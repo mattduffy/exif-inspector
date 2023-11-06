@@ -1,0 +1,44 @@
+<main>
+  <article>
+    <h1>Galleries Main Page</h1>
+    <% if (flash?.info) { %>
+    <div id="info" class="info">
+      <span><%= flash.info %></span>
+    </div>
+    <% } %>
+    <% if (flash?.message) { %>
+    <div id="messages" class="messages">
+      <span><%= flash.message %></span>
+    </div>
+    <% } %>
+    <% if (flash?.error) { %>
+    <div id="errors" class="errors">
+      <span><%= flash.error %></span>
+    </div>
+    <% } %> 
+    <% if (recent10?.length > 0) { %>
+      <h2>Recently Added</h2>    
+      <section id="recent10">
+        <div class="recentlyAdded">
+        <% recent10.forEach((a) => { %>
+          <div class="recentlyAddedAlbum"> 
+            <%= a.name %> 
+          </div>
+        <% }) %>
+        </div>
+      </section>
+    <% } %>
+    <br>
+    <section id="userAlbums">
+      <h2>Users With Public Albums</h2>
+      <% if (userAlbums?.length > 0) { %>
+      <ul id="usersAlbumsList">
+        <% userAlbums.forEach((a) => { %>
+          <li><a href="<%- origin -%>/@<%- a.ownerUsername -%>">@<%- a.ownerUsername -%></a></li>
+        <% }) %>
+      </ul>
+      <% } %>
+    </section>
+  </article>
+</main>
+

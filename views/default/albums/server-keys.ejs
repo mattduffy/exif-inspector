@@ -1,0 +1,62 @@
+<main>
+  <article>
+    <h1>Server Public Keys</h1>
+    <% if (flash.message) { %>
+    <div id="messages" class="messages">
+      <span><%= flash.message %></span>
+    </div>
+    <% } %>
+    <% if (flash.error) { %>
+    <div id="errors" class="errors">
+      <span><%= flash.error%></span>
+    </div>
+    <% } %>
+    <div class="account-pubkey">
+      <dl>
+        <dt>
+          <%
+          const sigK = await sessionUser.publicSigningKey
+          const encK = await sessionUser.publicEncryptingKey
+          if (sigK === null && encK === null) { %>
+          <div id="noKeys">
+            <span>No JWKs created yet.</span>
+            <br>
+            <span id="createKeys" class="link" data-href="<%= `${origin}/admin/app/createKeys` %>">Create keys pairs.</span>
+          </div>
+          <% } else { %>
+          <a href="<%= origin %>/.well-known/jwks.json">
+            <%= origin %>/.well-known/jwks.json
+          </a>
+          <% } %>
+        </dt>
+        <dd>
+        </dd>
+
+        <dt>Public Signing Key:</dt>
+          <pre data-sig><%= await theApp.signingPublicKey %></pre>
+        </dd>
+
+        <dt>Signing JWK</dt>
+        <dd>
+          <pre data-sig-jwk><%= await theApp.signingJwkPP %></pre>
+        </dd>
+
+        <dt>Public Encrypting Key:</dt>
+        <dd>
+          <pre data-enc><%= await theApp.encryptingPublicKey %></pre>
+        </dd>
+        
+        <dt>Encrypting JWK</dt>
+        <dd>
+          <pre data-enc-jwk><%= await theApp.encryptingJwkPP %></pre>
+        </dd>
+      </dl>
+    </div>
+    <script nonce="<%- nonce -%>">
+      let origin = '<%- origin -%>'
+      let csrfToken = '<%- csrfToken -%>'
+      let jwtAccess = '<%- jwtAccess -%>'
+    </script>
+    
+  </article>
+</main>

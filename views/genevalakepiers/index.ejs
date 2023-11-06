@@ -1,0 +1,191 @@
+<% if (flash?.info) { %>
+  <div id="info" class="info">
+    <span><%= flash.info %></span>
+  </div>
+<% } %>
+<% if (flash?.message) { %>
+  <div id="messages" class="messages">
+    <span><%= flash.message %></span>
+  </div>
+<% } %>
+<% if (flash?.error) { %>
+  <div id="errors" class="errors">
+    <span><%= flash.error %></span>
+  </div>
+<% } %>
+<% if (isAuthenticated) { %>
+<article class="admin-stuff">
+  <% /* %>
+  <p><a href="/account/view">Your account page</a></p>
+  <% */ %>
+  <% if (sessionUser) { %>
+    <div>Hi, <%= sessionUser.displayName %></div>
+    <% if (items.length > 0) { %>
+      <div>There <%= (items.length > 1) ? 'are' : 'is' %> <%= items.length %> item<%= (items.length > 1) ? 's' : '' %> that need<%= (items.length === 1) ? 's' : '' %> attention.</div> 
+      <ul class="admin-items">
+        <% items.forEach((item) => { %>
+          <li><a href="<%= origin %>/nullisland"><%= item.list.length %> <%= item.title %></a></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  <% } %>
+</article>
+<% } %>
+<article>
+  <section class="main">
+    <%# search section %>
+    <%- await include('./search.ejs') -%>
+    <%# search section %>
+  </section>
+  <section class="map">
+    <%# map embed %>
+    <%- await include('./mapkit-embed.ejs') -%>
+    <%# map embed %>
+    <script nonce=<%= nonce %>
+      src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.core.js"
+      crossorigin async
+      data-callback="initMapKit"
+      data-libraries="full-map,services"
+      data-initial-token="">
+    </script>
+    <script nonce=<%= nonce %> type="module">
+      let page = 'index'
+      const origin = '<%= origin %>'
+      const jwtAccess = '<%= searchJwtAccess %>'     
+      let map
+      async function setupMapKitJs() {
+        const tokenOpts = {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${jwtAccess}`,
+          },
+        }
+        const request = new Request(`${origin}/mapkit/getToken`, tokenOpts)
+        const response = await fetch(request)
+        const { tokenID } = await response.json()
+        console.log('tokenID: ', tokenID)
+        if (!window.mapkit || window.mapkit.loadedLibraries.length === 0) {
+          // mapkit.core.js or the libraries are not loaded yet.
+          // Set up the callback and wait for it to be called.
+          await new Promise(resolve => { window.initMapKit = resolve })
+          // Clean up
+          delete window.initMapKit
+        }
+        mapkit.init({
+          authorizationCallback: function(done) {
+            done(tokenID)
+          },
+        })
+      }
+      async function main() {
+        await setupMapKitJs()
+        // init / center the map over Geneva Bay 
+        const lat = 42.587751
+        const lon = -88.440669
+        const genevaBay = new mapkit.CoordinateRegion(
+          new mapkit.Coordinate(lat, lon),
+          // new mapkit.CoordinateSpan(0, 0.01)
+          new mapkit.CoordinateSpan(0.006, 0.001)
+        );
+        const opts = {
+          mapType: mapkit.Map.MapTypes.Hybrid,
+          loadPriority: mapkit.Map.LoadPriorities.PointsOfInterest,
+          selectableMapFeatures: [mapkit.MapFeatureType.PhysicalFeature, mapkit.MapFeatureType.PointOfInterest],
+          visibleMapRect: mapkit.MapRect(0, 0, 1, 1),
+          isZoomEnabled: true,
+          showsCompass: mapkit.FeatureVisibility.Visible,
+          showsScale: mapkit.FeatureVisibility.Visible,
+          showsZoomControl: true,
+          cameraDistance: 1100,
+          showsPointsOfInterest: true,
+          isRotationEnabled: true,
+          isScrollEnabled: true,
+          showsMapTypeControl: false,
+        } 
+        mapkit.Map.LoadPriorities = mapkit.Map.LoadPriorities.PointsOfInterest
+        window.map = new mapkit.Map("map", opts);
+        window.map.region = genevaBay;
+      }
+      await main()
+
+      async function showAllPiers() {
+        try {
+          const allPiers = await fetch(`${origin}/mapkit/allPiers`)
+          const piers = await allPiers.json()
+          if (piers.total > 0) {
+            const annotations = []
+            piers.documents.forEach((pier) => {
+              let [lon, lat] = pier.value['$.loc'].split(',')
+              lon = parseFloat(lon, 10)
+              lat = parseFloat(lat, 10)
+              // console.log(lat, lon)
+              if (lat !== 0 && lon !== 0) {
+                const pierMarker = new window.mapkit.Coordinate(lat, lon)
+                const pierAnnotation = new window.mapkit.MarkerAnnotation(pierMarker)
+                pierAnnotation.title = `Pier ${pier.value.pierNumber}`
+                annotations.push(pierAnnotation)
+              }
+            })
+            if (annotations.length > 0) {
+              // console.dir(annotations, { depth: null })
+              window.map.showItems(annotations)
+            }
+          }
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      // await showAllPiers()
+
+      window.map.addEventListener("single-tap", async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const {latitude, longitude} = window.map.convertPointOnPageToCoordinate(e.pointOnPage)
+        // const coordinate = window.map.convertPointOnPageToCoordinate(e.pointOnPage)
+        const defaultRadius = 50
+        const defaultUnits = 'ft'
+        console.log(`locate piers within ${defaultRadius} ${defaultUnits} of coords: ${longitude}, ${latitude}`)
+        const results = await (await fetch(`${origin}/mapkit/locate/${longitude}/${latitude}/${defaultRadius}/${defaultUnits}`)).json()
+        console.log(results)
+        if (results?.total > 0) {
+          results.documents.forEach((p) => {
+            console.log(`${p.value.pier}, ${p.value.coords}, ${p.value.estateName}, ${p.value.business}, ${p.value.association}`)
+              let subtitle = ' '
+              if (p.value.business !== '' && p.value.association === '') subtitle = p.value.business
+              if (p.value.association !== '' && p.value.business === '') subtitle = p.value.association
+              if (p.value.firstname !== '' && p.value.lastname !== '') subtitle = `${p.value.firstname} ${p.value.lastname}`
+              if (p.value.firstname !== '' && p.value.lastname === '') subtitle = p.value.firstname
+              if (p.value.firstname === '' && p.value.lastname !== '') subtitle = p.value.lastname
+              if (p.value.estateName !== '') subtitle = p.value.estateName
+              console.info(`subtitle: ${subtitle}`)
+              const annotationCallout = {
+                calloutLeftAccessoryForAnnotation: () => {
+                  const accessoryViewLeft = document.createElement("div")
+                  return accessoryViewLeft
+                },
+                calloutRightAccessoryForAnnotation: () => {
+                  const accessoryViewRight = document.createElement("a")
+                  accessoryViewRight.className = "right-accessory-view"
+                  accessoryViewRight.href = `${origin}/pier/${p.value.pier}`
+                  accessoryViewRight.target = "_self"
+                  accessoryViewRight.textContent = "\u{24D8}"
+                  return accessoryViewRight
+                }
+              }
+              const pierMarker = new window.mapkit.Coordinate(latitude, longitude)
+              const pierAnnotation = new window.mapkit.MarkerAnnotation(pierMarker)
+              pierAnnotation.title = `Pier ${p.value.pier}`
+              pierAnnotation.subtitle = subtitle 
+              pierAnnotation.animates = true
+              pierAnnotation.selected = true
+              pierAnnotation.color = "#4B93E0"
+              pierAnnotation.callout = annotationCallout
+              window.map.addAnnotation(pierAnnotation)
+          })
+        }
+      })
+    </script>
+  </section>
+</article>
+

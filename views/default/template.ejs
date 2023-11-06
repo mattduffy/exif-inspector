@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%# document head %>
+    <%- await include('./partials/head.ejs') -%>
+    <%# document head %>
+  </head>
+  <body>
+    <%# header %>
+    <%- await include('./partials/body-header.ejs') -%>
+    <%# header end %>
+
+    <%# main %>
+    <%- body %>
+    <%# main end %>
+
+    <%# footer %>
+    <%- await include('./partials/body-footer.ejs') -%>
+    <%# footer end %>
+  </body>
+</html>

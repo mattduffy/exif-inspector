@@ -1,0 +1,25 @@
+<main>
+  <article>
+    <h1>User Detail Page</h1>
+    
+    <% if (displayUser) { %>
+    <p>This is the user detail page for <%= displayUser.name %>.</p>
+    <ul>
+      <li><%= displayUser.type %></li>
+      <li><%= displayUser.name %></li>
+      <li><%= displayUser.firstName %><%= displayUser.lastName %></li>
+      <li><%= displayUser.email.primary %></li>
+      <li><%= displayUser.description %></li>
+      <li><%= displayUser.status %></li>
+    </ul>
+    <% } else { %>
+    <p>No user found with username <%= username %>.</p>
+    <ul>
+      <li>Nothing to see yet</li>
+      <li>Nothing to read yet</li>
+      <li>Nothing to judge yet</li>
+    </ul>
+    <% } %>
+  </article>
+</main>
+

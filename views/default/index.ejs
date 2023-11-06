@@ -1,0 +1,39 @@
+<main>
+  <article>
+    <h1>Home Page</h1>
+    <% if (flash?.info) { %>
+    <div id="info" class="info">
+      <span><%= flash.info %></span>
+    </div>
+    <% } %>
+    <% if (flash?.message) { %>
+    <div id="messages" class="messages">
+      <span><%= flash.message %></span>
+    </div>
+    <% } %>
+    <% if (flash?.error) { %>
+    <div id="errors" class="errors">
+      <span><%= flash.error %></span>
+    </div>
+  <% } %>
+  <p>This is the home page of the website.</p>
+    <% if (isAuthenticated) { %>
+    <p>View account <a href="/account/view">details</a>.</p>
+    <% } %>
+    <ul>
+      <% if (sessionUser) { %>
+      <li><%= sessionUser.type %></li>
+      <li><%= `${sessionUser.name}` %></li>
+      <li><%= `${sessionUser.firstName} ${sessionUser.lastName}` %></li>
+      <li><%= sessionUser.email.primary %></li>
+      <li><%= sessionUser.description %></li>
+      <li><%= sessionUser.status%></li>
+    <% } else { %>
+      <li>Nothing to see yet</li>
+      <li>Nothing to read yet</li>
+      <li>Nothing to judge yet</li>
+    <% } %>
+    </ul>
+  </article>
+</main>
+
