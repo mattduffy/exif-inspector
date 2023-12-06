@@ -8,6 +8,7 @@ archive/*
 !archive/Readme.md
 private/a/*
 !private/Readme.md
+public/sitemap.xml
 public/a/*
 public/c/*
 public/i/*

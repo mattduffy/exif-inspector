@@ -36,6 +36,7 @@ import { edit as Edit } from './routes/edit.js'
 import { main as Main } from './routes/main.js'
 import { app as theApp } from './routes/app.js'
 import { users as Users } from './routes/users.js'
+import { seo as Seo } from './routes/seo.js'
 
 const log = _log.extend('index')
 const error = _error.extend('index')
@@ -294,6 +295,7 @@ app.use(Edit.routes())
 app.use(Users.routes())
 app.use(Account.routes())
 app.use(wellKnown.routes())
+app.use(Seo.routes())
 // app.use(activityV1.routes())
 app.use(apiV1.routes())
 
