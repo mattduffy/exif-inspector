@@ -10,11 +10,27 @@ import NodeInfo from '@mattduffy/webfinger/nodeinfo.js' // eslint-disable-line i
 import Hostmeta from '@mattduffy/webfinger/host-meta.js' // eslint-disable-line import/no-unresolved
 import Webfinger from '@mattduffy/webfinger/webfinger.js' // eslint-disable-line import/no-unresolved
 import { App } from '../models/app.js'
-import { _log, _error } from '../utils/logging.js'
+import { _log, _info, _error } from '../utils/logging.js'
 
 const wellKnownLog = _log.extend('wellKnown')
+const wellKnownInfo = _info.extend('wellKnown')
 const wellKnownError = _error.extend('wellKnown')
 const router = new Router()
+
+router.get('security', '/.well-known/security.txt', async (ctx) => {
+  const info = wellKnownInfo.extend('GET-security.txt')
+  info('Sombody asked for the security.txt file.')
+  const securityTxt = []
+  securityTxt.push(`Contact: mailto:${ctx.app.securityContact}`)
+  securityTxt.push('Expires: 2025-12-31T23:59:00.000Z')
+  securityTxt.push(`Encryption: ${ctx.app.securityGpg}`)
+  securityTxt.push('Preferred-Languages: en')
+  securityTxt.push(`Canonical: ${ctx.origin}/.well-known/security.txt`)
+  info(securityTxt)
+  ctx.status = 200
+  ctx.type = 'text/plain; charset=utf-8'
+  ctx.body = securityTxt.join('\n')
+})
 
 router.get('jwks-json', '/.well-known/jwks.json', async (ctx) => {
   const log = wellKnownLog.extend('GET-jwks_json')

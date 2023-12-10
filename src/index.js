@@ -68,6 +68,8 @@ app.site = appEnv.SITE_NAME ?? 'Web site'
 app.domain = appEnv.DOMAIN_NAME ?? 'website.com'
 app.host = `${appEnv.HOST}:${port}` ?? `127.0.0.1:${port}`
 app.origin = app.host
+app.securityContact = appEnv.SECURITY_CONTACT ?? `security@${app.domain}`
+app.securityGpg = appEnv.SECURITY_GPG ?? 'GPG public key missing.'
 app.appEnv = appEnv
 
 app.proxy = true
