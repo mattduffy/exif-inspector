@@ -225,6 +225,7 @@ async function viewGlobals(ctx, next) {
   ctx.state.origin = ctx.request.origin
   ctx.state.siteName = ctx.app.site
   ctx.state.appName = ctx.app.site.toProperCase()
+  ctx.state.pageDescription = 'Inspect and edit the EXIF metadata in your photos.'
   ctx.state.stylesheets = []
   ctx.state.searchJwtAccess = appEnv.SEARCHJWTACCESS
   ctx.state.searchAccessToken = appEnv.SEARCHACCESSTOKEN
