@@ -232,7 +232,7 @@ async function viewGlobals(ctx, next) {
   ctx.state.structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Geneva Lake Piers',
+    name: 'Exif Inspector: view and edit image metadata.',
     url: ctx.request.origin,
   }
   await next()

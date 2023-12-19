@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <meta name="description" content="<%= pageDescription %>">
+    <% if (structuredData !== null) { %>
+    <script type="application/ld+json">
+      <%- structuredData %>
+    </script>
+    <% } %>
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://exif-inspector.com/">
     <meta property="og:title" content="Image metadata inspector">
@@ -16,7 +21,10 @@
     
     <title>EXIF Inspector: Home</title>
     <link rel="icon" type="image/x-icon" href="/i/favicon.ico"> 
-    <link rel="stylesheet" href="/c/glp.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/i/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/i/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/i/favicon-16x16.png">
+    <link rel="stylesheet" href="/c/main.css">
   </head>
   <body>
     <div class="grid-content" id="main-content">
