@@ -34,10 +34,6 @@ router.get('getLogin', '/login', async (ctx, next) => {
   const csrfToken = ulid()
   // const flashMessage = ctx.flash
   const locals = {
-    // origin: ctx.request.origin,
-    // siteName: ctx.app.site,
-    // appName: ctx.app.site.toProperCase(),
-    // nonce: ctx.app.nonce,
     body: ctx.body,
     title: `${ctx.app.site}: Login`,
     sessionUser: ctx.state.sessionUser,
