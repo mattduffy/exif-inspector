@@ -15,5 +15,16 @@
     </div>
     <% } %>
     <% if (isAuthenticated) { %>
-    logged in
+    <div id="dragzone">
+        <h2>Drop a photo here to inspect the it's metadata.</h2>
+    </div>
+    <div id="infozone">
+    </div>
+    <div id="metazone">
+    </div>
+    <script type="javascript" nonce="<%= nonce %>">
+        const dragzone = document.querySelcetor('div#dragzone')
+        const infozone = document.querySelcetor('div#infozone')
+        const metazone = document.querySelector('div#metazone')
+    </script>
     <% } %>
