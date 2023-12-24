@@ -141,7 +141,7 @@ async function openGraph(ctx, next) {
   ogArray.push('<meta property="og:site_name" content="EXIF Inspector">')
   ogArray.push('<meta property="og:title" content="Image metadata inspector">')
   ogArray.push(`<meta property="og:url" content="${ctx.request.href}${ctx.request.search}">`)
-  ogArray.push(`<meta property="og:image" content="${ctx.request.origin}/i/ogEmbed-450x295.jpg">`)
+  ogArray.push(`<meta property="og:image" content="${ctx.request.origin}/i/ei-ogEmbed-450x295.png">`)
   ogArray.push('<meta property="og:image:type" content="image/jpeg">')
   ogArray.push('<meta property="og:image:width" content="450">')
   ogArray.push('<meta property="og:image:height" content="295">')
@@ -163,20 +163,20 @@ async function csp(ctx, next) {
     + 'frame-ancestors \'none\'; '
     + 'object-src \'none\'; '
     + 'form-action \'self\'; '
-    + `style-src 'self' ${ctx.request.origin} 'unsafe-inline' 'nonce-${nonce}'; `
-    + `style-src-attr 'self' ${ctx.request.origin} 'unsafe-inline'; `
-    + `style-src-elem 'self' ${ctx.request.origin} 'unsafe-inline'; `
-    + `script-src 'self' ${ctx.request.origin} 'nonce-${nonce}'; `
-    + `script-src-attr 'self' ${ctx.request.origin} 'nonce-${nonce}'; `
-    + `script-src-elem 'self' ${ctx.request.origin} 'nonce-${nonce}'; `
-    + `img-src 'self' data: blob: ${ctx.request.origin} *.apple-mapkit.com; `
+    + `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' ${ctx.request.origin}; `
+    + `style-src-attr 'self' 'unsafe-inline' ${ctx.request.origin}; `
+    + `style-src-elem 'self' 'unsafe-inline' ${ctx.request.origin}; `
+    + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' ${ctx.request.origin}; `
+    + `script-src-attr 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
+    + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
+    + `img-src 'self' data: blob: ${ctx.request.origin}; `
     + `font-src 'self' ${ctx.request.origin}; `
     + `media-src 'self' data: ${ctx.request.origin}; `
     + 'frame-src \'self\'; '
     + `child-src 'self' blob: ${ctx.request.origin}; `
     + `worker-src 'self' blob: ${ctx.request.origin}; `
     + `manifest-src 'self' blob: ${ctx.request.origin}; `
-    + `connect-src 'self' blob: ${ctx.request.origin} https://plus.codes *.apple-mapkit.com *.geo.apple.com https://mw-ci1-mapkitjs.geo.apple.com; `
+    + `connect-src 'self' blob: ${ctx.request.origin}; `
   ctx.set('Content-Security-Policy', policy)
   logg(`Content-Security-Policy: ${policy}`)
   try {
