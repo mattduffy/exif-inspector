@@ -1,15 +1,18 @@
 div#dragzone {
   color: lightgrey;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  /*
   border: 1px solid grey;
   border-radius: 30px;
+  padding: 25px 25px; 
+  */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   max-height: 400px;
   min-height: 100px;
   min-width: 200px;
   max-width: 600px;
-  padding: 25px 25px; 
 }
 
 div#dragzone h2 {
@@ -18,3 +21,18 @@ div#dragzone h2 {
   text-align: center;
 }
 
+.dragTarget {
+  background-color: aliceblue;
+}
+
+fieldset {
+  border-radius: 30px;
+  max-height: 400px;
+  min-height: 100px;
+  min-width: 200px;
+  max-width: 600px;
+}
+
+input[type='file'] {
+  display: block;
+}
