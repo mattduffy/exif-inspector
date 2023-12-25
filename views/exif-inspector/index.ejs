@@ -21,7 +21,7 @@
             <div id="dragzone">
                 <h2>Drop a photo here to inspect it's metadata.</h2>
                 <br>
-                <input id="image_0Id" name="image_0" type="file" accept=".png,.jpg,.jpeg"i>
+                <input id="image_0Id" name="image_0" type="file" accept=".png,.jpg,.jpeg,.heic,.webp">
                 <input id="csrf-token" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
             </div>
         </fieldset>
@@ -31,6 +31,8 @@
     <div id="metazone">
     </div>
     <script nonce="<%= nonce %>">
+        const origin = '<%= origin %>'
+        const fileElement = document.forms[0]['image_0Id']
         const dragzone = document.querySelector('div#dragzone')
         const infozone = document.querySelector('div#infozone')
         const metazone = document.querySelector('div#metazone')
@@ -61,17 +63,45 @@
             fileInput.files = e.dataTransfer.files
             // const files = e.dataTransfer.files
             console.log(fileInput.files[0])
-            setFile(fileInput.files[0])
+            setFileInfo(fileInput.files[0])
         })
-        function setFile(file) {
+        fileElement.addEventListener('change', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            console.log(e)
+            setFileInfo(e.target.files[0])
+        })
+        function setFileInfo(file) {
+            if (infozone.firstElementChild !== null) {
+                infozone.removeChild(infozone.firstElementChild)
+            }
             let info = document.createElement('ul')
+            info.id = 'fileInfo'
             const name = document.createElement('li')
             name.innerText = file.name
             const size = document.createElement('li')
             size.innerText = `${Math.round(file.size / 1024)} KB`
             const type = document.createElement('li')
             type.innerText = file.type
-            info.appendChild(name).appendChild(type).appendChild(size)
+            info.appendChild(name)
+            info.appendChild(type)
+            info.appendChild(size)
+            let img
+            img = document.createElement('li')
+            if (/heic$/i.test(file.type)) {
+                // chrome doesn't natively display .HEIC image format
+                img.appendChild(document.createTextNode('HEIC image format is tough to display.'))
+            } else {
+                const preview = document.createElement('img')
+                preview.classList.add('smallImgPreview')
+                img.appendChild(preview)
+                const fileReader = new FileReader()
+                fileReader.addEventListener('load', (e) => {
+                    preview.src = e.target.result
+                })
+                fileReader.readAsDataURL(file)
+            }
+            info.appendChild(img)
             infozone.appendChild(info)
         }
     </script>

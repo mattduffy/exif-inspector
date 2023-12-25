@@ -50,6 +50,7 @@ router.get('index', '/', hasFlash, async (ctx) => {
   ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
   locals.csrfToken = csrfToken
   locals.body = ctx.body
+  locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
   locals.sessionUser = ctx.state.sessionUser

@@ -37,3 +37,20 @@ fieldset {
 input[type='file'] {
   display: none;
 }
+
+.smallImgPreview {
+  max-width: 350px;
+}
+
+@media screen and (max-width: 430px) {
+  input[type='file'] {
+    display: block;
+  }
+
+  .smallImgPreview {
+    max-width: 275px;
+  }
+
+}
+
+
