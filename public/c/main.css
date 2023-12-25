@@ -23,6 +23,7 @@ div#dragzone h2 {
 
 .dragTarget {
   background-color: aliceblue;
+  color: 
 }
 
 fieldset {
@@ -34,5 +35,5 @@ fieldset {
 }
 
 input[type='file'] {
-  display: block;
+  display: none;
 }
