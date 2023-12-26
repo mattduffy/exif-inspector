@@ -109,6 +109,8 @@
             formData.append('image_0', file)
             await send(formData)
         }
+        let imgMetadata
+        let tags
         async function send(data) {
             let jwtAccess = '<%= jwtAccess %>'
             const opts = {
@@ -124,8 +126,28 @@
             console.log(url.toString())
             const request = new Request(url, opts)
             console.log(request)
-            const response = await (await fetch(request, { credentials: 'same-origin' })).json()
-            console.log(response)
+            const response = await fetch(request, { credentials: 'same-origin' })
+            if (response.status === 200) {
+                const results = await response.json()
+                console.log(results)
+                const list = document.createElement('ul')
+                list.id = 'tagList'
+                imgMetadata = results.metadata
+                tags = Object.keys(results.metadata[0])
+                for(const tag of tags) {
+                    if (/file:directory/i.test(tag)) {
+                        continue
+                    }
+                    if (/sourcefile/i.test(tag)) {
+                        continue
+                    }
+                    const liTag = document.createElement('li')
+                    liTag.innerHTML = `<pre>${tag.padEnd(25, ' ')}${imgMetadata[0][tag]}</pre>`
+                    list.appendChild(liTag)
+                }
+                // metadata.appendChild(document.createTextNode(JSON.stringify(results.metadata[0])))
+                metazone.appendChild(list)
+            }
         }
     </script>
     <% } %>

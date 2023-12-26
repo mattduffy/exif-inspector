@@ -6,6 +6,7 @@
  */
 
 import { rename } from 'node:fs/promises'
+import path from 'node:path'
 import formidable from 'formidable'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
@@ -15,6 +16,7 @@ import {
   // getSetName,
   // TOWNS,
 } from '../utils/logging.js'
+import { Exiftool } from '@mattduffy/exiftool'
 // import { redis } from '../daos/impl/redis/redis-om.js'
 // import { redis as ioredis } from '../daos/impl/redis/redis-client.js'
 
@@ -24,6 +26,15 @@ const mainError = _error.extend('main')
 function sanitize(param) {
   // fill in with some effective input scubbing logic
   return param
+}
+function sanitizeFilename(filename) {
+  // Remove whitespace characters from filename.
+  // Remove non-word characters from filename.
+  /* eslint-disable-next-line */
+  // const cleanName = filename.replace(/[\s!@#\S%&*\(\)](?!(\.\w{1,4}$))/g, '_')
+  const cleanName = filename.replace(/[\s!@#\$%&*\(\)](?!(\.\w{1,4}$))/g, '_')
+  console.log(`Sanitizing filename ${filename} to ${cleanName}`)
+  return cleanName
 }
 
 const router = new Router()
@@ -63,12 +74,14 @@ router.get('index', '/', hasFlash, async (ctx) => {
 router.post('fileUpload', '/upload', async (ctx) => {
   const log = mainLog.extend('POST-upload')
   const error = mainError.extend('POST-upload')
-  const form = formidable({
+  const opts = {
     encoding: 'utf-8',
-    uploadDir: ctx.app.uploadsDir,
+    uploadDir: ctx.app.dirs.private.uploads,
     keepExtensions: true,
     multipart: true,
-  })
+  }
+  log(opts)
+  const form = formidable(opts)
   await new Promise((resolve, reject) => {
     form.parse(ctx.req, (err, fields, files) => {
       if (err) {
@@ -87,18 +100,51 @@ router.post('fileUpload', '/upload', async (ctx) => {
   })
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
-  const csrfTokenHidden = ctx.request.body['crsf-token']
+  const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
+  if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
+  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
+  if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
   if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
-    error(`CSRF-Token mismatch: header:${csrfTokenCookie} hidden:${csrfTokenHidden} - session:${csrfTokenSession}`)
+    error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
+    error(`                     hidden:${csrfTokenHidden}`)
+    error(`                    session:${csrfTokenSession}`)
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 401
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
-
+    const image = ctx.request.files.image_0[0]
+    let imageOriginalFilenameCleaned
+    let imageSaved
+    const response = {}
+    try {
+      log(image.size)
+      if (image.size > 0) {
+        imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
+        const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
+        // imageSaved = path.resolve(`${ctx.app.dirs.private.uploads}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
+        imageSaved = path.resolve(`${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
+        const isMoved = await rename(image.filepath, imageSaved)
+        log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
+      }
+    } catch (e) {
+      error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
+      response.msg = `Failed to move ${image.filepath} to the inspected/ dir.`
+    }
+    let exiftool = new Exiftool()
+    try {
+      // run exif command here
+      exiftool = await exiftool.init(imageSaved)
+      response.metadata = await exiftool.getMetadata()
+    } catch (e) {
+      error(e)
+      error(`Failed to run exif command on ${imageSaved}`)
+      response.msg = `Failed to run exif command on ${imageSaved}`
+      response.e = e
+    }
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
-    ctx.body = { status: 'ok' }
+    ctx.body = response
   }
 })
 

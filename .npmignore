@@ -6,6 +6,8 @@ migrations/*
 !migrations/Readme.md
 archive/*
 !archive/Readme.md
+inspected/*
+!inspected/Readme.md
 private/a/*
 !private/Readme.md
 public/sitemap.xml

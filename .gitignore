@@ -27,6 +27,8 @@ archive/*
 !archive/Readme.md
 uploads/*
 !uploads/Readme.md
+inspected/*
+!inspected/Readme.md
 public/a/*
 public/sitemap.xml
 private/a/*
