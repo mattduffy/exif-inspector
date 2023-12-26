@@ -54,6 +54,7 @@ router.get('index', '/', hasFlash, async (ctx) => {
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
   locals.sessionUser = ctx.state.sessionUser
+  locals.jwtAccess = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
   // locals.items = items
   await ctx.render('index', locals)
@@ -84,10 +85,21 @@ router.post('fileUpload', '/upload', async (ctx) => {
       resolve()
     })
   })
-  const csrfTokenCookie = ctx.cookies.get(crsfToken)
+  const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body['crsf-token']
+  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+    error(`CSRF-Token mismatch: header:${csrfTokenCookie} hidden:${csrfTokenHidden} - session:${csrfTokenSession}`)
+    ctx.type = 'application/json; charset=utf-8'
+    ctx.status = 401
+    ctx.body = { error: 'csrf token mismatch' }
+  } else {
+    log('csrf token check passed')
 
+    ctx.type = 'application/json; charset=utf-8'
+    ctx.status = 200
+    ctx.body = { status: 'ok' }
+  }
 })
 
 // router.get('about', '/about', hasFlash, async (ctx) => {

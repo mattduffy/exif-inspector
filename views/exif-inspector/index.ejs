@@ -71,7 +71,8 @@
             console.log(e)
             setFileInfo(e.target.files[0])
         })
-        function setFileInfo(file) {
+        async function setFileInfo(file) {
+            const form = document.forms[0]
             if (infozone.firstElementChild !== null) {
                 infozone.removeChild(infozone.firstElementChild)
             }
@@ -103,6 +104,28 @@
             }
             info.appendChild(img)
             infozone.appendChild(info)
+            const formData = new FormData()
+            formData.append('csrfTokenHidden', form['csrf-token'].value)
+            formData.append('image_0', file)
+            await send(formData)
+        }
+        async function send(data) {
+            let jwtAccess = '<%= jwtAccess %>'
+            const opts = {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    Authorization: `Bearer ${jwtAccess}`,
+                },
+                body: data
+            }
+            console.log(opts)
+            const url = new URL(`${origin}upload`)
+            console.log(url.toString())
+            const request = new Request(url, opts)
+            console.log(request)
+            const response = await (await fetch(request, { credentials: 'same-origin' })).json()
+            console.log(response)
         }
     </script>
     <% } %>
