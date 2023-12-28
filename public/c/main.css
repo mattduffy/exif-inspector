@@ -34,12 +34,27 @@ fieldset {
   max-width: 600px;
 }
 
+fieldset.tagSelect {
+  border: none;
+  min-height: 20px;
+  max-height: 0px;
+
+}
+
 input[type='file'] {
   display: none;
 }
 
 .smallImgPreview {
   max-width: 350px;
+}
+
+.mono {
+  font-family: monospace;
+}
+
+pre {
+  display: inline-block;
 }
 
 @media screen and (max-width: 430px) {

@@ -29,7 +29,7 @@
         <fieldset id="filesId" name="files" form="uploaderId" class="" title="Upload image to inspect">
             <legend></legend>
             <div id="dragzone">
-                <h2>Drop a photo here to inspect it's metadata.</h2>
+                <h2>Drop a photo here to inspect its metadata.</h2>
                 <br>
                 <input id="image_0Id" name="image_0" type="file" accept=".png,.jpg,.jpeg,.heic,.webp">
                 <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
@@ -147,6 +147,7 @@
                 list.id = 'tagList'
                 imgMetadata = results.metadata
                 tags = Object.keys(results.metadata[0])
+                let x = 0
                 for(const tag of tags) {
                     if (/file:directory/i.test(tag)) {
                         continue
@@ -154,11 +155,13 @@
                     if (/sourcefile/i.test(tag)) {
                         continue
                     }
+                    x += 1
                     const liTag = document.createElement('li')
-                    liTag.innerHTML = `<pre>${tag.padEnd(39, ' ')}${imgMetadata[0][tag]}</pre>`
+                    liTag.classList.add('mono')
+                    const p = Math.abs(39 - tag.length)
+                    liTag.innerHTML = `<span id="tag_${x}">${tag}</span><pre class="${p} mono">${' '.padEnd(p, ' ')}</pre><span id="val_${x}">${imgMetadata[0][tag]}</span>`
                     list.appendChild(liTag)
                 }
-                // metadata.appendChild(document.createTextNode(JSON.stringify(results.metadata[0])))
                 metazone.appendChild(list)
             }
         }
