@@ -120,6 +120,12 @@ router.post('fileUpload', '/upload', async (ctx) => {
       Basic: 'BasicShortcut',
       Full: null,
     }
+    // check if the url field was submitted
+    let urlToInspect
+    if (ctx.request.body?.url[0] !== '') {
+      urlToInspect = ctx.request.body.url[0]
+      log(urlToInspect)
+    }
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
     const response = {}
@@ -141,7 +147,8 @@ router.post('fileUpload', '/upload', async (ctx) => {
       // run exif command here
       exiftool = await exiftool.init(imageSaved)
       const result = await exiftool.setConfigPath(`${ctx.app.root}/src/exiftool.config`)
-      log(`exiftool config path set: ${result.toString()}`)
+      // log(`exiftool config path set: ${result.toString()}`)
+      log('exiftool config path set: %o', result)
       // response.metadata = await exiftool.getMetadata()
       response.metadata = await exiftool.getMetadata('', exifShortcut)
     } catch (e) {

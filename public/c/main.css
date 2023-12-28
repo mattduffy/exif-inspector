@@ -37,12 +37,23 @@ fieldset {
 fieldset.tagSelect {
   border: none;
   min-height: 20px;
-  max-height: 0px;
+}
 
+fieldset.urlFieldset {
+  border: none;
+  min-height: 20px;
+}
+
+input[type='text']#url_Id {
+  width: 65%;
 }
 
 input[type='file'] {
   display: none;
+}
+
+input[type='radio'] {
+  margin-right: 15px;
 }
 
 .smallImgPreview {
