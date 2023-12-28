@@ -31,7 +31,6 @@ function sanitizeFilename(filename) {
   // Remove whitespace characters from filename.
   // Remove non-word characters from filename.
   /* eslint-disable-next-line */
-  // const cleanName = filename.replace(/[\s!@#\S%&*\(\)](?!(\.\w{1,4}$))/g, '_')
   const cleanName = filename.replace(/[\s!@#\$%&*\(\)](?!(\.\w{1,4}$))/g, '_')
   console.log(`Sanitizing filename ${filename} to ${cleanName}`)
   return cleanName
@@ -116,13 +115,19 @@ router.post('fileUpload', '/upload', async (ctx) => {
     const image = ctx.request.files.image_0[0]
     let imageOriginalFilenameCleaned
     let imageSaved
+    const shortcuts = {
+      Location: 'Location',
+      Basic: 'BasicShortcut',
+      Full: null,
+    }
+    const exifShortcut = shortcuts[`${ctx.request.body?.tagSet}`] ?? false
+    log(`exifShortcut = ${exifShortcut}`)
     const response = {}
     try {
       log(image.size)
       if (image.size > 0) {
         imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
         const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
-        // imageSaved = path.resolve(`${ctx.app.dirs.private.uploads}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
         imageSaved = path.resolve(`${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
         const isMoved = await rename(image.filepath, imageSaved)
         log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
@@ -135,7 +140,10 @@ router.post('fileUpload', '/upload', async (ctx) => {
     try {
       // run exif command here
       exiftool = await exiftool.init(imageSaved)
-      response.metadata = await exiftool.getMetadata()
+      const result = await exiftool.setConfigPath(`${ctx.app.root}/src/exiftool.config`)
+      log(`exiftool config path set: ${result.toString()}`)
+      // response.metadata = await exiftool.getMetadata()
+      response.metadata = await exiftool.getMetadata('', exifShortcut)
     } catch (e) {
       error(e)
       error(`Failed to run exif command on ${imageSaved}`)
