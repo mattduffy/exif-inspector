@@ -5,20 +5,21 @@
  * @file src/routes/main.js The router for the top level app URLs.
  */
 
+import http from 'node:http'
+import https from 'node:https'
 import { rename } from 'node:fs/promises'
 import path from 'node:path'
 import formidable from 'formidable'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
+/* eslint-disable-next-line */
+import { Exiftool } from '@mattduffy/exiftool'
+/* eslint-disable-next-line */
+import get from '@mattduffy/webfinger/get.js'
 import {
   _log,
   _error,
-  // getSetName,
-  // TOWNS,
 } from '../utils/logging.js'
-import { Exiftool } from '@mattduffy/exiftool'
-// import { redis } from '../daos/impl/redis/redis-om.js'
-// import { redis as ioredis } from '../daos/impl/redis/redis-client.js'
 
 const mainLog = _log.extend('main')
 const mainError = _error.extend('main')
@@ -123,8 +124,18 @@ router.post('fileUpload', '/upload', async (ctx) => {
     // check if the url field was submitted
     let urlToInspect
     if (ctx.request.body?.url[0] !== '') {
-      urlToInspect = ctx.request.body.url[0]
-      log(urlToInspect)
+      try {
+        // [urlToInspect] = ctx.request.body.url
+        urlToInspect = new URL(ctx.request.body.url[0])
+        log(urlToInspect)
+        const response = await get(urlToInspect)
+        log(response.statusCode)
+        log(response.statusMessage)
+        log(response.contentType)
+      } catch (e) {
+        error(e)
+        error('not a valid URL')
+      }
     }
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
