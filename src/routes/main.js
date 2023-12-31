@@ -5,9 +5,7 @@
  * @file src/routes/main.js The router for the top level app URLs.
  */
 
-import http from 'node:http'
-import https from 'node:https'
-import { rename } from 'node:fs/promises'
+import { rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import formidable from 'formidable'
 import Router from '@koa/router'
@@ -113,6 +111,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
+    const response = {}
     const image = ctx.request.files.image_0[0]
     let imageOriginalFilenameCleaned
     let imageSaved
@@ -123,26 +122,38 @@ router.post('fileUpload', '/upload', async (ctx) => {
     }
     // check if the url field was submitted
     let urlToInspect
+    let inspectedName
     if (ctx.request.body?.url[0] !== '') {
       try {
         // [urlToInspect] = ctx.request.body.url
         urlToInspect = new URL(ctx.request.body.url[0])
         log(urlToInspect)
-        const response = await get(urlToInspect)
-        log(response.statusCode)
-        log(response.statusMessage)
-        log(response.contentType)
+        const remoteFile = { url: urlToInspect }
+        const remoteResponse = await get(urlToInspect)
+        log(remoteResponse.statusCode)
+        log(remoteResponse.statusMessage)
+        log(remoteResponse.contentType)
+        const filePath = path.parse(urlToInspect.pathname)
+        const fileName = `${ulid()}_${filePath.base}`
+        inspectedName = path.resolve(`${ctx.app.root}/inspected/${fileName}`)
+        log(`remote file will be written to ${inspectedName}`)
+        remoteFile.inspectedFile = fileName
+        const written = await writeFile(inspectedName, new Uint8Array(remoteResponse.buffer))
+        if (written === undefined) {
+          remoteFile.written = true
+        }
+        response.remoteFile = remoteFile
       } catch (e) {
         error(e)
         error('not a valid URL')
+        response.remoteFile = { error: e.message, written: false, url: urlToInspect }
       }
     }
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
-    const response = {}
     try {
-      log(image.size)
-      if (image.size > 0) {
+      log(image?.size)
+      if (image?.size > 0) {
         imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
         const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
         imageSaved = path.resolve(`${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
@@ -156,6 +167,9 @@ router.post('fileUpload', '/upload', async (ctx) => {
     let exiftool = new Exiftool()
     try {
       // run exif command here
+      if (urlToInspect) {
+        imageSaved = inspectedName
+      }
       exiftool = await exiftool.init(imageSaved)
       const result = await exiftool.setConfigPath(`${ctx.app.root}/src/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
