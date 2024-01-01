@@ -169,7 +169,7 @@ async function csp(ctx, next) {
     + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' ${ctx.request.origin}; `
     + `script-src-attr 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
     + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
-    + `img-src 'self' data: blob: ${ctx.request.origin}; `
+    + `img-src 'self' data: blob: ${ctx.request.origin} *; `
     + `font-src 'self' ${ctx.request.origin}; `
     + `media-src 'self' data: ${ctx.request.origin}; `
     + 'frame-src \'self\'; '
