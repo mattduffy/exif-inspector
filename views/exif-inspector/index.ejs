@@ -17,7 +17,7 @@
     <% if (isAuthenticated) { %>
 
     <% } %>
-    <form id="uploaderId" name="uploader" action="<%= origin %>/upload" method="POST" enctype="multiplart/form-data">
+    <form id="uploaderId" name="uploader" action="<%= origin %>upload" method="POST" enctype="multiplart/form-data">
         <fieldset id="tagSelect_Id" name="tagSelect" form="uploaderId" class="tagSelect" title="Metadata to display">
             <label for="full_Id">Full tag set</label>
             <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0" checked>
@@ -35,10 +35,11 @@
                 <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
             </div>
         </fieldset>
-        or
+        <span class="or">or</span>
         <fieldset id="urlInspectId" name="urlInspect" form="uploaderId" class="urlFieldset" title="Paset URL to image to inspect">
             <label for="url_Id">URL of an image to inspect: </label>
             <input id="url_Id" name="url" type="text" value="" tabeindex="0">
+            <input id="submit_Id" name="submit" type="submit" value="Inspect Image" tabindex="0">
         </fieldset>
     </form>
     <div id="infozone">
@@ -47,10 +48,13 @@
     </div>
     <script nonce="<%= nonce %>">
         const origin = '<%= origin %>'
-        const fileElement = document.forms[0]['image_0Id']
+        const form = document.forms[0]
+        const fileElement = form['image_0Id']
+        const submitButton = form['submit_Id']
         const dragzone = document.querySelector('div#dragzone')
         const infozone = document.querySelector('div#infozone')
         const metazone = document.querySelector('div#metazone')
+        const formData = new FormData()
         dragzone.addEventListener('dragenter', (e) => {
             // e.preventDefault()
             e.stopPropagation();
@@ -74,7 +78,7 @@
             e.stopPropagation();
             (document.querySelector('#filesId')).classList.remove('dragTarget')
             // e.target.classList.remove('dragTarget')
-            const fileInput = document.forms[0]['image_0Id']
+            const fileInput = form['image_0Id']
             fileInput.files = e.dataTransfer.files
             // const files = e.dataTransfer.files
             console.log(fileInput.files[0])
@@ -87,50 +91,78 @@
             // metazone.innerHTML = ''
             setFileInfo(e.target.files[0])
         })
-        async function setFileInfo(file) {
-            metazone.innerHTML = ''
-            const form = document.forms[0]
-            if (infozone.firstElementChild !== null) {
-                infozone.removeChild(infozone.firstElementChild)
+        submitButton.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (form['url'].value === '') {
+                form['url'].focus()
+                return
             }
-            let info = document.createElement('ul')
-            info.id = 'fileInfo'
-            const name = document.createElement('li')
-            name.innerText = file.name
-            const size = document.createElement('li')
-            size.innerText = `${Math.round(file.size / 1024)} KB`
-            const type = document.createElement('li')
-            type.innerText = file.type
-            info.appendChild(name)
-            info.appendChild(type)
-            info.appendChild(size)
-            let img
-            img = document.createElement('li')
-            if (/heic$/i.test(file.type)) {
-                // chrome doesn't natively display .HEIC image format
-                img.appendChild(document.createTextNode('HEIC image format is tough to display.'))
-            } else {
-                const preview = document.createElement('img')
-                preview.classList.add('smallImgPreview')
-                img.appendChild(preview)
-                const fileReader = new FileReader()
-                fileReader.addEventListener('load', (e) => {
-                    preview.src = e.target.result
-                })
-                fileReader.readAsDataURL(file)
-            }
-            info.appendChild(img)
-            infozone.appendChild(info)
-            const formData = new FormData()
+            setFileInfo()
+        })
+        async function setFileInfo(file = null) {
             formData.append('csrfTokenHidden', form['csrf-token'].value)
             formData.append('tagSet', form['tagSet'].value)
-            if (form['image_0'].files.length > 0) {
-                formData.append('image_0', file)
-            }
-            if (form['url'].value !== '') {
-                formData.append('url', form['url'].value)
+            if (file !== null) {
+                metazone.innerHTML = ''
+                if (infozone.firstElementChild !== null) {
+                    infozone.removeChild(infozone.firstElementChild)
+                }
+                let info = document.createElement('ul')
+                info.id = 'fileInfo'
+                const name = document.createElement('li')
+                name.innerText = file.name
+                const size = document.createElement('li')
+                size.innerText = `${Math.round(file.size / 1024)} KB`
+                const type = document.createElement('li')
+                type.innerText = file.type
+                info.appendChild(name)
+                info.appendChild(type)
+                info.appendChild(size)
+                let img
+                img = document.createElement('li')
+                if (/heic$/i.test(file.type)) {
+                    // chrome doesn't natively display .HEIC image format
+                    img.appendChild(document.createTextNode('HEIC image format is tough to display.'))
+                } else {
+                    const preview = document.createElement('img')
+                    preview.classList.add('smallImgPreview')
+                    img.appendChild(preview)
+                    const fileReader = new FileReader()
+                    fileReader.addEventListener('load', (e) => {
+                        preview.src = e.target.result
+                    })
+                    fileReader.readAsDataURL(file)
+                }
+                info.appendChild(img)
+                infozone.appendChild(info)
+                if (form['image_0'].files.length > 0) {
+                    formData.append('image_0', file)
+                }
+            } else {
+                if (form['url'].value !== '') {
+                    formData.append('url', form['url'].value)
+                    let info = document.createElement('ul')
+                    info.id = 'fileInfo'
+                    const name = document.createElement('li')
+                    name.innerText = form['url'].value
+                    info.appendChild(name)
+                    // const type = document.createElement('li')
+                    // type.innerText = file.type
+                    // info.appendChild(type)
+                    const img = document.createElement('li')
+                    const remoteThumbnail = document.createElement('img')
+                    remoteThumbnail.classList.add('smallImgPreview')
+                    remoteThumbnail.src = form['url'].value
+                    img.appendChild(remoteThumbnail)
+                    info.appendChild(img)
+                    infozone.appendChild(info)
+                }
             }
             await send(formData)
+            console.log(`tagSet: ${formData.get('tagSet')}`)
+            console.log(`image_0: ${formData.get('image_0')}`)
+            console.log(`url: ${formData.get('url')}`)
         }
         let imgMetadata
         let tags

@@ -45,7 +45,7 @@ fieldset.urlFieldset {
 }
 
 input[type='text']#url_Id {
-  width: 65%;
+  width: 50%;
 }
 
 input[type='file'] {
@@ -54,6 +54,12 @@ input[type='file'] {
 
 input[type='radio'] {
   margin-right: 15px;
+}
+
+span.or {
+  font-weight: 600;
+  font-style: italic;
+  text-transform: uppercase;
 }
 
 .smallImgPreview {

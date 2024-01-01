@@ -112,7 +112,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
   } else {
     log('csrf token check passed')
     const response = {}
-    const image = ctx.request.files.image_0[0]
+    const image = ctx.request.files?.image_0?.[0] ?? null
     let imageOriginalFilenameCleaned
     let imageSaved
     const shortcuts = {
@@ -120,12 +120,12 @@ router.post('fileUpload', '/upload', async (ctx) => {
       Basic: 'BasicShortcut',
       Full: null,
     }
+    const images = []
     // check if the url field was submitted
-    let urlToInspect
     let inspectedName
-    if (ctx.request.body?.url[0] !== '') {
+    let urlToInspect = ctx.request.body?.url?.[0] ?? null
+    if (urlToInspect !== null) {
       try {
-        // [urlToInspect] = ctx.request.body.url
         urlToInspect = new URL(ctx.request.body.url[0])
         log(urlToInspect)
         const remoteFile = { url: urlToInspect }
@@ -141,8 +141,11 @@ router.post('fileUpload', '/upload', async (ctx) => {
         const written = await writeFile(inspectedName, new Uint8Array(remoteResponse.buffer))
         if (written === undefined) {
           remoteFile.written = true
+        } else {
+          remoteFile.written = false
         }
         response.remoteFile = remoteFile
+        images.push(inspectedName)
       } catch (e) {
         error(e)
         error('not a valid URL')
@@ -153,12 +156,14 @@ router.post('fileUpload', '/upload', async (ctx) => {
     log(`exifShortcut = ${exifShortcut}`)
     try {
       log(image?.size)
-      if (image?.size > 0) {
+      // if (image?.size > 0) {
+      if (image !== null) {
         imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
         const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
         imageSaved = path.resolve(`${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
         const isMoved = await rename(image.filepath, imageSaved)
         log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
+        images.push(imageSaved)
       }
     } catch (e) {
       error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
@@ -167,10 +172,9 @@ router.post('fileUpload', '/upload', async (ctx) => {
     let exiftool = new Exiftool()
     try {
       // run exif command here
-      if (urlToInspect) {
-        imageSaved = inspectedName
-      }
-      exiftool = await exiftool.init(imageSaved)
+      // exiftool = await exiftool.init(imageSaved)
+      log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
+      exiftool = await exiftool.init(images)
       const result = await exiftool.setConfigPath(`${ctx.app.root}/src/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
       log('exiftool config path set: %o', result)
