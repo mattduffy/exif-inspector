@@ -15,6 +15,10 @@ div#dragzone {
   max-width: 600px;
 }
 
+fieldset#filesId > legend {
+  display: none;
+}
+
 div#dragzone h2 {
   margin: 0px;
   padding: 0px;
@@ -46,6 +50,10 @@ fieldset.tagSelect {
 fieldset.urlFieldset {
   border: none;
   min-height: 20px;
+}
+
+legend {
+  font-weight: 600;
 }
 
 input[type='text']#url_Id {
@@ -81,6 +89,39 @@ pre {
 @media screen and (max-width: 430px) {
   input[type='file'] {
     display: block;
+  }
+
+  input[type='text']#url_Id {
+    width: 65%;
+  }
+
+  fieldset#filesId {
+    border: none;
+    border-radius: 10px;
+    background-color: aliceblue;
+    max-height: 50px;
+    min-height: 50px;
+    min-width: 200px;
+    max-width: 600px; 
+  }
+
+  fieldset#filesId > legend {
+    position: relative;
+    top: 15px;
+  }
+
+  fieldset#filesId > div#dragzone {
+    max-height: 50px;
+    min-height: 50px;
+    min-width: 200px;
+    max-width: 600px;
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+  }
+
+  fieldset#filesId > div#dragzone h2,br {
+    display: none;
   }
 
   .smallImgPreview {
