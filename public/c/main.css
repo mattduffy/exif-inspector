@@ -26,6 +26,10 @@ div#dragzone h2 {
   color: 
 }
 
+fieldset.hiddenFieldset {
+  display: none;
+}
+
 fieldset {
   border-radius: 30px;
   max-height: 400px;

@@ -18,6 +18,10 @@
 
     <% } %>
     <form id="uploaderId" name="uploader" action="<%= origin %>upload" method="POST" enctype="multiplart/form-data">
+        <fieldset id="hiddenFields_Id" name="hiddenFields" form="uploaderId" class="hiddenFieldset" title="">
+            <input id="inspectedFilename_Id" name="inspectedFilename" type="hidden" value="">
+            <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
+        </fieldset>
         <fieldset id="tagSelect_Id" name="tagSelect" form="uploaderId" class="tagSelect" title="Metadata to display">
             <label for="full_Id">Full tag set</label>
             <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0" checked>
@@ -32,7 +36,6 @@
                 <h2>Drop a photo here to inspect its metadata.</h2>
                 <br>
                 <input id="image_0Id" name="image_0" type="file" accept=".png,.jpg,.jpeg,.heic,.webp">
-                <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
             </div>
         </fieldset>
         <span class="or">or</span>
@@ -185,6 +188,9 @@
             if (response.status === 200) {
                 const results = await response.json()
                 console.log(results)
+                if (results.inspectedFile) {
+                    form['inspectedFilename'].value = results.inspectedFile
+                }
                 const list = document.createElement('ul')
                 list.id = 'tagList'
                 imgMetadata = results.metadata

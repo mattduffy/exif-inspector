@@ -141,6 +141,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
         const written = await writeFile(inspectedName, new Uint8Array(remoteResponse.buffer))
         if (written === undefined) {
           remoteFile.written = true
+          response.inspectedFile = fileName
         } else {
           remoteFile.written = false
         }
@@ -164,6 +165,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
         const isMoved = await rename(image.filepath, imageSaved)
         log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
         images.push(imageSaved)
+        response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
       }
     } catch (e) {
       error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
@@ -172,19 +174,20 @@ router.post('fileUpload', '/upload', async (ctx) => {
     let exiftool = new Exiftool()
     try {
       // run exif command here
-      // exiftool = await exiftool.init(imageSaved)
       log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
       exiftool = await exiftool.init(images)
       const result = await exiftool.setConfigPath(`${ctx.app.root}/src/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
       log('exiftool config path set: %o', result)
-      // response.metadata = await exiftool.getMetadata()
       response.metadata = await exiftool.getMetadata('', exifShortcut)
     } catch (e) {
       error(e)
       error(`Failed to run exif command on ${imageSaved}`)
       response.msg = `Failed to run exif command on ${imageSaved}`
       response.e = e
+    }
+    if (response.metadata['File:Directory']) {
+      delete response.metadata['File:Directory']
     }
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
