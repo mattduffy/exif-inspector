@@ -1,4 +1,4 @@
-    <section>
+    <section id="headerSection">
         <h1><%= siteName %></h1>
         <h2>View and edit your image metadata.</h2>
         <p>Built using the excellent <a href="https://exiftool.org" target="_blank">Exiftool</a> by Phil Harvey,
@@ -23,48 +23,50 @@
 
         <% } %>
     </section>
-    <form id="uploaderId" name="uploader" action="<%= origin %>upload" method="POST" enctype="multiplart/form-data">
-        <fieldset id="hiddenFields_Id" name="hiddenFields" form="uploaderId" class="hiddenFieldset" title="">
-            <input id="inspectedFilename_Id" name="inspectedFilename" type="hidden" value="">
-            <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
-        </fieldset>
-        <fieldset id="tagSelect_Id" name="tagSelect" form="uploaderId" class="tagSelect" title="Metadata to display">
-            <legend>View Image Metadata Tags</legend>
-            <label for="full_Id">Full tag set</label>
-            <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0"> 
-            <% /* %>
-            <label for="simple_Id">Simple tag set</label>
-            <input id="simple_Id" name="tagSet" type="radio" value="Basic" tabeindex="0">
-            <% */ %>
-            <label for="location_Id">Just tags related to location</label>
-            <input id="location_Id" name="tagSet" type="radio" value="Location" tabeindex="0">
-        </fieldset>
-        <fieldset id="tagEditSelect_Id" name="tagEditSelect" form="uploaderId" class="tagSelect" title="Metadata to edit">
-            <legend>Clear Image Metadata Tags</legend>
-            <label for="stripAllTags_Id">Clear all tags</label>
-            <input id="stripAllTags_Id" name="tagSet" type="radio" value="StripAllTags" tabindex="0">
-            <label for="stripLocationTags_Id">Clear location tags</label>
-            <input id="stripLocationTags_Id" name="tagSet" type="radio" value="StripLocation" tabindex="0">
-        </fieldset>
-        <fieldset id="filesId" name="files" form="uploaderId" class="" title="Upload image to inspect" tabeindex="0">
-            <legend>Upload an image to inspect its metadata.</legend>
-            <div id="dragzone">
-                <h2>Drop a photo here to inspect its metadata.</h2>
-                <br>
-                <input id="image_0Id" name="image_0" type="file" accept=".png,.jpg,.jpeg,.heic,.webp">
-            </div>
-        </fieldset>
-        <span class="or">or</span>
-        <fieldset id="urlInspectId" name="urlInspect" form="uploaderId" class="urlFieldset" title="Paset URL to image to inspect">
-            <label for="url_Id">URL of an image to inspect: </label>
-            <input id="url_Id" name="url" type="text" value="" tabeindex="0">
-            <input id="submit_Id" name="submit" type="submit" value="Inspect Image" tabindex="0">
-        </fieldset>
-    </form>
-    <div id="infozone">
-    </div>
-    <div id="metazone">
-    </div>
+    <section id="formSection">
+        <form id="uploaderId" name="uploader" action="<%= origin %>upload" method="POST" enctype="multiplart/form-data">
+            <fieldset id="hiddenFields_Id" name="hiddenFields" form="uploaderId" class="hiddenFieldset" title="">
+                <input id="inspectedFilename_Id" name="inspectedFilename" type="hidden" value="">
+                <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
+            </fieldset>
+            <fieldset id="tagSelect_Id" name="tagSelect" form="uploaderId" class="tagSelect" title="Metadata to display">
+                <legend>View Image Metadata Tags</legend>
+                <label for="full_Id">Full metadata</label>
+                <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0" checked> 
+                <label for="common_Id">Common metadata</label>
+                <input id="common_Id" name="tagSet" type="radio" value="Common" tabeindex="0">
+                <label for="location_Id">Location metadata</label>
+                <input id="location_Id" name="tagSet" type="radio" value="Location" tabeindex="0">
+            </fieldset>
+            <fieldset id="tagEditSelect_Id" name="tagEditSelect" form="uploaderId" class="tagSelect" title="Metadata to edit">
+                <legend>Clear Image Metadata Tags</legend>
+                <label for="stripAllTags_Id">Clear all tags</label>
+                <input id="stripAllTags_Id" name="tagSet" type="radio" value="StripAllTags" tabindex="0">
+                <label for="stripLocationTags_Id">Clear location tags</label>
+                <input id="stripLocationTags_Id" name="tagSet" type="radio" value="StripLocation" tabindex="0">
+            </fieldset>
+            <fieldset id="filesId" name="files" form="uploaderId" class="" title="Upload image to inspect" tabeindex="0">
+                <legend>Upload an image to inspect its metadata.</legend>
+                <div id="dragzone">
+                    <h2>Drop a photo here to inspect its metadata.</h2>
+                    <br>
+                    <input id="image_0Id" name="image_0" type="file" accept=".png,.jpg,.jpeg,.heic,.webp">
+                </div>
+            </fieldset>
+            <span class="or">or</span>
+            <fieldset id="urlInspectId" name="urlInspect" form="uploaderId" class="urlFieldset" title="Paset URL to image to inspect">
+                <label for="url_Id">URL of an image to inspect: </label>
+                <input id="url_Id" name="url" type="text" value="" tabeindex="0">
+                <input id="submit_Id" name="submit" type="submit" value="Inspect Image" tabindex="0">
+            </fieldset>
+        </form>
+    </section>
+    <section id="metadataSection">
+        <div id="infozone">
+        </div>
+        <div id="metazone">
+        </div>
+    </section>
     <script nonce="<%= nonce %>">
         const origin = '<%= origin %>'
         const form = document.forms[0]

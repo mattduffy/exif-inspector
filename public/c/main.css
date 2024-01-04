@@ -99,19 +99,20 @@ pre {
     border: none;
     border-radius: 10px;
     background-color: aliceblue;
-    max-height: 50px;
+    max-height: 55px;
     min-height: 50px;
     min-width: 200px;
     max-width: 600px; 
   }
 
   fieldset#filesId > legend {
+    display: block;
     position: relative;
     top: 15px;
   }
 
   fieldset#filesId > div#dragzone {
-    max-height: 50px;
+    max-height: 55px;
     min-height: 50px;
     min-width: 200px;
     max-width: 600px;
