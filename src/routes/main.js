@@ -116,9 +116,12 @@ router.post('fileUpload', '/upload', async (ctx) => {
     let imageOriginalFilenameCleaned
     let imageSaved
     const shortcuts = {
-      Location: 'Location',
       Basic: 'BasicShortcut',
+      Common: 'Common',
+      Location: 'Location',
       Full: null,
+      StripAllTags: 'StripAllTags',
+      StripLocation: 'StripGPS',
     }
     const images = []
     // check if the url field was submitted
@@ -153,7 +156,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
         response.remoteFile = { error: e.message, written: false, url: urlToInspect }
       }
     }
-    const exifShortcut = shortcuts[`${ctx.request.body?.tagSet}`] ?? false
+    const exifShortcut = shortcuts[`${ctx.request.body?.tagSet?.[0]}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
     try {
       log(image?.size)
@@ -176,10 +179,28 @@ router.post('fileUpload', '/upload', async (ctx) => {
       // run exif command here
       log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
       exiftool = await exiftool.init(images)
-      const result = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+      const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
-      log('exiftool config path set: %o', result)
-      response.metadata = await exiftool.getMetadata('', exifShortcut)
+      log('exiftool config path set: %o', newConfigPath)
+      let result
+      let stripResult
+      if (exifShortcut === 'StripAllTags') {
+        stripResult = await exiftool.stripMetadata()
+        log(stripResult)
+        result = await exiftool.getMetadata('', null)
+        const original = path.parse(stripResult.original)
+        // response.inspectedFile = (await exiftool.getPath()).file
+        response.originalFile = original.base
+        response.modifiedFile = (await exiftool.getPath()).file
+      } else if (exifShortcut === 'StripGPS') {
+        await exiftool.stripLocation()
+        result = await exiftool.getMetadata('', null)
+        response.modifiedFile = result[0]['File:FileName']
+        log(result)
+      } else {
+        result = await exiftool.getMetadata('', exifShortcut)
+      }
+      response.metadata = result
     } catch (e) {
       error(e)
       error(`Failed to run exif command on ${imageSaved}`)
