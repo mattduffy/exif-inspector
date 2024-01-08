@@ -74,6 +74,22 @@ span.or {
   text-transform: uppercase;
 }
 
+section#metadataSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-gap: 1rem;
+}
+
+section#metadataSection > div#infozone {
+  border: 1px solid #E2E2E2;
+  border-radius: .5rem;
+}
+
+section#metadataSection > div#metazone {
+  border: 1px solid #E2E2E2;
+  border-radius: .5rem;
+}
+
 .smallImgPreview {
   max-width: 350px;
 }
