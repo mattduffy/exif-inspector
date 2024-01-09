@@ -32,7 +32,7 @@ import { wellKnown } from './routes/wellKnown.js'
 import { account as Account } from './routes/account.js'
 import { auth as Auth } from './routes/auth.js'
 import { edit as Edit } from './routes/edit.js'
-// import { mapkit as Mapkit } from './routes/mapkit.js'
+import { mapkit as Mapkit } from './routes/mapkit.js'
 import { main as Main } from './routes/main.js'
 import { app as theApp } from './routes/app.js'
 import { users as Users } from './routes/users.js'
@@ -168,7 +168,7 @@ async function csp(ctx, next) {
     + `style-src-elem 'self' 'unsafe-inline' ${ctx.request.origin}; `
     + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' ${ctx.request.origin}; `
     + `script-src-attr 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
-    + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
+    + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.origin} *.apple-mapkit.com; `
     + `img-src 'self' data: blob: ${ctx.request.origin} *; `
     + `font-src 'self' ${ctx.request.origin}; `
     + `media-src 'self' data: ${ctx.request.origin}; `
@@ -176,7 +176,7 @@ async function csp(ctx, next) {
     + `child-src 'self' blob: ${ctx.request.origin}; `
     + `worker-src 'self' blob: ${ctx.request.origin}; `
     + `manifest-src 'self' blob: ${ctx.request.origin}; `
-    + `connect-src 'self' blob: ${ctx.request.origin}; `
+    + `connect-src 'self' blob: ${ctx.request.origin} *.apple-mapkit.com *.geo.apple.com https://mw-ci1-mapkitjs.geo.apple.com; `
   ctx.set('Content-Security-Policy', policy)
   logg(`Content-Security-Policy: ${policy}`)
   try {
@@ -292,7 +292,7 @@ app.use(cors)
 app.use(serve(app.dirs.public.dir))
 app.use(theApp.routes())
 app.use(Auth.routes())
-// app.use(Mapkit.routes())
+app.use(Mapkit.routes())
 app.use(Main.routes())
 app.use(Edit.routes())
 app.use(Users.routes())

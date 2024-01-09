@@ -63,7 +63,7 @@ router.get('index', '/', hasFlash, async (ctx) => {
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
   locals.sessionUser = ctx.state.sessionUser
-  locals.jwtAccess = ctx.state.searchJwtAccess
+  locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
   // locals.items = items
   await ctx.render('index', locals)
