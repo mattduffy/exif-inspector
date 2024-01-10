@@ -300,7 +300,6 @@
                 if (lat !== null && lon !== null) {
                     console.log(`image location: ${lat}, ${lon}`)
                     await main(lat, lon)
-                    // document.querySelector('div#mapzone').classList.remove('hidden')
                     const map = document.querySelector('div#mapzone')
                     console.log('mapzone: ', map)
                     map.classList.remove('hidden')
@@ -312,27 +311,36 @@
                     console.log('dd: ', dl)
                 }
                 let x = 0
-                let seen = []
+                let seen = new Set()
                 for(const tag of tags) {
-                    let [t] = tag.split(':')
-                    seen.push(t)
-                    if (/ExifTool|file:directory|sourcefile/i.test(tag)) {
-                        continue
-                    }
+                    let [g,t] = tag.split(':')
+                    seen.add(g)
                     x += 1
-                    // const liTag = document.createElement('li')
                     const dtTag = document.createElement('dt')
                     const ddTag = document.createElement('dd')
-                    // liTag.classList.add('mono')
-                    const p = Math.abs(39 - tag.length)
-                    // liTag.innerHTML = `<span id="tag_${x}">${tag}</span><pre class="${p} mono">${' '.padEnd(p, ' ')}</pre><span id="val_${x}">${imgMetadata[0][tag]}</span>`
                     dtTag.id = `tag_${x}`
                     dtTag.innerHTML = `${tag}`
                     ddTag.id = `val_${x}`
-                    ddTag.innerHTML = `${imgMetadata[0][tag]}`
-                    // list.appendChild(liTag)
+
+                    if (/ThumbnailImage|PreviewImage|MPImage2/i.test(t)) {
+                        // img.src = `data:image/jpg;base64,${binary.innerText.slice(7)}`
+                        // console.log(`${g}:${t}`)
+                        const img = document.createElement('img')
+                        img.classList.add('smallImgPreview')
+                        const type = imgMetadata[0]['File:MIMEType']
+                        const imgData = imgMetadata[0][tag].slice(7)
+                        const imgSource = `data:${type};base64,${imgData}`
+                        img.src = imgSource
+                        ddTag.appendChild(img)
+                    } else {
+                        ddTag.innerHTML = `${imgMetadata[0][tag]}`
+                    }
                     list.appendChild(dtTag)
                     list.appendChild(ddTag)
+                }
+                console.log(`seen ${seen.size} unique tags`)
+                for (const item of seen) {
+                    console.log(`seen item: ${item}`)
                 }
                 metazone.appendChild(list)
             }
