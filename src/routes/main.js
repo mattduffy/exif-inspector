@@ -198,7 +198,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
         response.modifiedFile = result[0]['File:FileName']
         log(result)
       } else {
-        result = await exiftool.getMetadata('', exifShortcut)
+        result = await exiftool.getMetadata('', exifShortcut, '--ICC_Profile:all')
       }
       response.metadata = result
     } catch (e) {
@@ -207,9 +207,11 @@ router.post('fileUpload', '/upload', async (ctx) => {
       response.msg = `Failed to run exif command on ${imageSaved}`
       response.e = e
     }
-    if (response.metadata['File:Directory']) {
-      delete response.metadata['File:Directory']
-    }
+    // don't leak system info to the web page
+    delete response.metadata[0]?.SourceFile
+    delete response.metadata[0]['ExifTool:ExifToolVersion']
+    delete response.metadata[0]?.['File:Directory']
+
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
     ctx.body = response
