@@ -66,16 +66,16 @@
             <div id="mapzone" class="hidden">
             </div>
         </div>
-        <script
+        <div id="metazone" class="hidden">
+        </div>
+    </section>
+    <script
           src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.core.js"
           crossorigin async
           data-callback="initMapKit"
           data-libraries="full-map,services"
           data-initial-token=""
         ></script>
-        <div id="metazone" class="hidden">
-        </div>
-    </section>
     <script nonce="<%= nonce %>" type="module">
         const origin = '<%= origin %>'
         const access = '<%= accessToken %>'
@@ -116,6 +116,7 @@
         }
         async function main(lat, lon) {
             await setupMapKitJs()
+            const CAMERA_ALT = 5000
             const location = new mapkit.CoordinateRegion(
                 new mapkit.Coordinate(lat, lon),
                 new mapkit.CoordinateSpan(0.1, 0.1)
@@ -123,19 +124,19 @@
             const opts = {
                 mapType: mapkit.Map.MapTypes.Hybrid,
                 loadPriority: mapkit.Map.LoadPriorities.PointsOfInterest,
-                visibleMapRect: mapkit.MapRect(0, 0, 1, 1),
+                visibleMapRect: new mapkit.MapRect(0, 0, 1, 1),
                 showsCompass: mapkit.FeatureVisibility.Visible,
                 showsScale: mapkit.FeatureVisibility.Visible,
                 showsZoomControl: true,
                 showsPointsOfInterest: true,
                 showsMapTypeControl: true,
-                cameraDistance: 5000,
                 isZoomEnabled: true,
                 isRotationEnabled: true,
                 isScrollEnabled: true,
             }
             window.map = new mapkit.Map(mapzone, opts)
             window.map.region = location
+            window.map.cameraDistance = CAMERA_ALT 
             const marker = new window.mapkit.Coordinate(lat, lon)
             const annotation = new window.mapkit.MarkerAnnotation(marker)
             window.map.showItems([annotation])
@@ -195,19 +196,19 @@
                 if (infozone.contains(document.querySelector('ul#fileInfo'))) {
                     infozone.removeChild(document.querySelector('ul#fileInfo'))
                 }
-                let info = document.createElement('ul')
+                let info = document.createElement('dl')
                 info.id = 'fileInfo'
-                const name = document.createElement('li')
+                const name = document.createElement('dt')
                 name.innerText = file.name
-                const size = document.createElement('li')
+                const size = document.createElement('dt')
                 size.innerText = `${Math.round(file.size / 1024)} KB`
-                const type = document.createElement('li')
+                const type = document.createElement('dt')
                 type.innerText = file.type
                 info.appendChild(name)
                 info.appendChild(type)
                 info.appendChild(size)
                 let img
-                img = document.createElement('li')
+                img = document.createElement('dd')
                 if (/heic$/i.test(file.type)) {
                     // chrome doesn't natively display .HEIC image format
                     img.appendChild(document.createTextNode('HEIC image format is tough to display.'))
@@ -230,15 +231,15 @@
             } else {
                 if (form['url'].value !== '') {
                     formData.append('url', form['url'].value)
-                    let info = document.createElement('ul')
+                    let info = document.createElement('dl')
                     info.id = 'fileInfo'
-                    const name = document.createElement('li')
+                    const name = document.createElement('dt')
                     name.innerText = form['url'].value
                     info.appendChild(name)
                     // const type = document.createElement('li')
                     // type.innerText = file.type
                     // info.appendChild(type)
-                    const img = document.createElement('li')
+                    const img = document.createElement('dd')
                     const remoteThumbnail = document.createElement('img')
                     remoteThumbnail.classList.add('smallImgPreview')
                     remoteThumbnail.src = form['url'].value
@@ -298,15 +299,24 @@
                 }
                 if (lat !== null && lon !== null) {
                     console.log(`image location: ${lat}, ${lon}`)
-                    document.querySelector('div#mapzone').classList.remove('hidden')
                     await main(lat, lon)
+                    // document.querySelector('div#mapzone').classList.remove('hidden')
+                    const map = document.querySelector('div#mapzone')
+                    console.log('mapzone: ', map)
+                    map.classList.remove('hidden')
+                    let dt = document.createElement('dt')
+                    dt.appendChild(map)
+                    console.log('dt: ', dt)
+                    const dl = document.querySelector('dl#fileInfo')
+                    dl.appendChild(dt)
+                    console.log('dd: ', dl)
                 }
                 let x = 0
+                let seen = []
                 for(const tag of tags) {
-                    if (/file:directory/i.test(tag)) {
-                        continue
-                    }
-                    if (/sourcefile/i.test(tag)) {
+                    let [t] = tag.split(':')
+                    seen.push(t)
+                    if (/ExifTool|file:directory|sourcefile/i.test(tag)) {
                         continue
                     }
                     x += 1
