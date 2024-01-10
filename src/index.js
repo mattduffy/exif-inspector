@@ -176,7 +176,7 @@ async function csp(ctx, next) {
     + `child-src 'self' blob: ${ctx.request.origin}; `
     + `worker-src 'self' blob: ${ctx.request.origin}; `
     + `manifest-src 'self' blob: ${ctx.request.origin}; `
-    + `connect-src 'self' blob: ${ctx.request.origin} *.apple-mapkit.com *.geo.apple.com https://mw-ci1-mapkitjs.geo.apple.com; `
+    + `connect-src 'self' blob: ${ctx.request.origin} *.ls.apple.com *.apple-mapkit.com *.geo.apple.com; `
   ctx.set('Content-Security-Policy', policy)
   logg(`Content-Security-Policy: ${policy}`)
   try {
