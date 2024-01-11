@@ -115,31 +115,35 @@
             // const map = new mapkit.Map("mapzone");
         }
         async function main(lat, lon) {
-            await setupMapKitJs()
-            const CAMERA_ALT = 5000
-            const location = new mapkit.CoordinateRegion(
-                new mapkit.Coordinate(lat, lon),
-                new mapkit.CoordinateSpan(0.1, 0.1)
-            )
-            const opts = {
-                mapType: mapkit.Map.MapTypes.Hybrid,
-                loadPriority: mapkit.Map.LoadPriorities.PointsOfInterest,
-                visibleMapRect: new mapkit.MapRect(0, 0, 1, 1),
-                showsCompass: mapkit.FeatureVisibility.Visible,
-                showsScale: mapkit.FeatureVisibility.Visible,
-                showsZoomControl: true,
-                showsPointsOfInterest: true,
-                showsMapTypeControl: true,
-                isZoomEnabled: true,
-                isRotationEnabled: true,
-                isScrollEnabled: true,
+            if (lat === null || lon === null) {
+                console.info('lat or lon (or both) are null, can\'t display map.')
+            } else {
+                await setupMapKitJs()
+                const CAMERA_ALT = 5000
+                // const location = new mapkit.CoordinateRegion(
+                //     new mapkit.Coordinate(lat, lon),
+                //     new mapkit.CoordinateSpan(0.1, 0.1)
+                // )
+                const opts = {
+                    mapType: mapkit.Map.MapTypes.Hybrid,
+                    loadPriority: mapkit.Map.LoadPriorities.PointsOfInterest,
+                    visibleMapRect: new mapkit.MapRect(0, 0, 1, 1),
+                    showsCompass: mapkit.FeatureVisibility.Visible,
+                    showsScale: mapkit.FeatureVisibility.Visible,
+                    showsZoomControl: true,
+                    showsPointsOfInterest: true,
+                    showsMapTypeControl: true,
+                    isZoomEnabled: true,
+                    isRotationEnabled: true,
+                    isScrollEnabled: true,
+                }
+                window.map = new mapkit.Map(mapzone, opts)
+                // window.map.region = location
+                window.map.cameraDistance = CAMERA_ALT 
+                const marker = new window.mapkit.Coordinate(lat, lon)
+                const annotation = new window.mapkit.MarkerAnnotation(marker)
+                window.map.showItems([annotation])
             }
-            window.map = new mapkit.Map(mapzone, opts)
-            window.map.region = location
-            window.map.cameraDistance = CAMERA_ALT 
-            const marker = new window.mapkit.Coordinate(lat, lon)
-            const annotation = new window.mapkit.MarkerAnnotation(marker)
-            window.map.showItems([annotation])
         }
         dragzone.addEventListener('dragenter', (e) => {
             // e.preventDefault()
@@ -285,20 +289,31 @@
                 tags = Object.keys(results.metadata[0])
                 // check if location info is present to display map
                 let lat
+                let NS
                 let lon
+                let EW
                 if (tags.includes('EXIF:GPSLongitude') && tags.includes('EXIF:GPSLatitude')) {
-                    lat = imgMetadata[0]['EXIF:GPSLatitude']
-                    lon = imgMetadata[0]['EXIF:GPSLongitude']
+                    lat = parseFloat(imgMetadata[0]['EXIF:GPSLatitude'])
+                    NS = imgMetadata[0]['EXIF:GPSLatitudeRef']
+                    if (/south/i.test(NS)) lat *= (-1)
+                    lon = parseFloat(imgMetadata[0]['EXIF:GPSLongitude'])
+                    EW = imgMetadata[0]['EXIF:GPSLongitudeRef']
+                    if (/west/i.test(EW)) lon *= (-1)
                 } else if (tags.includes('Composite:GPSPosition')) {
-                    [lat, lon] = imgMetadata[0]['Composite:GPSPosition']
-                    lat = lat.slice(0, -2)
-                    lon = lon.slice(0, -2)
+                    let [_lat, _lon] = imgMetadata[0]['Composite:GPSPosition'].split(', ');
+                    console.log(`lat ${_lat}, lon ${_lon}`);
+                    [lat, NS] = _lat.split(' ')
+                    lat = parseFloat(lat)
+                    if (/s/i.test(NS)) lat *= (-1);
+                    [lon, EW] = _lon.split(' ');
+                    lon = parseFloat(lon)
+                    if (/w/i.test(EW)) lon *= (-1)
                 } else {
                     lat =  null
                     lon = null
                 }
                 if (lat !== null && lon !== null) {
-                    console.log(`image location: ${lat}, ${lon}`)
+                    console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
                     await main(lat, lon)
                     const map = document.querySelector('div#mapzone')
                     console.log('mapzone: ', map)
