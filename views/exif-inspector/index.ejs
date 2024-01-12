@@ -320,10 +320,12 @@
                     map.classList.remove('hidden')
                     let dt = document.createElement('dt')
                     dt.appendChild(map)
-                    console.log('dt: ', dt)
-                    const dl = document.querySelector('dl#fileInfo')
+                    // const dl = document.querySelector('dl#fileInfo')
+                    const locationListDiv = tagListDiv('location')
+                    console.info(locationListDiv)
+                    const dl = locationListDiv.children[0]
                     dl.appendChild(dt)
-                    console.log('dd: ', dl)
+                    console.log('dl: ', dl)
                 }
                 let x = 0
                 let seen = new Set()
@@ -336,7 +338,6 @@
                     dtTag.id = `tag_${x}`
                     dtTag.innerHTML = `${tag}`
                     ddTag.id = `val_${x}`
-
                     if (/ThumbnailImage|PreviewImage|MPImage2/i.test(t)) {
                         // img.src = `data:image/jpg;base64,${binary.innerText.slice(7)}`
                         // console.log(`${g}:${t}`)
@@ -350,14 +351,41 @@
                     } else {
                         ddTag.innerHTML = `${imgMetadata[0][tag]}`
                     }
-                    list.appendChild(dtTag)
-                    list.appendChild(ddTag)
+                    if (/file/i.test(tag)) {
+                        console.log(`tag is ${tag}`)
+                        const fileInfo = document.querySelector('dl#fileInfo')
+                        fileInfo.appendChild(dtTag)
+                        fileInfo.appendChild(ddTag)
+                    } else if (/gps/i.test(tag)) {
+                        console.log(`location tag: ${tag}`)
+                        const div = tagListDiv('location')
+                        div.children[0].appendChild(dtTag)
+                        div.children[0].appendChild(ddTag)
+                    } else {
+                        list.appendChild(dtTag)
+                        list.appendChild(ddTag)
+                    }
                 }
                 console.log(`seen ${seen.size} unique tags`)
                 for (const item of seen) {
                     console.log(`seen item: ${item}`)
                 }
-                metazone.appendChild(list)
+                // metazone.appendChild(list)
             }
+        }
+        function tagListDiv(tag) {
+            if (tag === undefined || tag === null || tag === '') {
+                return false
+            }
+            let div = document.querySelector(`div#${tag}`)
+            console.log(div)
+            if (!!!div) {
+                div = document.createElement('div')
+                div.id = tag
+                div.appendChild(document.createElement('dl'))
+                document.querySelector('section#metadataSection').appendChild(div)
+           }
+           console.log(`returning div: ${div}`)
+           return div
         }
     </script>

@@ -48,7 +48,7 @@ div#dragzone h2 {
 }
 
 div#mapzone {
-  max-width: 350px;
+  width: auto;
   height: 350px;
 }
 
@@ -100,6 +100,11 @@ section#metadataSection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 600px));
   grid-gap: 1rem;
+}
+
+section#metadataSection > div {
+  border: 1px solid #E2E2E2;
+  border-radius: .5rem;
 }
 
 section#metadataSection > div#infozone {
