@@ -4,6 +4,7 @@
 
 dl {
   padding: 0em .5em;
+  font-family: monospace;
 }
 
 dl > dt {
@@ -110,6 +111,14 @@ section#metadataSection > div {
 section#metadataSection > div#infozone {
   border: 1px solid #E2E2E2;
   border-radius: .5rem;
+}
+
+section#metadataSection > div#infozone > h3 {
+  margin: .5em;
+}
+
+section#metadataSection > div#metazone > h3 {
+  margin: .5em;
 }
 
 section#metadataSection > div#metazone {

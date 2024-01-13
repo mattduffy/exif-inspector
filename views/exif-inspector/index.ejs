@@ -63,10 +63,13 @@
     </section>
     <section id="metadataSection">
         <div id="infozone" class="hidden">
-            <div id="mapzone" class="hidden">
-            </div>
+            <h3>File Information</h3>
+        </div>
+        <div id="mapzone" class="hidden">
+            <h3>Location Information</h3>
         </div>
         <div id="metazone" class="hidden">
+            <h3>Camera, Exposure and Software Information</h3>
         </div>
     </section>
     <script
@@ -84,8 +87,8 @@
         const submitButton = form['submit_Id']
         const dragzone = document.querySelector('div#dragzone')
         const infozone = document.querySelector('div#infozone')
-        const metazone = document.querySelector('div#metazone')
-        const mapzone = document.querySelector('div#mapzone')
+        // const metazone = document.querySelector('div#metazone')
+        // const mapzone = document.querySelector('div#mapzone')
         const formData = new FormData()
         let map
         async function setupMapKitJs() {
@@ -112,7 +115,6 @@
                     done(tokenID);
                 }
             })
-            // const map = new mapkit.Map("mapzone");
         }
         async function main(lat, lon) {
             if (lat === null || lon === null) {
@@ -120,10 +122,6 @@
             } else {
                 await setupMapKitJs()
                 const CAMERA_ALT = 5000
-                // const location = new mapkit.CoordinateRegion(
-                //     new mapkit.Coordinate(lat, lon),
-                //     new mapkit.CoordinateSpan(0.1, 0.1)
-                // )
                 const opts = {
                     mapType: mapkit.Map.MapTypes.Hybrid,
                     loadPriority: mapkit.Map.LoadPriorities.PointsOfInterest,
@@ -138,7 +136,6 @@
                     isScrollEnabled: true,
                 }
                 window.map = new mapkit.Map(mapzone, opts)
-                // window.map.region = location
                 window.map.cameraDistance = CAMERA_ALT 
                 const marker = new window.mapkit.Coordinate(lat, lon)
                 const annotation = new window.mapkit.MarkerAnnotation(marker)
@@ -178,7 +175,6 @@
             e.preventDefault()
             e.stopPropagation()
             console.log(e)
-            // metazone.innerHTML = ''
             setFileInfo(e.target.files[0])
         })
         submitButton.addEventListener('click', (e) => {
@@ -194,9 +190,9 @@
             formData.append('csrfTokenHidden', form['csrf-token'].value)
             formData.append('tagSet', form['tagSet'].value)
             infozone.classList.remove('hidden')
-            metazone.classList.remove('hidden')
+            // metazone.classList.remove('hidden')
             if (file !== null) {
-                metazone.innerHTML = ''
+                // metazone.innerHTML = ''
                 if (infozone.contains(document.querySelector('ul#fileInfo'))) {
                     infozone.removeChild(document.querySelector('ul#fileInfo'))
                 }
@@ -227,8 +223,7 @@
                     fileReader.readAsDataURL(file)
                 }
                 info.appendChild(img)
-                // infozone.appendChild(info)
-                infozone.insertBefore(info, mapzone)
+                infozone.appendChild(info)
                 if (form['image_0'].files.length > 0) {
                     formData.append('image_0', file)
                 }
@@ -240,9 +235,6 @@
                     const name = document.createElement('dt')
                     name.innerText = form['url'].value
                     info.appendChild(name)
-                    // const type = document.createElement('li')
-                    // type.innerText = file.type
-                    // info.appendChild(type)
                     const img = document.createElement('dd')
                     const remoteThumbnail = document.createElement('img')
                     remoteThumbnail.classList.add('smallImgPreview')
@@ -252,10 +244,10 @@
                     infozone.appendChild(info)
                 }
             }
-            await send(formData)
             console.log(`tagSet: ${formData.get('tagSet')}`)
             console.log(`image_0: ${formData.get('image_0')}`)
             console.log(`url: ${formData.get('url')}`)
+            await send(formData)
         }
         let imgMetadata
         let tags
@@ -281,7 +273,6 @@
                 if (results.inspectedFile) {
                     form['inspectedFilename'].value = results.inspectedFile
                 }
-                // const list = document.createElement('ul')
                 const list = document.createElement('dl')
                 list.classList.add('mono')
                 list.id = 'tagList'
@@ -301,7 +292,6 @@
                     if (/west/i.test(EW)) lon *= (-1)
                 } else if (tags.includes('Composite:GPSPosition')) {
                     let [_lat, _lon] = imgMetadata[0]['Composite:GPSPosition'].split(', ');
-                    console.log(`lat ${_lat}, lon ${_lon}`);
                     [lat, NS] = _lat.split(' ')
                     lat = parseFloat(lat)
                     if (/s/i.test(NS)) lat *= (-1);
@@ -316,16 +306,12 @@
                     console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
                     await main(lat, lon)
                     const map = document.querySelector('div#mapzone')
-                    console.log('mapzone: ', map)
                     map.classList.remove('hidden')
                     let dt = document.createElement('dt')
                     dt.appendChild(map)
-                    // const dl = document.querySelector('dl#fileInfo')
-                    const locationListDiv = tagListDiv('location')
-                    console.info(locationListDiv)
+                    const locationListDiv = tagListDiv('locationzone')
                     const dl = locationListDiv.children[0]
                     dl.appendChild(dt)
-                    console.log('dl: ', dl)
                 }
                 let x = 0
                 let seen = new Set()
@@ -357,13 +343,17 @@
                         fileInfo.appendChild(dtTag)
                         fileInfo.appendChild(ddTag)
                     } else if (/gps/i.test(tag)) {
-                        console.log(`location tag: ${tag}`)
-                        const div = tagListDiv('location')
-                        div.children[0].appendChild(dtTag)
-                        div.children[0].appendChild(ddTag)
+                        // console.log(`location tag: ${tag}`)
+                        const div = tagListDiv('locationzone')
+                        const dl = div.querySelector(':scope > dl')
+                        dl.appendChild(dtTag)
+                        dl.appendChild(ddTag)
                     } else {
-                        list.appendChild(dtTag)
-                        list.appendChild(ddTag)
+                        const otherMetadata = tagListDiv('metazone')
+                        // otherMetadata.classList.remove('hidden')
+                        const dl = otherMetadata.querySelector(':scope > dl')
+                        dl.appendChild(dtTag)
+                        dl.appendChild(ddTag)
                     }
                 }
                 console.log(`seen ${seen.size} unique tags`)
@@ -371,21 +361,36 @@
                     console.log(`seen item: ${item}`)
                 }
                 // metazone.appendChild(list)
+                metazone.classList.remove('hidden')
+                metadataSection.appendChild(metazone)
+            } else {
+                const responseErrDiv = document.createElement('div')
+                div.id = 'responseError'
+                const text = document.createTextNode(response.statusText)
+                div.appendChild(text)
+                fileInfo.insertBefore(div, fileInfo.children[0])
             }
         }
         function tagListDiv(tag) {
             if (tag === undefined || tag === null || tag === '') {
                 return false
             }
+            // console.log(`div#${tag}`)
             let div = document.querySelector(`div#${tag}`)
-            console.log(div)
             if (!!!div) {
                 div = document.createElement('div')
                 div.id = tag
                 div.appendChild(document.createElement('dl'))
                 document.querySelector('section#metadataSection').appendChild(div)
+           } else {
+                let dl = div.querySelector(':scope > dl')
+                if (!!!dl) {
+                    // console.log(`creating dl for ${tag}`)
+                    dl = document.createElement('dl')
+                    div.appendChild(dl)
+                }
            }
-           console.log(`returning div: ${div}`)
+           // console.log(`returning div: ${div}`)
            return div
         }
     </script>
