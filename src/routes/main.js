@@ -211,6 +211,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
     delete response.metadata[0]?.SourceFile
     delete response.metadata[0]['ExifTool:ExifToolVersion']
     delete response.metadata[0]?.['File:Directory']
+    delete response.metadata[1]
 
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
