@@ -68,8 +68,10 @@
         <div id="mapzone" class="hidden">
             <h3 class='mono'>Location Information</h3>
         </div>
+        <div id="contentzone" class="hidden">
+            <h3 class='mono'>Content, Attributions, and Rights</h3>
         <div id="metazone" class="hidden">
-            <h3 class='mono'>Camera, Exposure and Software Information</h3>
+            <h3 class='mono'>Camera, Exposure, and Software Information</h3>
         </div>
     </section>
     <script
@@ -142,6 +144,10 @@
                 window.map.showItems([annotation])
             }
         }
+        dragzone.addEventListener('click', (e) => {
+            e.stopPropagation()
+            fileElement.click()
+        })
         dragzone.addEventListener('dragenter', (e) => {
             // e.preventDefault()
             e.stopPropagation();
@@ -315,6 +321,9 @@
                 }
                 let x = 0
                 let seen = new Set()
+                let showLocationTags = false
+                let showOtherTags = false
+                let showCARTags = false
                 for(const tag of tags) {
                     let [g,t] = tag.split(':')
                     seen.add(g)
@@ -325,8 +334,6 @@
                     dtTag.innerHTML = `${tag}`
                     ddTag.id = `val_${x}`
                     if (/ThumbnailImage|PreviewImage|MPImage2/i.test(t)) {
-                        // img.src = `data:image/jpg;base64,${binary.innerText.slice(7)}`
-                        // console.log(`${g}:${t}`)
                         const img = document.createElement('img')
                         img.classList.add('smallImgPreview')
                         const type = imgMetadata[0]['File:MIMEType']
@@ -338,31 +345,42 @@
                         ddTag.innerHTML = `${imgMetadata[0][tag]}`
                     }
                     if (/file/i.test(tag)) {
+                        // file tags
                         console.log(`tag is ${tag}`)
                         const fileInfo = document.querySelector('dl#fileInfo')
                         fileInfo.appendChild(dtTag)
                         fileInfo.appendChild(ddTag)
                     } else if (/gps/i.test(tag)) {
-                        // console.log(`location tag: ${tag}`)
+                        // location tags
                         const div = tagListDiv('locationzone')
                         const dl = div.querySelector(':scope > dl')
                         dl.appendChild(dtTag)
                         dl.appendChild(ddTag)
+                        showLocationTags = true
+                    } else if (isCARTag(t)) {
+                        // content, attributions, and rights
+                        const div = tagListDiv('contentzone')
+                        const dl = div.querySelector(':scope > dl')
+                        dl.appendChild(dtTag)
+                        dl.appendChild(ddTag)
+                        showCARTags = true
                     } else {
+                        // all other metadata tags
                         const otherMetadata = tagListDiv('metazone')
-                        // otherMetadata.classList.remove('hidden')
                         const dl = otherMetadata.querySelector(':scope > dl')
                         dl.appendChild(dtTag)
                         dl.appendChild(ddTag)
+                        showOtherTags = true
                     }
                 }
-                console.log(`seen ${seen.size} unique tags`)
-                for (const item of seen) {
-                    console.log(`seen item: ${item}`)
-                }
                 // metazone.appendChild(list)
-                metazone.classList.remove('hidden')
-                metadataSection.appendChild(metazone)
+                if (showOtherTags) {
+                    metazone.classList.remove('hidden')
+                    metadataSection.appendChild(metazone)
+                }
+                if (showCARTags) {
+                    document.querySelector('div#contentzone').classList.remove('hidden') 
+                } 
             } else {
                 const responseErrDiv = document.createElement('div')
                 div.id = 'responseError'
@@ -370,6 +388,10 @@
                 div.appendChild(text)
                 fileInfo.insertBefore(div, fileInfo.children[0])
             }
+        }
+        function isCARTag(tag) {
+            const cartags = ['ImageDescription', 'Artist', 'Copyright', 'By-line', 'By-lineTitle', 'Caption-Abstract', 'CopyrightNotice', 'Credit', 'Headline', 'Keywords', 'Source', 'AuthorsPosition', 'Rights', 'CopyrightFlag', 'Url', 'Location', 'WebStatement', 'Subject', 'Creator', 'Description', 'LicensorURL']
+           return cartags.includes(tag)
         }
         function tagListDiv(tag) {
             if (tag === undefined || tag === null || tag === '') {

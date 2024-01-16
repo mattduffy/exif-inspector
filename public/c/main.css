@@ -5,6 +5,7 @@
 dl {
   padding: 0em .5em;
   font-family: monospace;
+  overflow-wrap: break-word;
 }
 
 dl > dt {
@@ -101,11 +102,13 @@ section#metadataSection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 450px));
   grid-gap: 1rem;
+  grid-auto-flow: row dense;
 }
 
 section#metadataSection > div {
   border: 1px solid #E2E2E2;
   border-radius: .5rem;
+  height: fit-content
 }
 
 section#metadataSection > div#infozone {
@@ -118,6 +121,10 @@ section#metadataSection > div#infozone > h3 {
 }
 
 section#metadataSection > div#metazone > h3 {
+  margin: .5em;
+}
+
+section#metadataSection > div#contentzone > h3 {
   margin: .5em;
 }
 
