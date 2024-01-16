@@ -63,12 +63,13 @@ fieldset {
   max-height: 400px;
   min-height: 100px;
   min-width: 200px;
-  max-width: 600px;
+  max-width: 610px;
 }
 
 fieldset.tagSelect {
   border: none;
   min-height: 20px;
+  max-width: 100%;
 }
 
 fieldset.urlFieldset {

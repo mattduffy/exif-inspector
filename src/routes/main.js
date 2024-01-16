@@ -119,6 +119,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
       Basic: 'BasicShortcut',
       Common: 'Common',
       Location: 'Location',
+      CAR: 'CAR',
       Full: null,
       StripAllTags: 'StripAllTags',
       StripLocation: 'StripGPS',
