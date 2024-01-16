@@ -146,10 +146,20 @@
                 window.map.showItems([annotation])
             }
         }
-        dragzone.addEventListener('click', (e) => {
-            e.stopPropagation()
-            fileElement.click()
-        })
+        if (navigator.maxTouchPoints === 0) {
+            dragzone.addEventListener('click', (e) => {
+                console.log('dragzone click event target: ', e)
+                // e.stopPropagation()
+                // e.preventDefault()
+                if (e.target.tagName === 'DIV') {
+                    fileElement.click() 
+                }
+            })
+        } else {
+            console.log('so many touch points')
+            fileElement.style.display = 'visible' 
+        }
+        
         dragzone.addEventListener('dragenter', (e) => {
             // e.preventDefault()
             e.stopPropagation();
@@ -182,7 +192,7 @@
         fileElement.addEventListener('change', (e) => {
             e.preventDefault()
             e.stopPropagation()
-            console.log(e)
+            console.log('fileElement change: ', e)
             setFileInfo(e.target.files[0])
         })
         submitButton.addEventListener('click', (e) => {
