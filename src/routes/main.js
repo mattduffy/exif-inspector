@@ -5,7 +5,7 @@
  * @file src/routes/main.js The router for the top level app URLs.
  */
 
-import { rename, writeFile } from 'node:fs/promises'
+import { readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import formidable from 'formidable'
 import Router from '@koa/router'
@@ -23,7 +23,7 @@ const mainLog = _log.extend('main')
 const mainError = _error.extend('main')
 /* eslint-disable-next-line no-unused-vars */
 function sanitize(param) {
-  // fill in with some effective input scubbing logic
+  // fill in with some effective input scrubbing logic
   return param
 }
 function sanitizeFilename(filename) {
@@ -211,13 +211,46 @@ router.post('fileUpload', '/upload', async (ctx) => {
     }
     // don't leak system info to the web page
     delete response.metadata[0]?.SourceFile
-    delete response.metadata[0]['ExifTool:ExifToolVersion']
+    delete response.metadata[0]?.['File:Filename']
     delete response.metadata[0]?.['File:Directory']
+    delete response.metadata[0]?.['File:FileModifyDate']
+    delete response.metadata[0]?.['File:FileAccessDate']
+    delete response.metadata[0]?.['File:FilePermissions']
+    delete response.metadata[0]?.['File:FileTypeExtension']
+    delete response.metadata[0]?.['File:FileInodeChangeDate']
+    delete response.metadata[0]['ExifTool:ExifToolVersion']
     delete response.metadata[1]
 
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
     ctx.body = response
+  }
+})
+
+router.get('getEditedFile', '/inspected/:f', async (ctx) => {
+  const log = mainLog.extend('GET-editedFile')
+  const error = mainError.extend('GET-editedFile')
+  const file = sanitize(ctx.params.f)
+  if (!file || file === '') {
+    error('Missing required file name url parameter.')
+    ctx.reponse.status = 401
+  } else {
+    let edittedFile
+    const edittedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+    try {
+      log(edittedFilePath)
+      edittedFile = await readFile(edittedFilePath)
+      const { ext } = path.parse(edittedFilePath)
+      const type = `image/${ext.slice(1)}`
+      log(ctx.response.status, type, edittedFile)
+      ctx.response.status = 200
+      ctx.response.type = type
+      ctx.response.body = edittedFile
+    } catch (e) {
+      error(`Failed to open ${edittedFilePath} `)
+      error(e)
+      ctx.response.status = 404
+    }
   }
 })
 

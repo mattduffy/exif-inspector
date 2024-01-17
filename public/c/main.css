@@ -101,6 +101,18 @@ span.or {
   text-transform: uppercase;
 }
 
+section#linkSection {
+  margin: 1em;
+}
+
+section#linkSection > div {
+  padding: 0em 5em 1em 0em;
+}
+
+section#linkSection > div > a {
+  
+}
+
 section#metadataSection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 450px));
