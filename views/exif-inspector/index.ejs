@@ -385,7 +385,20 @@
                         // content, attributions, and rights
                         const div = tagListDiv('contentzone')
                         const dl = div.querySelector(':scope > dl')
+                        const label = document.createElement('label')
+                        label.setAttribute('for', `val_${x}`)
+                        label.innerText = tag
+                        // dl.appendChild(dtTag)
+                        dtTag.removeChild(dtTag.firstChild)
+                        dtTag.appendChild(label)
                         dl.appendChild(dtTag)
+                        const textarea = document.createElement('textarea')
+                        textarea.name = tag
+                        textarea.id = `val_${x}`
+                        textarea.rows = 3
+                        textarea.style.width = '95%'
+                        textarea.value = `${imgMetadata[0][tag]}`
+                        ddTag.replaceChild(textarea, ddTag.firstChild)
                         dl.appendChild(ddTag)
                         showCARTags = true
                     } else {
