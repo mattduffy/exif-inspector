@@ -2,26 +2,75 @@ const cartags = [
   'EXIF:Artist',
   'XMP:Artist',
   'XMP:Creator',
+  'XMP:ArtworkCreator',
+  'XMP:ArtworkCreatorID',
   'IPTC:By-line',
   'XMP:AuthorsPosition',
   'IPTC:Credit',
   'IPTC:Source',
+  'IPTC:Writer-Editor',
   'IPTC:By-lineTitle',
+  'XMP:ContributorIdentifier',
+  'XMP:ContributorName',
+  'XMP:ContributorRole',
   'IPCT:Headline',
+  'IPTC:ObjectName',
   'XMP:Title',
+  'XMP:ArtworkTitle',
   'XMP:Headline',
+  'IPTC:Headline',
   'IPTC:Caption-Abstract',
+  'XMP:CaptionWriter',
+  'EXIF:ImageDescription',
   'XMP:ImageDescription',
   'XMP:Description',
-  'CopyrightNotice',
   'IPTC:Keywords',
   'XMP:Subject',
+  'EXIF:Copyright',
   'IPTC:Copyright',
+  'IPTC:CopyrightNotice',
+  'XMP:CopyrightOwnerID',
+  'XMP:CopyrightOwnerName',
+  'XMP:ArtworkCopyrightNotice',
+  'XMP:ArtworkCopyrightOwnerID',
+  'XMP:ArtworkCopyrightOwnerName',
   'XMP:Rights',
   'XMP:CopyrightFlag',
   'XMP:Url',
   'XMP:WebStatement',
   'XMPLLicensorURL',
+]
+const locationtags = [
+  'Composite:GPSAltitude',
+  'Composite:GPSLatitude',
+  'Composite:GPSLongitude',
+  'Composite:GPSPosition',
+  'EXIF:GPSLatitude',
+  'EXIF:GPSLongitudeRef',
+  'EXIF:GPSLongitude',
+  'EXIF:GPSAltitudeRef',
+  'EXIF:GPSAltitude',
+  'EXIF:GPSSpeedRef',
+  'EXIF:GPSSpeed',
+  'EXIF:GPSImgDirectionRef',
+  'EXIF:GPSImgDirection',
+  'EXIF:GPSDestBearingRef',
+  'EXIF:GPSDestBearing',
+  'EXIF:GPSHPositioningError',
+  'IPTC:City',
+  'IPTC:Country-PrimaryLocationCode',
+  'IPTC:Country-PrimaryLocationName',
+  'IPTC:Province-State',
+  'IPTC:Sub-location',
+  'XMP:City',
+  'XMP:Country',
+  'XMP:CountryCode',
+  'XMP:LocationCreatedGPSLatitude',
+  'XMP:LocationCreatedGPSLongitude',
+  'XMP:LocationShownGPSAltitude',
+  'XMP:LocationShownGPSLatitude',
+  'XMP:LocationShownGPSLongitude',
+  'XMP:LocationCreatedGPSAltitude',
 ]
 // const origin = '<%= origin %>'
 // const access = '<%= accessToken %>'
@@ -36,6 +85,55 @@ const formData = new FormData()
 // let map
 function isCARTag(tag) {
   return cartags.includes(tag)
+}
+function isLocationTag(tag) {
+  return locationtags.includes(tag)
+}
+function hasLocationTags(meta) {
+  let hasCoords = false
+  if (meta['EXIF:GPSLongitude'] && meta['EXIF:GPSLatitude']) {
+    hasCoords = 'EXIF'
+  } else if (meta['Composite:GPSPosition']) {
+    hasCoords = 'Composite'
+  } else if (meta['XMP:LocationCreatedGPSLatitude'] && meta['XMP:LocationCreatedGPSLongitude']) {
+    hasCoords = 'XMP'
+  } else {
+    hasCoords = false
+  }
+  return hasCoords
+}
+function getLocationCoordinates(type, meta) {
+  let lat
+  let lon
+  let NS
+  let EW
+  if (type === 'EXIF') {
+    lat = parseFloat(meta['EXIF:GPSLatitude'])
+    NS = meta['EXIF:GPSLatitudeRef']
+    if (/south/i.test(NS)) lat *= (-1)
+    lon = parseFloat(meta['EXIF:GPSLongitude'])
+    EW = meta['EXIF:GPSLongitudeRef']
+    if (/west/i.test(EW)) lon *= (-1)
+  } else if (type === 'Composite') {
+    const [_lat, _lon] = meta['Composite:GPSPosition'].split(', ');
+    [lat, NS] = _lat.split(' ')
+    lat = parseFloat(lat)
+    if (/s/i.test(NS)) lat *= (-1);
+    [lon, EW] = _lon.split(' ')
+    lon = parseFloat(lon)
+    if (/w/i.test(EW)) lon *= (-1)
+  } else if (type === 'XMP') {
+    lat = parseFloat(meta['XMP:LocationCreatedGPSLatitude'])
+    NS = meta['EXIF:GPSLatitudeRef']
+    if (/south/i.test(NS)) lat *= (-1)
+    lon = parseFloat(meta['XMP:LocationCreatedGPSLongitude'])
+    EW = meta['EXIF:GPSLongitudeRef']
+    if (/west/i.test(EW)) lon *= (-1)
+  } else {
+    lat = 0
+    lon = 0
+  }
+  return [lat, lon]
 }
 function tagListDiv(tag) {
   if (tag === undefined || tag === null || tag === '') {
@@ -275,40 +373,26 @@ async function send(data) {
       parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
     }
     tags = Object.keys(results.metadata[0])
+    tags.sort()
     // check if location info is present to display map
     let lat
     let NS
     let lon
     let EW
-    if (tags.includes('EXIF:GPSLongitude') && tags.includes('EXIF:GPSLatitude')) {
-      lat = parseFloat(imgMetadata[0]['EXIF:GPSLatitude'])
-      NS = imgMetadata[0]['EXIF:GPSLatitudeRef']
-      if (/south/i.test(NS)) lat *= (-1)
-      lon = parseFloat(imgMetadata[0]['EXIF:GPSLongitude'])
-      EW = imgMetadata[0]['EXIF:GPSLongitudeRef']
-      if (/west/i.test(EW)) lon *= (-1)
-    } else if (tags.includes('Composite:GPSPosition')) {
-      const [_lat, _lon] = imgMetadata[0]['Composite:GPSPosition'].split(', ');
-      [lat, NS] = _lat.split(' ')
-      lat = parseFloat(lat)
-      if (/s/i.test(NS)) lat *= (-1);
-      [lon, EW] = _lon.split(' ')
-      lon = parseFloat(lon)
-      if (/w/i.test(EW)) lon *= (-1)
-    } else {
-      lat = null
-      lon = null
-    }
-    if (lat !== null && lon !== null) {
-      console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
-      await main(lat, lon)
-      const map = document.querySelector('div#mapzone')
-      map.classList.remove('hidden')
-      const dt = document.createElement('dt')
-      dt.appendChild(map)
-      const locationListDiv = tagListDiv('locationzone')
-      const dl = locationListDiv.children[0]
-      dl.appendChild(dt)
+    const locationTagType = hasLocationTags(results.metadata[0])
+    if (locationTagType) {
+      [lat, lon] = getLocationCoordinates(locationTagType, results.metadata[0])
+      if (lat !== null && lon !== null) {
+        console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
+        await main(lat, lon)
+        const map = document.querySelector('div#mapzone')
+        map.classList.remove('hidden')
+        const dt = document.createElement('dt')
+        dt.appendChild(map)
+        const locationListDiv = tagListDiv('locationzone')
+        const dl = locationListDiv.children[0]
+        dl.appendChild(dt)
+      }
     }
     let x = 0
     const seen = new Set()
@@ -341,7 +425,8 @@ async function send(data) {
         const fileInfo = document.querySelector('dl#fileInfo')
         fileInfo.appendChild(dtTag)
         fileInfo.appendChild(ddTag)
-      } else if (/gps/i.test(tag)) {
+      // } else if (/gps/i.test(tag)) {
+      } else if (isLocationTag(tag)) {
         // location tags
         const div = tagListDiv('locationzone')
         const dl = div.querySelector(':scope > dl')
@@ -378,11 +463,11 @@ async function send(data) {
       }
     // }
     })
-    // metazone.appendChild(list)
-    // if (showOtherTags) {
-    //   metazone.classList.remove('hidden')
-    //   metadataSection.appendChild(metazone)
-    // }
+    window.metazone.appendChild(list)
+    if (showOtherTags) {
+      window.metazone.classList.remove('hidden')
+      window.metadataSection.appendChild(window.metazone)
+    }
     if (showCARTags) {
       document.querySelector('div#contentzone').classList.remove('hidden')
     }
