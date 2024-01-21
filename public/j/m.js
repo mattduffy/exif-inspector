@@ -7,7 +7,9 @@ const cartags = [
   'IPTC:By-line',
   'XMP:AuthorsPosition',
   'IPTC:Credit',
+  'XMP:Credit',
   'IPTC:Source',
+  'XMP:Source',
   'IPTC:Writer-Editor',
   'IPTC:By-lineTitle',
   'XMP:ContributorIdentifier',
@@ -38,7 +40,7 @@ const cartags = [
   'XMP:CopyrightFlag',
   'XMP:Url',
   'XMP:WebStatement',
-  'XMPLLicensorURL',
+  'XMP:LicensorURL',
 ]
 const locationtags = [
   'Composite:GPSAltitude',
@@ -155,6 +157,7 @@ function tagListDiv(tag) {
       dl = document.createElement('dl')
       div.appendChild(dl)
     }
+    // div.classList.remove('hidden')
   }
   // console.log(`returning div: ${div}`)
   return div
@@ -390,7 +393,13 @@ async function send(data) {
         const dt = document.createElement('dt')
         dt.appendChild(map)
         const locationListDiv = tagListDiv('locationzone')
-        const dl = locationListDiv.children[0]
+        if (locationListDiv.children[0].tagName !== 'H3') {
+          const h3 = document.createElement('h3')
+          h3.classList.add('mono')
+          h3.innerText = 'Location Information'
+          locationListDiv.children[0].before(h3)
+        }
+        const dl = locationListDiv.querySelector(':scope > dl')
         dl.appendChild(dt)
       }
     }
@@ -399,7 +408,6 @@ async function send(data) {
     // let showLocationTags = false
     let showOtherTags = false
     let showCARTags = false
-    // for(const tag of tags) {
     tags.forEach((tag) => {
       const [g, t] = tag.split(':')
       seen.add(g)
@@ -461,7 +469,6 @@ async function send(data) {
         dl.appendChild(ddTag)
         showOtherTags = true
       }
-    // }
     })
     window.metazone.appendChild(list)
     if (showOtherTags) {
@@ -470,6 +477,17 @@ async function send(data) {
     }
     if (showCARTags) {
       document.querySelector('div#contentzone').classList.remove('hidden')
+    }
+    const zones = window.metadataSection.children
+    if (zones.locationzone) {
+      zones.infozone.after(zones.locationzone)
+    }
+    if (zones.contentzone) {
+      if (zones.locationzone) {
+        zones.locationzone.after(zones.contentzone)
+      } else {
+        zones.infozone.after(zones.contentzone)
+      }
     }
   } else {
     const responseErrDiv = document.createElement('div')

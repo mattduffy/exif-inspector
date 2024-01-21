@@ -2,6 +2,10 @@
   display: none;
 }
 
+textarea {
+  border-radius: 5px;
+}
+
 dl {
   padding: 0em .5em;
   font-family: monospace;
@@ -54,6 +58,7 @@ div#dragzone h2 {
 div#mapzone {
   width: auto;
   height: 350px;
+  margin-bottom: 1em;
 }
 
 fieldset.hiddenFieldset {
@@ -131,7 +136,16 @@ section#metadataSection > div#infozone {
   border-radius: .5rem;
 }
 
+section#metadataSection > div#metazone {
+  border: 1px solid #E2E2E2;
+  border-radius: .5rem;
+}
+
 section#metadataSection > div#infozone > h3 {
+  margin: .5em;
+}
+
+section#metadataSection > div#locationzone > h3 {
   margin: .5em;
 }
 
@@ -141,11 +155,6 @@ section#metadataSection > div#metazone > h3 {
 
 section#metadataSection > div#contentzone > h3 {
   margin: .5em;
-}
-
-section#metadataSection > div#metazone {
-  border: 1px solid #E2E2E2;
-  border-radius: .5rem;
 }
 
 .smallImgPreview {
