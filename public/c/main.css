@@ -61,12 +61,16 @@ div#mapzone {
   margin-bottom: 1em;
 }
 
+div#mapzone > div:first-child {
+  border-radius: 15px;
+}
+
 fieldset.hiddenFieldset {
   display: none;
 }
 
 fieldset {
-  border-radius: 30px;
+  border-radius: 15px;
   max-height: 400px;
   min-height: 100px;
   min-width: 200px;

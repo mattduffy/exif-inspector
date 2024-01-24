@@ -80,8 +80,6 @@ const locationtags = [
   'XMP:LocationShownGPSLongitude',
   'XMP:LocationCreatedGPSAltitude',
 ]
-// const origin = '<%= origin %>'
-// const access = '<%= accessToken %>'
 const form = document.forms[0]
 const fileElement = form.image_0Id
 const submitButton = form.submit_Id
@@ -90,7 +88,6 @@ const infozone = document.querySelector('div#infozone')
 // const metazone = document.querySelector('div#metazone')
 const mapzone = document.querySelector('div#mapzone')
 const formData = new FormData()
-// let map
 function isCARTag(tag) {
   return cartags.includes(tag)
 }
@@ -399,12 +396,12 @@ async function send(data) {
         const dt = document.createElement('dt')
         dt.appendChild(map)
         const locationListDiv = tagListDiv('locationzone')
-        if (locationListDiv.children[0].tagName !== 'H3') {
-          const h3 = document.createElement('h3')
-          h3.classList.add('mono')
-          h3.innerText = 'Location Information'
-          locationListDiv.children[0].before(h3)
-        }
+        // if (locationListDiv.children[0].tagName !== 'H3') {
+        //   const h3 = document.createElement('h3')
+        //   h3.classList.add('mono')
+        //   h3.innerText = 'Location Information'
+        //   locationListDiv.children[0].before(h3)
+        // }
         const dl = locationListDiv.querySelector(':scope > dl')
         dl.appendChild(dt)
       }
@@ -487,6 +484,12 @@ async function send(data) {
     const zones = window.metadataSection.children
     if (zones.locationzone) {
       zones.infozone.after(zones.locationzone)
+      if (zones.locationzone.children[0].tagName !== 'H3') {
+        const h3 = document.createElement('h3')
+        h3.classList.add('mono')
+        h3.innerText = 'Location Information'
+        zones.locationzone.children[0].before(h3)
+      }
     }
     if (zones.contentzone) {
       if (zones.locationzone) {
