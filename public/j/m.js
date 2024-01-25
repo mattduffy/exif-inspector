@@ -1,52 +1,52 @@
 const cartags = [
-  'EXIF:Artist',
-  'IPTC:By-line',
-  'XMP:Artist',
-  'XMP:Creator',
+  { tag: 'EXIF:Artist', value: '' },
+  { tag: 'IPTC:By-line', value: '' },
+  { tag: 'XMP:Artist', value: '' },
+  { tag: 'XMP:Creator', value: '' },
 
-  'XMP:ArtworkCreator',
-  'XMP:ArtworkCreatorID',
-  'XMP:AuthorsPosition',
+  { tag: 'XMP:ArtworkCreator', value: '' },
+  { tag: 'XMP:ArtworkCreatorID', value: '' },
+  { tag: 'XMP:AuthorsPosition', value: '' },
 
-  'XMP:Credit',
-  'IPTC:Credit',
-  'XMP:Source',
-  'IPTC:Source',
+  { tag: 'XMP:Credit', value: '' },
+  { tag: 'IPTC:Credit', value: '' },
+  { tag: 'XMP:Source', value: '' },
+  { tag: 'IPTC:Source', value: '' },
 
-  'IPTC:Writer-Editor',
-  'XMP:CaptionWriter',
-  'IPTC:By-lineTitle',
-  'XMP:ContributorIdentifier',
-  'XMP:ContributorName',
-  'XMP:ContributorRole',
+  { tag: 'IPTC:Writer-Editor', value: '' },
+  { tag: 'XMP:CaptionWriter', value: '' },
+  { tag: 'IPTC:By-lineTitle', value: '' },
+  { tag: 'XMP:ContributorIdentifier', value: '' },
+  { tag: 'XMP:ContributorName', value: '' },
+  { tag: 'XMP:ContributorRole', value: '' },
 
-  'IPTC:Headline',
-  'XMP:Headline',
+  { tag: 'IPTC:Headline', value: '' },
+  { tag: 'XMP:Headline', value: '' },
 
-  'IPTC:ObjectName',
-  'XMP:Title',
-  'XMP:ArtworkTitle',
+  { tag: 'IPTC:ObjectName', value: '' },
+  { tag: 'XMP:Title', value: '' },
+  { tag: 'XMP:ArtworkTitle', value: '' },
 
-  'IPTC:Caption-Abstract',
-  'EXIF:ImageDescription',
-  'XMP:Description',
-  'XMP:ImageDescription',
+  { tag: 'IPTC:Caption-Abstract', value: '' },
+  { tag: 'EXIF:ImageDescription', value: '' },
+  { tag: 'XMP:Description', value: '' },
+  { tag: 'XMP:ImageDescription', value: '' },
 
-  'IPTC:Keywords',
-  'XMP:Subject',
+  { tag: 'IPTC:Keywords', value: '' },
+  { tag: 'XMP:Subject', value: '' },
 
-  'EXIF:Copyright',
-  'IPTC:CopyrightNotice',
-  'XMP:Rights',
-  'XMP:CopyrightOwnerID',
-  'XMP:CopyrightOwnerName',
-  'XMP:ArtworkCopyrightNotice',
-  'XMP:ArtworkCopyrightOwnerID',
-  'XMP:ArtworkCopyrightOwnerName',
-  'XMP:CopyrightFlag',
-  'XMP:Url',
-  'XMP:WebStatement',
-  'XMP:LicensorURL',
+  { tag: 'EXIF:Copyright', value: '' },
+  { tag: 'IPTC:CopyrightNotice', value: '' },
+  { tag: 'XMP:Rights', value: '' },
+  { tag: 'XMP:CopyrightOwnerID', value: '' },
+  { tag: 'XMP:CopyrightOwnerName', value: '' },
+  { tag: 'XMP:ArtworkCopyrightNotice', value: '' },
+  { tag: 'XMP:ArtworkCopyrightOwnerID', value: '' },
+  { tag: 'XMP:ArtworkCopyrightOwnerName', value: '' },
+  { tag: 'XMP:CopyrightFlag', value: '' },
+  { tag: 'XMP:Url', value: '' },
+  { tag: 'XMP:WebStatement', value: '' },
+  { tag: 'XMP:LicensorURL', value: '' },
 ]
 const locationtags = [
   'Composite:GPSAltitude',
@@ -89,7 +89,17 @@ const infozone = document.querySelector('div#infozone')
 const mapzone = document.querySelector('div#mapzone')
 const formData = new FormData()
 function isCARTag(tag) {
-  return cartags.includes(tag)
+  // return cartags.includes(tag)
+  let found
+  cartags.some((t, i) => {
+    if (t.tag.toLowerCase() === tag.toLowerCase()) {
+      found = i
+      return i
+    }
+    found = false
+    return false
+  })
+  return found
 }
 function isLocationTag(tag) {
   return locationtags.includes(tag)
@@ -431,6 +441,7 @@ async function send(data) {
       } else {
         ddTag.innerHTML = `${imgMetadata[0][tag]}`
       }
+      let carTagIndex
       if (/file/i.test(tag)) {
         // file tags
         const fileInfo = document.querySelector('dl#fileInfo')
@@ -444,7 +455,10 @@ async function send(data) {
         dl.appendChild(dtTag)
         dl.appendChild(ddTag)
         // showLocationTags = true
-      } else if (isCARTag(tag)) {
+        // eslint-disable-next-line
+      } else if (carTagIndex = isCARTag(tag)) {
+        console.log(carTagIndex, tag)
+        console.log(`CAR tag index: ${cartags[carTagIndex]}`)
         // content, attributions, and rights
         const div = tagListDiv('contentzone')
         const dl = div.querySelector(':scope > dl')
