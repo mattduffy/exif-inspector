@@ -458,7 +458,8 @@ async function send(data) {
         // eslint-disable-next-line
       } else if (carTagIndex = isCARTag(tag)) {
         console.log(carTagIndex, tag)
-        console.log(`CAR tag index: ${cartags[carTagIndex]}`)
+        // console.log(`CAR tag index: ${cartags[carTagIndex]}`)
+        console.log('CAR tag index: ', cartags[carTagIndex])
         // content, attributions, and rights
         const div = tagListDiv('contentzone')
         const dl = div.querySelector(':scope > dl')
