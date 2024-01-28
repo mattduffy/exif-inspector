@@ -1,7 +1,8 @@
-const cartags = [
+window.cartags = [
+  { tag: '', value: '' },
   { tag: 'EXIF:Artist', value: '' },
   { tag: 'IPTC:By-line', value: '' },
-  { tag: 'XMP:Artist', value: '' },
+  // { tag: 'XMP:Artist', value: '' },
   { tag: 'XMP:Creator', value: '' },
 
   { tag: 'XMP:ArtworkCreator', value: '' },
@@ -16,9 +17,9 @@ const cartags = [
   { tag: 'IPTC:Writer-Editor', value: '' },
   { tag: 'XMP:CaptionWriter', value: '' },
   { tag: 'IPTC:By-lineTitle', value: '' },
-  { tag: 'XMP:ContributorIdentifier', value: '' },
-  { tag: 'XMP:ContributorName', value: '' },
-  { tag: 'XMP:ContributorRole', value: '' },
+  // { tag: 'XMP:ContributorIdentifier', value: '' },
+  // { tag: 'XMP:ContributorName', value: '' },
+  // { tag: 'XMP:ContributorRole', value: '' },
 
   { tag: 'IPTC:Headline', value: '' },
   { tag: 'XMP:Headline', value: '' },
@@ -30,7 +31,7 @@ const cartags = [
   { tag: 'IPTC:Caption-Abstract', value: '' },
   { tag: 'EXIF:ImageDescription', value: '' },
   { tag: 'XMP:Description', value: '' },
-  { tag: 'XMP:ImageDescription', value: '' },
+  // { tag: 'XMP:ImageDescription', value: '' },
 
   { tag: 'IPTC:Keywords', value: '' },
   { tag: 'XMP:Subject', value: '' },
@@ -43,8 +44,8 @@ const cartags = [
   { tag: 'XMP:ArtworkCopyrightNotice', value: '' },
   { tag: 'XMP:ArtworkCopyrightOwnerID', value: '' },
   { tag: 'XMP:ArtworkCopyrightOwnerName', value: '' },
-  { tag: 'XMP:CopyrightFlag', value: '' },
-  { tag: 'XMP:Url', value: '' },
+  // { tag: 'XMP:CopyrightFlag', value: '' },
+  // { tag: 'XMP:Url', value: '' },
   { tag: 'XMP:WebStatement', value: '' },
   { tag: 'XMP:LicensorURL', value: '' },
 ]
@@ -89,10 +90,10 @@ const infozone = document.querySelector('div#infozone')
 const mapzone = document.querySelector('div#mapzone')
 const formData = new FormData()
 function isCARTag(tag) {
-  // return cartags.includes(tag)
   let found
-  cartags.some((t, i) => {
-    if (t.tag.toLowerCase() === tag.toLowerCase()) {
+  window.cartags.some((t, i) => {
+    // console.log(`cartags[${i}]${t.tag} ?=? ${tag}`)
+    if (t?.tag.toLowerCase() === tag.toLowerCase()) {
       found = i
       return i
     }
@@ -345,7 +346,12 @@ async function setFileInfo(file = null) {
   console.log(`tagSet: ${formData.get('tagSet')}`)
   console.log(`image_0: ${formData.get('image_0')}`)
   console.log(`url: ${formData.get('url')}`)
-  await send(formData)
+  try {
+    await send(formData)
+  } catch (e) {
+    console.warn('something caused the send method to fail')
+    console.error(e)
+  }
 }
 let imgMetadata
 let tags
@@ -457,28 +463,25 @@ async function send(data) {
         // showLocationTags = true
         // eslint-disable-next-line
       } else if (carTagIndex = isCARTag(tag)) {
-        console.log(carTagIndex, tag)
-        // console.log(`CAR tag index: ${cartags[carTagIndex]}`)
-        console.log('CAR tag index: ', cartags[carTagIndex])
         // content, attributions, and rights
-        const div = tagListDiv('contentzone')
-        const dl = div.querySelector(':scope > dl')
-        const label = document.createElement('label')
-        label.setAttribute('for', `val_${x}`)
-        label.innerText = tag
-        // dl.appendChild(dtTag)
-        dtTag.removeChild(dtTag.firstChild)
-        dtTag.appendChild(label)
-        dl.appendChild(dtTag)
-        const textarea = document.createElement('textarea')
-        textarea.name = tag
-        textarea.id = `val_${x}`
-        textarea.rows = 3
-        textarea.style.width = '95%'
-        textarea.value = `${imgMetadata[0]?.[tag]}`
-        ddTag.replaceChild(textarea, ddTag.firstChild)
-        dl.appendChild(ddTag)
+        window.cartags[carTagIndex].value = imgMetadata[0][tag]
         showCARTags = true
+        // const div = tagListDiv('contentzone')
+        // const dl = div.querySelector(':scope > dl')
+        // const label = document.createElement('label')
+        // label.setAttribute('for', `val_${x}`)
+        // label.innerText = tag
+        // dtTag.removeChild(dtTag.firstChild)
+        // dtTag.appendChild(label)
+        // dl.appendChild(dtTag)
+        // const textarea = document.createElement('textarea')
+        // textarea.name = tag
+        // textarea.id = `val_${x}`
+        // textarea.rows = 3
+        // textarea.style.width = '95%'
+        // textarea.value = `${imgMetadata[0]?.[tag]}`
+        // ddTag.replaceChild(textarea, ddTag.firstChild)
+        // dl.appendChild(ddTag)
       } else {
         // all other metadata tags
         const otherMetadata = tagListDiv('metazone')
@@ -494,6 +497,27 @@ async function send(data) {
       window.metadataSection.appendChild(window.metazone)
     }
     if (showCARTags) {
+      const div = tagListDiv('contentzone')
+      const dl = div.querySelector(':scope > dl')
+      window.cartags.forEach((t, i) => {
+        if (t.value !== '') {
+          const label = document.createElement('label')
+          label.setAttribute('for', `car_val_${i}`)
+          label.innerText = t.tag
+          const dtTag = document.createElement('dt')
+          const ddTag = document.createElement('dd')
+          dtTag.appendChild(label)
+          dl.appendChild(dtTag)
+          const textarea = document.createElement('textarea')
+          textarea.name = t.tag
+          textarea.id = `car_val_${x}`
+          textarea.rows = 3
+          textarea.style.width = '95%'
+          textarea.value = t.value
+          ddTag.appendChild(textarea)
+          dl.appendChild(ddTag)
+        }
+      })
       document.querySelector('div#contentzone').classList.remove('hidden')
     }
     const zones = window.metadataSection.children
