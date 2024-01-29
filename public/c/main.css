@@ -21,6 +21,10 @@ dl > dd {
   padding: .25em 0em;
 }
 
+dl#locationDL > dd > input[type='text'] {
+  width: 95%;
+}
+
 div#dragzone {
   color: lightgrey;
   /*
