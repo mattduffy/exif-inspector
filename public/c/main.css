@@ -96,6 +96,10 @@ legend {
   font-weight: 600;
 }
 
+input[type='text']:disabled:hover {
+  content: 'Edit the EXIF version of this value.'; 
+}
+
 input[type='text']#url_Id {
   width: 50%;
 }

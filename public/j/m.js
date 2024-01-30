@@ -46,14 +46,10 @@ window.cartags = [
 window.locationtags = [
   { tag: '', value: '' },
   //
-  { tag: 'Composite:GPSPosition', value: '' },
-  { tag: 'Composite:GPSLatitude', value: '' },
-  { tag: 'Composite:GPSLongitude', value: '' },
-  { tag: 'Composite:GPSAltitude', value: '' },
-
   { tag: 'EXIF:GPSLatitude', value: '' },
-  { tag: 'EXIF:GPSLongitudeRef', value: '' },
+  { tag: 'EXIF:GPSLatitudeRef', value: '' },
   { tag: 'EXIF:GPSLongitude', value: '' },
+  { tag: 'EXIF:GPSLongitudeRef', value: '' },
   { tag: 'EXIF:GPSAltitude', value: '' },
   { tag: 'EXIF:GPSAltitudeRef', value: '' },
   { tag: 'EXIF:GPSSpeed', value: '' },
@@ -64,22 +60,27 @@ window.locationtags = [
   { tag: 'EXIF:GPSDestBearingRef', value: '' },
   { tag: 'EXIF:GPSHPositioningError', value: '' },
 
+  { tag: 'Composite:GPSPosition', value: '', disabled: true },
+  { tag: 'Composite:GPSLatitude', value: '', disabled: true },
+  { tag: 'Composite:GPSLongitude', value: '', disabled: true },
+  { tag: 'Composite:GPSAltitude', value: '', disabled: true },
+
   { tag: 'IPTC:City', value: '' },
   { tag: 'IPTC:Province-State', value: '' },
-  { tag: 'IPTC:Country-PrimaryLocationCode', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationName', value: '' },
+  { tag: 'IPTC:Country-PrimaryLocationCode', value: '' },
 
-  { tag: 'XMP:LocationCreatedGPSLatitude', value: '' },
-  { tag: 'XMP:LocationCreatedGPSLongitude', value: '' },
-  { tag: 'XMP:LocationShownGPSAltitude', value: '' },
-  { tag: 'XMP:LocationShownGPSLatitude', value: '' },
-  { tag: 'XMP:LocationShownGPSLongitude', value: '' },
-  { tag: 'XMP:LocationCreatedGPSAltitude', value: '' },
+  { tag: 'XMP:LocationCreatedGPSLatitude', value: '', disabled: true },
+  { tag: 'XMP:LocationCreatedGPSLongitude', value: '', disabled: true },
+  { tag: 'XMP:LocationShownGPSAltitude', value: '', disabled: true },
+  { tag: 'XMP:LocationShownGPSLatitude', value: '', disabled: true },
+  { tag: 'XMP:LocationShownGPSLongitude', value: '', disabled: true },
+  { tag: 'XMP:LocationCreatedGPSAltitude', value: '', disabled: true },
 
-  { tag: 'XMP:City', value: '' },
-  { tag: 'IPTC:Sub-location', value: '' },
-  { tag: 'XMP:Country', value: '' },
-  { tag: 'XMP:CountryCode', value: '' },
+  { tag: 'XMP:City', value: '', disabled: true },
+  { tag: 'IPTC:Sub-location', value: '', disabled: true },
+  { tag: 'XMP:Country', value: '', disabled: true },
+  { tag: 'XMP:CountryCode', value: '', disabled: true },
 ]
 const form = document.forms[0]
 const fileElement = form.image_0Id
@@ -160,6 +161,10 @@ function getLocationCoordinates(type, meta) {
     lon = 0
   }
   return [lat, lon]
+}
+function normalizeCoordinateTags() {
+  // fill in function body.
+  // Prefer exif coords if present, else xmp
 }
 function tagListDiv(tag) {
   if (tag === undefined || tag === null || tag === '') {
@@ -469,31 +474,11 @@ async function send(data) {
         // location tags
         window.locationtags[locationTagIndex].value = imgMetadata[0][tag]
         showLocationTags = true
-        // const div = tagListDiv('locationzone')
-        // const dl = div.querySelector(':scope > dl')
-        // dl.appendChild(dtTag)
-        // dl.appendChild(ddTag)
         // eslint-disable-next-line
       } else if (carTagIndex = isCARTag(tag)) {
         // content, attributions, and rights
         window.cartags[carTagIndex].value = imgMetadata[0][tag]
         showCARTags = true
-        // const div = tagListDiv('contentzone')
-        // const dl = div.querySelector(':scope > dl')
-        // const label = document.createElement('label')
-        // label.setAttribute('for', `val_${x}`)
-        // label.innerText = tag
-        // dtTag.removeChild(dtTag.firstChild)
-        // dtTag.appendChild(label)
-        // dl.appendChild(dtTag)
-        // const textarea = document.createElement('textarea')
-        // textarea.name = tag
-        // textarea.id = `val_${x}`
-        // textarea.rows = 3
-        // textarea.style.width = '95%'
-        // textarea.value = `${imgMetadata[0]?.[tag]}`
-        // ddTag.replaceChild(textarea, ddTag.firstChild)
-        // dl.appendChild(ddTag)
       } else {
         // all other metadata tags
         const otherMetadata = tagListDiv('metazone')
@@ -526,10 +511,14 @@ async function send(data) {
           textfield.id = `loc_val_${i}`
           textfield.name = t.tag
           textfield.value = t.value
+          if (t.disabled) {
+            textfield.disabled = true
+          }
           ddTag.appendChild(textfield)
           dl.appendChild(ddTag)
         }
       })
+      normalizeCoordinateTags()
     }
     if (showCARTags) {
       const div = tagListDiv('contentzone')
