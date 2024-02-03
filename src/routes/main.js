@@ -181,6 +181,9 @@ router.post('fileUpload', '/upload', async (ctx) => {
       log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
       exiftool = await exiftool.init(images)
       exiftool.enableBinaryTagOutput(true)
+      const expandStructs = true
+      exiftool.enableXMPStructTagOutput(expandStructs)
+      exiftool.setOverwriteOriginal(false)
       const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
       log('exiftool config path set: %o', newConfigPath)
@@ -189,15 +192,20 @@ router.post('fileUpload', '/upload', async (ctx) => {
       if (exifShortcut === 'StripAllTags') {
         stripResult = await exiftool.stripMetadata()
         log(stripResult)
-        result = await exiftool.getMetadata('', null)
-        const original = path.parse(stripResult.original)
-        // response.inspectedFile = (await exiftool.getPath()).file
-        response.originalFile = original.base
+        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+        if (stripResult?.original) {
+          const original = path.parse(stripResult.original)
+          response.originalFile = original.base
+        }
         response.modifiedFile = (await exiftool.getPath()).file
       } else if (exifShortcut === 'StripGPS') {
         await exiftool.stripLocation()
-        result = await exiftool.getMetadata('', null)
-        response.modifiedFile = result[0]['File:FileName']
+        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+        if (result?.original) {
+          const original = path.parse(result.original)
+          response.originalFile = original.base
+        }
+        response.modifiedFile = result[0]['File:FileorName']
         log(result)
       } else {
         result = await exiftool.getMetadata('', exifShortcut, '--ICC_Profile:all')

@@ -70,11 +70,14 @@ window.locationtags = [
   { tag: 'IPTC:Country-PrimaryLocationName', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationCode', value: '' },
 
-  { tag: 'XMP:LocationCreatedGPSLatitude', value: '', disabled: true },
-  { tag: 'XMP:LocationCreatedGPSLongitude', value: '', disabled: true },
+  { tag: 'XMP:Location', value: '', disabled: true },
+  { tag: 'XMP:LocationShown', value: '', disabled: true },
   { tag: 'XMP:LocationShownGPSAltitude', value: '', disabled: true },
   { tag: 'XMP:LocationShownGPSLatitude', value: '', disabled: true },
   { tag: 'XMP:LocationShownGPSLongitude', value: '', disabled: true },
+  { tag: 'XMP:LocationCreated', value: '', disabled: true },
+  { tag: 'XMP:LocationCreatedGPSLatitude', value: '', disabled: true },
+  { tag: 'XMP:LocationCreatedGPSLongitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSAltitude', value: '', disabled: true },
 
   { tag: 'XMP:City', value: '', disabled: true },
@@ -122,8 +125,12 @@ function hasLocationTags(meta) {
     hasCoords = 'EXIF'
   } else if (meta['Composite:GPSPosition']) {
     hasCoords = 'Composite'
-  } else if (meta['XMP:LocationCreatedGPSLatitude'] && meta['XMP:LocationCreatedGPSLongitude']) {
+  } else if (meta['XMP:LocationShownGPSLatitude'] && meta['XMP:LocationShownGPSLongitude']) {
     hasCoords = 'XMP'
+  } else if (meta['XMP:LocationShown']?.[0]?.GPSLatitude && meta['XMP:LocationShown']?.[0]?.GPSLongitude) {
+    hasCoords = 'XMP-struct'
+  } else if (meta['XMP:LocationCreated']?.[0]?.GPSLatitude && meta['XMP:LocationCreated']?.[0]?.GPSLongitude) {
+    hasCoords = 'XMP-struct'
   } else {
     hasCoords = false
   }
@@ -150,21 +157,56 @@ function getLocationCoordinates(type, meta) {
     lon = parseFloat(lon)
     if (/w/i.test(EW)) lon *= (-1)
   } else if (type === 'XMP') {
-    lat = parseFloat(meta['XMP:LocationCreatedGPSLatitude'])
+    lat = parseFloat(meta['XMP:LocationShownGPSLatitude'])
     NS = meta['EXIF:GPSLatitudeRef']
     if (/south/i.test(NS)) lat *= (-1)
-    lon = parseFloat(meta['XMP:LocationCreatedGPSLongitude'])
+    lon = parseFloat(meta['XMP:LocationShownGPSLongitude'])
     EW = meta['EXIF:GPSLongitudeRef']
     if (/west/i.test(EW)) lon *= (-1)
+  } else if (type === 'XMP-struct') {
+    lat = parseFloat(meta['XMP:LocationShown']?.[0]?.GPSLatitude);
+    [NS] = meta['XMP:LocationShown']?.[0]?.GPSLatitude.match(/[NS]/i) ?? ''
+    if (/s/i.test(NS)) lat *= (-1)
+    lon = parseFloat(meta['XMP:LocationShown']?.[0]?.GPSLongitude);
+    [EW] = meta['XMP:LocationShown']?.[0]?.GPSLongitude.match(/[EW]/i) ?? ''
+    if (/w/i.test(EW)) lon *= (-1)
   } else {
     lat = 0
     lon = 0
   }
-  return [lat, lon]
+  window.lat = lat
+  window.lon = lon
+  window.NS = NS
+  window.EW = EW
+  return [lat, lon, NS, EW]
 }
 function normalizeCoordinateTags() {
-  // fill in function body.
   // Prefer exif coords if present, else xmp
+  const dl = document.querySelector('dl#locationDL')
+  const exifLat = dl.querySelector(':scope input[name="EXIF:GPSLatitude"]')
+  const exifLon = dl.querySelector(':scope input[name="EXIF:GPSLongitude"]')
+  const xmpLocationShown = dl.querySelector(':scope input[name="XMP:LocationShown"]')
+  const xmpLocationCreated = dl.querySelector(':scope input[name="XMP:LocationCreated"]')
+  const xmpShownLat = dl.querySelector(':scope input[name="XMP:LocationShownGPSLatitude"]')
+  const xmpShownLon = dl.querySelector(':scope input[name="XMP:LocationShownGPSLongitude"]')
+  const xmpCreatedLat = dl.querySelector(':scope input[name="XMP:LocationCreatedGPSLatitude"]')
+  const xmpCreatedLon = dl.querySelector(':scope input[name="XMP:LcoationCreatedGPSLongitude"]')
+  if (exifLat !== null) {
+    exifLat.disabled = false
+    exifLon.disabled = false
+    if (xmpShownLat !== null) xmpShownLat.disabled = true
+    if (xmpShownLon !== null) xmpShownLon.disabled = true
+    if (xmpCreatedLat !== null) xmpCreatedLat.disabled = true
+    if (xmpCreatedLon !== null) xmpCreatedLon.disabled = true
+  } else if (xmpLocationShown !== null) {
+    xmpLocationShown.disabled = false
+    if (xmpLocationCreated !== null) xmpLocationCreated.disabled = false
+  } else if (xmpShownLat !== null) {
+    if (xmpShownLat !== null) xmpShownLat.disabled = false
+    if (xmpShownLon !== null) xmpShownLon.disabled = false
+    if (xmpCreatedLat !== null) xmpCreatedLat.disabled = true
+    if (xmpCreatedLon !== null) xmpCreatedLon.disabled = true
+  }
 }
 function tagListDiv(tag) {
   if (tag === undefined || tag === null || tag === '') {
@@ -392,6 +434,7 @@ async function send(data) {
     if (results.inspectedFile) {
       form.inspectedFilename.value = results.inspectedFile
     }
+    window.results = results
     const list = document.createElement('dl')
     list.classList.add('mono')
     list.id = 'tagList'
@@ -418,7 +461,7 @@ async function send(data) {
     let EW
     const locationTagType = hasLocationTags(results.metadata[0])
     if (locationTagType) {
-      [lat, lon] = getLocationCoordinates(locationTagType, results.metadata[0])
+      [lat, lon, NS, EW] = getLocationCoordinates(locationTagType, results.metadata[0])
       if (lat !== null && lon !== null) {
         console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
         await main(lat, lon)
@@ -427,12 +470,6 @@ async function send(data) {
         const dt = document.createElement('dt')
         dt.appendChild(map)
         const locationListDiv = tagListDiv('locationzone')
-        // if (locationListDiv.children[0].tagName !== 'H3') {
-        //   const h3 = document.createElement('h3')
-        //   h3.classList.add('mono')
-        //   h3.innerText = 'Location Information'
-        //   locationListDiv.children[0].before(h3)
-        // }
         const dl = locationListDiv.querySelector(':scope > dl')
         dl.appendChild(dt)
       }
@@ -452,6 +489,7 @@ async function send(data) {
       dtTag.innerHTML = `${tag}`
       ddTag.id = `val_${x}`
       if (/ThumbnailImage|PreviewImage|MPImage2/i.test(t)) {
+        console.log('thumbnail tag found: ', t)
         const img = document.createElement('img')
         img.classList.add('smallImgPreview')
         const type = imgMetadata[0]['File:MIMEType']
@@ -498,6 +536,9 @@ async function send(data) {
       const dl = div.querySelector(':scope > dl')
       dl.id = 'locationDL'
       window.locationtags.forEach((t, i) => {
+        if (Array.isArray(t.value)) {
+          console.log('%s is an array of tag values', t.tag)
+        }
         if (t.value !== '') {
           const label = document.createElement('label')
           label.setAttribute('for', `loc_val_${i}`)
@@ -509,8 +550,14 @@ async function send(data) {
           const textfield = document.createElement('input')
           textfield.type = 'text'
           textfield.id = `loc_val_${i}`
+          if (t.tag === 'XMP:LocationShown' && Array.isArray(t.value)) {
+            textfield.value = `${t.value[0].GPSLatitude} ${t.value[0].GPSLongitude}`
+          } else if (t.tag === 'XMP:LocationCreated' && Array.isArray(t.value)) {
+            textfield.value = `${t.value[0].GPSLatitude} ${t.value[0].GPSLongitude}`
+          } else {
+            textfield.value = t.value
+          }
           textfield.name = t.tag
-          textfield.value = t.value
           if (t.disabled) {
             textfield.disabled = true
           }
