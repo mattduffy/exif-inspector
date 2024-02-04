@@ -219,7 +219,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
     }
     // don't leak system info to the web page
     delete response.metadata[0]?.SourceFile
-    delete response.metadata[0]?.['File:Filename']
+    delete response.metadata[0]?.['File:FileName']
     delete response.metadata[0]?.['File:Directory']
     delete response.metadata[0]?.['File:FileModifyDate']
     delete response.metadata[0]?.['File:FileAccessDate']

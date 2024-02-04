@@ -65,23 +65,23 @@ window.locationtags = [
   { tag: 'Composite:GPSLongitude', value: '', disabled: true },
   { tag: 'Composite:GPSAltitude', value: '', disabled: true },
 
+  // { tag: 'IPTC:Sub-location', value: '', disabled: true },
   { tag: 'IPTC:City', value: '' },
   { tag: 'IPTC:Province-State', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationName', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationCode', value: '' },
 
-  { tag: 'XMP:Location', value: '', disabled: true },
   { tag: 'XMP:LocationShown', value: '', disabled: true },
-  { tag: 'XMP:LocationShownGPSAltitude', value: '', disabled: true },
   { tag: 'XMP:LocationShownGPSLatitude', value: '', disabled: true },
   { tag: 'XMP:LocationShownGPSLongitude', value: '', disabled: true },
+  { tag: 'XMP:LocationShownGPSAltitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreated', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSLatitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSLongitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSAltitude', value: '', disabled: true },
 
+  { tag: 'XMP:Location', value: '', disabled: true },
   { tag: 'XMP:City', value: '', disabled: true },
-  { tag: 'IPTC:Sub-location', value: '', disabled: true },
   { tag: 'XMP:Country', value: '', disabled: true },
   { tag: 'XMP:CountryCode', value: '', disabled: true },
 ]
@@ -126,6 +126,8 @@ function hasLocationTags(meta) {
   } else if (meta['Composite:GPSPosition']) {
     hasCoords = 'Composite'
   } else if (meta['XMP:LocationShownGPSLatitude'] && meta['XMP:LocationShownGPSLongitude']) {
+    hasCoords = 'XMP'
+  } else if (meta['XMP:LocationCreatedGPSLatitude'] && meta['XMP:LocationCreatedGPSLongitude']) {
     hasCoords = 'XMP'
   } else if (meta['XMP:LocationShown']?.[0]?.GPSLatitude && meta['XMP:LocationShown']?.[0]?.GPSLongitude) {
     hasCoords = 'XMP-struct'
@@ -232,6 +234,21 @@ function tagListDiv(tag) {
   }
   // console.log(`returning div: ${div}`)
   return div
+}
+function addPointToMap(point) {
+  console.log(point)
+  const marker = new window.mapkit.Coordinate(point.lat, point.lon)
+  const annotation = new window.mapkit.MarkerAnnotation(marker)
+  window.map.showItems([annotation])
+}
+function convertFromPolarToScalar(coord) {
+  const x = coord.match(/(?<n>\d{1,3}\.?\d{0,9}) (?<c>[NSEW])/i)
+  let n = parseFloat(x.groups.n)
+  if (x.groups.c.toLowerCase() === 's' || x.groups.c.toLowerCase() === 'w') {
+    n *= (-1)
+  }
+  console.log(coord, n)
+  return n
 }
 async function setupMapKitJs() {
   const tokenOpts = {
@@ -547,21 +564,33 @@ async function send(data) {
           const ddTag = document.createElement('dd')
           dtTag.appendChild(label)
           dl.appendChild(dtTag)
-          const textfield = document.createElement('input')
-          textfield.type = 'text'
-          textfield.id = `loc_val_${i}`
-          if (t.tag === 'XMP:LocationShown' && Array.isArray(t.value)) {
-            textfield.value = `${t.value[0].GPSLatitude} ${t.value[0].GPSLongitude}`
-          } else if (t.tag === 'XMP:LocationCreated' && Array.isArray(t.value)) {
-            textfield.value = `${t.value[0].GPSLatitude} ${t.value[0].GPSLongitude}`
+          let textfield
+          if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated') && Array.isArray(t.value)) {
+            t.value.forEach((s, n) => {
+              textfield = document.createElement('input')
+              textfield.type = 'text'
+              textfield.id = `loc_val_${i}_${n}`
+              textfield.name = `${t.tag}:${s}`
+              const Slat = t.value[n].GPSLatitude
+              const Slon = t.value[n].GPSLongitude
+              textfield.value = `${Slat} ${Slon}`
+              textfield.disabled = t.disabled
+              ddTag.appendChild(textfield)
+              addPointToMap({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon) })
+            })
+          // } else if (t.tag === 'XMP:LocationCreated' && Array.isArray(t.value)) {
+          //   textfield = document.createElement('input')
+          //   textfield.type = 'text'
+          //   textfield.value = `${t.value[0].GPSLatitude} ${t.value[0].GPSLongitude}`
           } else {
+            textfield = document.createElement('input')
+            textfield.type = 'text'
+            textfield.id = `loc_val_${i}`
+            textfield.name = t.tag
             textfield.value = t.value
+            textfield.disabled = t.disabled
+            ddTag.appendChild(textfield)
           }
-          textfield.name = t.tag
-          if (t.disabled) {
-            textfield.disabled = true
-          }
-          ddTag.appendChild(textfield)
           dl.appendChild(ddTag)
         }
       })
