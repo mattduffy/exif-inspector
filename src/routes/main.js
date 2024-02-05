@@ -235,6 +235,56 @@ router.post('fileUpload', '/upload', async (ctx) => {
   }
 })
 
+router.post('editMetadata', '/editMetadata', async (ctx) => {
+  const log = mainLog.extend('POST-editMetadata')
+  const error = mainError.extend('POST-editMetadata')
+  const opts = {
+    encoding: 'utf-8',
+    uploadDir: ctx.app.dirs.private.uploads,
+    keepExtensions: true,
+    multipart: true,
+  }
+  log(opts)
+  const form = formidable(opts)
+  await new Promise((resolve, reject) => {
+    form.parse(ctx.req, (err, fields) => {
+      if (err) {
+        error('There was a problem parsing the multipart form data.')
+        error(err)
+        reject(err)
+        return
+      }
+      log('Multipart form data was successfully parsed.')
+      ctx.request.body = fields
+      // ctx.request.files = files
+      // log(files)
+      log(fields)
+      resolve()
+    })
+  })
+  const csrfTokenCookie = ctx.cookies.get('csrfToken')
+  const csrfTokenSession = ctx.session.csrfToken
+  const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
+  if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
+  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
+  if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
+  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+    error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
+    error(`                     hidden:${csrfTokenHidden}`)
+    error(`                    session:${csrfTokenSession}`)
+    ctx.type = 'application/json; charset=utf-8'
+    ctx.status = 401
+    ctx.body = { error: 'csrf token mismatch' }
+  } else {
+    log('csrf token check passed')
+    const response = {}
+
+    ctx.type = 'application/json; charset=utf-8'
+    ctx.status = 200
+    ctx.body = response.fields
+  }
+})
+
 router.get('getEditedFile', '/inspected/:f', async (ctx) => {
   const log = mainLog.extend('GET-editedFile')
   const error = mainError.extend('GET-editedFile')
