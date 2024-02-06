@@ -143,6 +143,7 @@ function getLocationCoordinates(type, meta) {
   let lon
   let NS
   let EW
+  let tag = null
   if (type === 'EXIF') {
     lat = parseFloat(meta['EXIF:GPSLatitude'])
     NS = meta['EXIF:GPSLatitudeRef']
@@ -150,6 +151,7 @@ function getLocationCoordinates(type, meta) {
     lon = parseFloat(meta['EXIF:GPSLongitude'])
     EW = meta['EXIF:GPSLongitudeRef']
     if (/west/i.test(EW)) lon *= (-1)
+    tag = 'EXIF GPS'
   } else if (type === 'Composite') {
     const [_lat, _lon] = meta['Composite:GPSPosition'].split(', ');
     [lat, NS] = _lat.split(' ')
@@ -158,6 +160,7 @@ function getLocationCoordinates(type, meta) {
     [lon, EW] = _lon.split(' ')
     lon = parseFloat(lon)
     if (/w/i.test(EW)) lon *= (-1)
+    tag = 'Composite GPS'
   } else if (type === 'XMP') {
     lat = parseFloat(meta['XMP:LocationShownGPSLatitude'])
     NS = meta['EXIF:GPSLatitudeRef']
@@ -165,6 +168,7 @@ function getLocationCoordinates(type, meta) {
     lon = parseFloat(meta['XMP:LocationShownGPSLongitude'])
     EW = meta['EXIF:GPSLongitudeRef']
     if (/west/i.test(EW)) lon *= (-1)
+    tag = 'XMP Location Shown'
   } else if (type === 'XMP-struct') {
     lat = parseFloat(meta['XMP:LocationShown']?.[0]?.GPSLatitude);
     [NS] = meta['XMP:LocationShown']?.[0]?.GPSLatitude.match(/[NS]/i) ?? ''
@@ -180,7 +184,7 @@ function getLocationCoordinates(type, meta) {
   window.lon = lon
   window.NS = NS
   window.EW = EW
-  return [lat, lon, NS, EW]
+  return [lat, lon, NS, EW, tag]
 }
 function normalizeCoordinateTags() {
   // Prefer exif coords if present, else xmp
@@ -235,11 +239,19 @@ function tagListDiv(tag) {
   // console.log(`returning div: ${div}`)
   return div
 }
-function addPointToMap(point) {
-  console.log(point)
-  const marker = new window.mapkit.Coordinate(point.lat, point.lon)
-  const annotation = new window.mapkit.MarkerAnnotation(marker)
-  window.map.showItems([annotation])
+function addPointsToMap(points) {
+  console.log(points)
+  const annotations = []
+  if (Array.isArray(points)) {
+    points.forEach((point) => {
+      const marker = new window.mapkit.Coordinate(point.lat, point.lon)
+      annotations.push(new window.mapkit.MarkerAnnotation(marker, { title: point.tag }))
+    })
+  } else {
+    const marker = new window.mapkit.Coordinate(points.lat, points.lon)
+    annotations.push(new window.mapkit.MarkerAnnotation(marker, { title: points.tag }))
+  }
+  window.map.showItems(annotations)
 }
 function convertFromPolarToScalar(coord) {
   const x = coord.match(/(?<n>\d{1,3}\.?\d{0,9}) (?<c>[NSEW])/i)
@@ -275,7 +287,7 @@ async function setupMapKitJs() {
     },
   })
 }
-async function main(lat, lon) {
+async function main(lat, lon, tag) {
   if (lat === null || lon === null) {
     console.info('lat or lon (or both) are null, can\'t display map.')
   } else {
@@ -297,7 +309,7 @@ async function main(lat, lon) {
     window.map = new window.mapkit.Map(mapzone, opts)
     window.map.cameraDistance = CAMERA_ALT
     const marker = new window.mapkit.Coordinate(lat, lon)
-    const annotation = new window.mapkit.MarkerAnnotation(marker)
+    const annotation = new window.mapkit.MarkerAnnotation(marker, { title: tag })
     window.map.showItems([annotation])
   }
 }
@@ -476,12 +488,13 @@ async function send(data) {
     let NS
     let lon
     let EW
+    let tagLocation
     const locationTagType = hasLocationTags(results.metadata[0])
     if (locationTagType) {
-      [lat, lon, NS, EW] = getLocationCoordinates(locationTagType, results.metadata[0])
+      [lat, lon, NS, EW, tagLocation] = getLocationCoordinates(locationTagType, results.metadata[0])
       if (lat !== null && lon !== null) {
         console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
-        await main(lat, lon)
+        await main(lat, lon, tagLocation)
         const map = document.querySelector('div#mapzone')
         map.classList.remove('hidden')
         const dt = document.createElement('dt')
@@ -552,6 +565,7 @@ async function send(data) {
       const div = tagListDiv('locationzone')
       const dl = div.querySelector(':scope > dl')
       dl.id = 'locationDL'
+      const mapPoints = []
       window.locationtags.forEach((t, i) => {
         if (Array.isArray(t.value)) {
           console.log('%s is an array of tag values', t.tag)
@@ -576,12 +590,8 @@ async function send(data) {
               textfield.value = `${Slat} ${Slon}`
               textfield.disabled = t.disabled
               ddTag.appendChild(textfield)
-              addPointToMap({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon) })
+              mapPoints.push({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon), tag: `${t.tag} ${n + 1}` })
             })
-          // } else if (t.tag === 'XMP:LocationCreated' && Array.isArray(t.value)) {
-          //   textfield = document.createElement('input')
-          //   textfield.type = 'text'
-          //   textfield.value = `${t.value[0].GPSLatitude} ${t.value[0].GPSLongitude}`
           } else {
             textfield = document.createElement('input')
             textfield.type = 'text'
@@ -594,6 +604,9 @@ async function send(data) {
           dl.appendChild(ddTag)
         }
       })
+      if (mapPoints.length > 0) {
+        addPointsToMap(mapPoints)
+      }
       normalizeCoordinateTags()
     }
     if (showCARTags) {
