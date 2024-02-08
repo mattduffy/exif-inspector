@@ -502,6 +502,42 @@ async function send(data) {
         const locationListDiv = tagListDiv('locationzone')
         const dl = locationListDiv.querySelector(':scope > dl')
         dl.appendChild(dt)
+        // add input fields for selecting new map location
+        const dtNewLatitude = document.createElement('dt')
+        const newLatitudeLabel = document.createElement('label')
+        newLatitudeLabel.setAttribute('for', 'newLatitude')
+        newLatitudeLabel.textContent = 'New Latitude'
+        dtNewLatitude.appendChild(newLatitudeLabel)
+        dl.appendChild(dtNewLatitude)
+        const ddNewLatitude = document.createElement('dd')
+        const newLatitudeInput = document.createElement('input')
+        newLatitudeInput.type = 'text'
+        newLatitudeInput.id = 'newLatitude'
+        newLatitudeInput.setAttribute('name', 'newLatitude')
+        ddNewLatitude.appendChild(newLatitudeInput)
+        dl.appendChild(ddNewLatitude)
+        const dtNewLongitude = document.createElement('dt')
+        const newLongitudeLabel = document.createElement('label')
+        newLongitudeLabel.setAttribute('for', 'newLongitude')
+        newLongitudeLabel.textContent = 'New Longitude'
+        dtNewLongitude.appendChild(newLongitudeLabel)
+        dl.appendChild(dtNewLongitude)
+        const ddNewLongitude = document.createElement('dd')
+        const newLongitudeInput = document.createElement('input')
+        newLongitudeInput.type = 'text'
+        newLongitudeInput.id = 'newLongitude'
+        newLongitudeInput.setAttribute('name', 'newLongitude')
+        ddNewLongitude.appendChild(newLongitudeInput)
+        dl.appendChild(ddNewLongitude)
+        window.map.addEventListener('single-tap', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          const { latitude, longitude } = window.map.convertPointOnPageToCoordinate(e.pointOnPage)
+          const newLat = document.querySelector('dd > input[name="newLatitude"]')
+          const newLon = document.querySelector('dd > input[name="newLongitude"]')
+          newLat.value = latitude
+          newLon.value = longitude
+        })
       }
     }
     let x = 0
