@@ -193,10 +193,12 @@ function normalizeCoordinateTags() {
   const exifLon = dl.querySelector(':scope input[name="EXIF:GPSLongitude"]')
   const xmpLocationShown = dl.querySelector(':scope input[name="XMP:LocationShown"]')
   const xmpLocationCreated = dl.querySelector(':scope input[name="XMP:LocationCreated"]')
-  const xmpShownLat = dl.querySelector(':scope input[name="XMP:LocationShownGPSLatitude"]')
-  const xmpShownLon = dl.querySelector(':scope input[name="XMP:LocationShownGPSLongitude"]')
-  const xmpCreatedLat = dl.querySelector(':scope input[name="XMP:LocationCreatedGPSLatitude"]')
-  const xmpCreatedLon = dl.querySelector(':scope input[name="XMP:LcoationCreatedGPSLongitude"]')
+  const xmpLocationShownLatLon = dl.querySelectorAll(':scope input[name^="XMP:LocationShown:LatLon"]')
+  const xmpLocationCreatedLatLon = dl.querySelectorAll(':scope input[name^="XMP:LocationCreated:LatLon"]')
+  const xmpShownLat = dl.querySelector(':scope input[name^="XMP:LocationShown:GPSLat"]')
+  const xmpShownLon = dl.querySelector(':scope input[name^="XMP:LocationShown:GPSLon"]')
+  const xmpCreatedLat = dl.querySelector(':scope input[name^="XMP:LocationCreated:GPSLat"]')
+  const xmpCreatedLon = dl.querySelector(':scope input[name^="XMP:LcoationCreated:GPSLon"]')
   if (exifLat !== null) {
     exifLat.disabled = false
     exifLon.disabled = false
@@ -204,14 +206,31 @@ function normalizeCoordinateTags() {
     if (xmpShownLon !== null) xmpShownLon.disabled = true
     if (xmpCreatedLat !== null) xmpCreatedLat.disabled = true
     if (xmpCreatedLon !== null) xmpCreatedLon.disabled = true
-  } else if (xmpLocationShown !== null) {
-    xmpLocationShown.disabled = false
-    if (xmpLocationCreated !== null) xmpLocationCreated.disabled = false
-  } else if (xmpShownLat !== null) {
-    if (xmpShownLat !== null) xmpShownLat.disabled = false
-    if (xmpShownLon !== null) xmpShownLon.disabled = false
-    if (xmpCreatedLat !== null) xmpCreatedLat.disabled = true
-    if (xmpCreatedLon !== null) xmpCreatedLon.disabled = true
+    if (xmpLocationShownLatLon !== null) xmpLocationShownLatLon.disabled = true
+    if (xmpLocationCreatedLatLon !== null) xmpLocationCreatedLatLon.disabled = true
+  } else {
+    if (xmpLocationShown !== null) {
+      xmpLocationShown.disabled = false
+      if (xmpLocationCreated !== null) xmpLocationCreated.disabled = false
+    }
+    if (xmpLocationShownLatLon.length > 0) {
+      xmpLocationShownLatLon.forEach((n) => {
+        /* eslint-disable-next-line */
+        n.disabled = false
+      })
+    }
+    if (xmpLocationCreatedLatLon.length > 0) {
+      xmpLocationCreatedLatLon.forEach((n) => {
+        /* eslint-disable-next-line */
+        n.disabled = false
+      })
+    }
+    if (xmpShownLat !== null) {
+      xmpShownLat.disabled = false
+      if (xmpShownLon !== null) xmpShownLon.disabled = false
+      if (xmpCreatedLat !== null) xmpCreatedLat.disabled = true
+      if (xmpCreatedLon !== null) xmpCreatedLon.disabled = true
+    }
   }
 }
 function tagListDiv(tag) {
@@ -240,7 +259,7 @@ function tagListDiv(tag) {
   return div
 }
 function addPointsToMap(points) {
-  console.log(points)
+  // console.log(points)
   const annotations = []
   if (Array.isArray(points)) {
     points.forEach((point) => {
@@ -617,13 +636,15 @@ async function send(data) {
           let textfield
           if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated') && Array.isArray(t.value)) {
             t.value.forEach((s, n) => {
+              console.log(s)
               textfield = document.createElement('input')
               textfield.type = 'text'
               textfield.id = `loc_val_${i}_${n}`
-              textfield.name = `${t.tag}:${s}`
+              // textfield.name = `${t.tag}:${s}`
+              textfield.name = `${t.tag}:LatLon:${n}`
               const Slat = t.value[n].GPSLatitude
               const Slon = t.value[n].GPSLongitude
-              textfield.value = `${Slat} ${Slon}`
+              textfield.value = `${Slat}, ${Slon}`
               textfield.disabled = t.disabled
               ddTag.appendChild(textfield)
               mapPoints.push({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon), tag: `${t.tag} ${n + 1}` })
