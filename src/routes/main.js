@@ -266,8 +266,8 @@ router.post('editMetadata', '/editMetadata', async (ctx) => {
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
-  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
+  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
   if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
@@ -277,11 +277,10 @@ router.post('editMetadata', '/editMetadata', async (ctx) => {
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
-    const response = {}
-
-    ctx.type = 'application/json; charset=utf-8'
-    ctx.status = 200
-    ctx.body = response.fields
+    const res = { fields: JSON.parse(ctx.request.body.metadata[0]) }
+    ctx.response.status = 200
+    ctx.response.type = 'application/json; charset=utf-8'
+    ctx.response.body = res.fields ?? { huh: 'whut?' }
   }
 })
 
