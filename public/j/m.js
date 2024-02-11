@@ -237,7 +237,6 @@ function tagListDiv(tag) {
   if (tag === undefined || tag === null || tag === '') {
     return false
   }
-  // console.log(`div#${tag}`)
   let div = document.querySelector(`div#${tag}`)
   /* eslint-disable-next-line */
   if (!!!div) {
@@ -249,17 +248,13 @@ function tagListDiv(tag) {
     let dl = div.querySelector(':scope > dl')
     /* eslint-disable-next-line */
     if (!!!dl) {
-      // console.log(`creating dl for ${tag}`)
       dl = document.createElement('dl')
       div.appendChild(dl)
     }
-    // div.classList.remove('hidden')
   }
-  // console.log(`returning div: ${div}`)
   return div
 }
 function addPointsToMap(points) {
-  // console.log(points)
   const annotations = []
   if (Array.isArray(points)) {
     points.forEach((point) => {
@@ -390,6 +385,9 @@ submitButton.addEventListener('click', (e) => {
   }
   setFileInfo()
 })
+function _x() {
+
+}
 async function setFileInfo(file = null) {
   formData.append('csrfTokenHidden', form['csrf-token'].value)
   formData.append('tagSet', form.tagSet.value)
@@ -551,11 +549,25 @@ async function send(data) {
         window.map.addEventListener('single-tap', (e) => {
           e.preventDefault()
           e.stopPropagation()
-          const { latitude, longitude } = window.map.convertPointOnPageToCoordinate(e.pointOnPage)
+          let { latitude, longitude } = window.map.convertPointOnPageToCoordinate(e.pointOnPage)
+          latitude = latitude.toFixed(6)
+          longitude = longitude.toFixed(6)
+          let cLatitude = 'N'
+          let cLongitude = 'E'
+          let negLat = 1
+          let negLon = 1
           const newLat = document.querySelector('dd > input[name="newLatitude"]')
           const newLon = document.querySelector('dd > input[name="newLongitude"]')
-          newLat.value = latitude
-          newLon.value = longitude
+          if (parseFloat(latitude) < 0) {
+            cLatitude = 'S'
+            negLat = -1
+          }
+          if (parseFloat(longitude) < 0) {
+            cLongitude = 'W'
+            negLon = -1
+          }
+          newLat.value = `${latitude}\tor\t${parseFloat(latitude) * negLat} ${cLatitude}`
+          newLon.value = `${longitude}\tor\t${parseFloat(longitude) * negLon} ${cLongitude}`
         })
       }
     }
@@ -626,39 +638,47 @@ async function send(data) {
           console.log('%s is an array of tag values', t.tag)
         }
         if (t.value !== '') {
-          const label = document.createElement('label')
-          label.setAttribute('for', `loc_val_${i}`)
-          label.innerText = t.tag
-          const dtTag = document.createElement('dt')
-          const ddTag = document.createElement('dd')
-          dtTag.appendChild(label)
-          dl.appendChild(dtTag)
-          let textfield
           if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated') && Array.isArray(t.value)) {
             t.value.forEach((s, n) => {
               console.log(s)
-              textfield = document.createElement('input')
+              const m = n + 1
+              const label = document.createElement('label')
+              label.setAttribute('for', `loc_val_${i}_${m}`)
+              label.textContent = `${t.tag} #${m}`
+              const dtTag = document.createElement('dt')
+              const ddTag = document.createElement('dd')
+              dtTag.appendChild(label)
+              dl.appendChild(dtTag)
+              const textfield = document.createElement('input')
               textfield.type = 'text'
-              textfield.id = `loc_val_${i}_${n}`
+              textfield.id = `loc_val_${i}_${m}`
               // textfield.name = `${t.tag}:${s}`
-              textfield.name = `${t.tag}:LatLon:${n}`
+              textfield.name = `${t.tag}:LatLon:${m}`
               const Slat = t.value[n].GPSLatitude
               const Slon = t.value[n].GPSLongitude
               textfield.value = `${Slat}, ${Slon}`
               textfield.disabled = t.disabled
               ddTag.appendChild(textfield)
-              mapPoints.push({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon), tag: `${t.tag} ${n + 1}` })
+              dl.appendChild(ddTag)
+              mapPoints.push({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon), tag: `${t.tag} #${m}` })
             })
           } else {
-            textfield = document.createElement('input')
+            const label = document.createElement('label')
+            label.setAttribute('for', `loc_val_${i}`)
+            label.innerText = t.tag
+            const dtTag = document.createElement('dt')
+            const ddTag = document.createElement('dd')
+            dtTag.appendChild(label)
+            dl.appendChild(dtTag)
+            const textfield = document.createElement('input')
             textfield.type = 'text'
             textfield.id = `loc_val_${i}`
             textfield.name = t.tag
             textfield.value = t.value
             textfield.disabled = t.disabled
             ddTag.appendChild(textfield)
+            dl.appendChild(ddTag)
           }
-          dl.appendChild(ddTag)
         }
       })
       if (mapPoints.length > 0) {
