@@ -191,6 +191,7 @@ function normalizeCoordinateTags() {
   const dl = document.querySelector('dl#locationDL')
   const exifLat = dl.querySelector(':scope input[name="EXIF:GPSLatitude"]')
   const exifLon = dl.querySelector(':scope input[name="EXIF:GPSLongitude"]')
+  const xmpLocation = dl.querySelector(':scope input[name="XMP:Location"]')
   const xmpLocationShown = dl.querySelector(':scope input[name="XMP:LocationShown"]')
   const xmpLocationCreated = dl.querySelector(':scope input[name="XMP:LocationCreated"]')
   const xmpLocationShownLatLon = dl.querySelectorAll(':scope input[name^="XMP:LocationShown:LatLon"]')
@@ -225,6 +226,7 @@ function normalizeCoordinateTags() {
         n.disabled = false
       })
     }
+    if (xmpLocation !== null) xmpLocation.disabled = false
     if (xmpShownLat !== null) {
       xmpShownLat.disabled = false
       if (xmpShownLon !== null) xmpShownLon.disabled = false
@@ -571,7 +573,7 @@ async function send(data) {
         })
       }
     }
-    let x = 0
+    let x = 1
     const seen = new Set()
     let showLocationTags = false
     let showOtherTags = false
@@ -692,7 +694,7 @@ async function send(data) {
       window.cartags.forEach((t, i) => {
         if (t.value !== '') {
           const label = document.createElement('label')
-          label.setAttribute('for', `car_val_${i}`)
+          label.setAttribute('for', `car_val_${x}_${i}`)
           label.innerText = t.tag
           const dtTag = document.createElement('dt')
           const ddTag = document.createElement('dd')
@@ -700,7 +702,7 @@ async function send(data) {
           dl.appendChild(dtTag)
           const textarea = document.createElement('textarea')
           textarea.name = t.tag
-          textarea.id = `car_val_${x}`
+          textarea.id = `car_val_${x}_${i}`
           textarea.rows = 3
           textarea.style.width = '95%'
           textarea.value = t.value
