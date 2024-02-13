@@ -224,6 +224,17 @@ async function cors(ctx, next) {
   }
 }
 
+async function acceptCH(ctx, next) {
+  const err = error.extend('Accept-CH')
+  ctx.set('Accept-CH', 'Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Bitness, Sec-CH-UA-Wow64')
+  try {
+    await next()
+  } catch (e) {
+    err(e)
+    ctx.throw(500, 'Rethrown in Accept-CH middleware', e)
+  }
+}
+
 // checking to see if mongodb client is working
 async function isMongo(ctx, next) {
   const logg = log.extend('isMongo')
@@ -310,6 +321,7 @@ app.use(checkServerJWKs)
 app.use(proxyCheck)
 app.use(csp)
 app.use(cors)
+app.use(acceptCH)
 app.use(serve(app.dirs.public.dir))
 app.use(theApp.routes())
 app.use(Auth.routes())
