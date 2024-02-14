@@ -270,7 +270,10 @@ function addPointsToMap(points) {
   window.map.showItems(annotations)
 }
 function convertFromPolarToScalar(coord) {
-  const x = coord.match(/(?<n>\d{1,3}\.?\d{0,9}) (?<c>[NSEW])/i)
+  const x = coord.match(/(?<sign>\+|-)?(?<n>\d{1,3}\.?\d{0,9})\s?(?<c>[NSEW])?/i)
+  if (x.groups.sign !== undefined) {
+    return parseFloat(`${(x.groups.sign === '-' ? '-' : '')}${x.groups.n}`)
+  }
   let n = parseFloat(x.groups.n)
   if (x.groups.c.toLowerCase() === 's' || x.groups.c.toLowerCase() === 'w') {
     n *= (-1)
@@ -533,6 +536,7 @@ async function send(data) {
         newLatitudeInput.type = 'text'
         newLatitudeInput.id = 'newLatitude'
         newLatitudeInput.setAttribute('name', 'newLatitude')
+        newLatitudeInput.placeholder = 'Select a location on the map to get new coordinates.'
         ddNewLatitude.appendChild(newLatitudeInput)
         dl.appendChild(ddNewLatitude)
         const dtNewLongitude = document.createElement('dt')
@@ -546,6 +550,7 @@ async function send(data) {
         newLongitudeInput.type = 'text'
         newLongitudeInput.id = 'newLongitude'
         newLongitudeInput.setAttribute('name', 'newLongitude')
+        newLongitudeInput.placeholder = 'Select a location on the map to get new coordinates.'
         ddNewLongitude.appendChild(newLongitudeInput)
         dl.appendChild(ddNewLongitude)
         window.map.addEventListener('single-tap', (e) => {

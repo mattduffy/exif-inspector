@@ -180,9 +180,10 @@ router.post('fileUpload', '/upload', async (ctx) => {
       // run exif command here
       log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
       exiftool = await exiftool.init(images)
-      exiftool.enableBinaryTagOutput(true)
       const expandStructs = true
       exiftool.enableXMPStructTagOutput(expandStructs)
+      exiftool.setGPSCoordinatesOutputFormat('+gps')
+      exiftool.enableBinaryTagOutput(true)
       exiftool.setOverwriteOriginal(false)
       const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
