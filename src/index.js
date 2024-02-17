@@ -161,8 +161,8 @@ async function openGraph(ctx, next) {
   ogArray.push('<meta property="og:type" content="website">')
   ogArray.push('<meta property="og:site_name" content="EXIF Inspector">')
   ogArray.push('<meta property="og:title" content="Image metadata inspector">')
-  ogArray.push(`<meta property="og:url" content="${ctx.request.href}${ctx.request.search}">`)
-  ogArray.push(`<meta property="og:image" content="${ctx.request.origin}/i/ei-ogEmbed-450x295.png">`)
+  ogArray.push(`<meta property="og:url" content="${ctx.request.protocol}://${ctx.app.domain}${ctx.request.path}">`)
+  ogArray.push(`<meta property="og:image" content="${ctx.request.protocol}://${ctx.app.domain}/i/ei-ogEmbed-450x295.png">`)
   ogArray.push('<meta property="og:image:type" content="image/jpeg">')
   ogArray.push('<meta property="og:image:width" content="450">')
   ogArray.push('<meta property="og:image:height" content="295">')
@@ -184,20 +184,20 @@ async function csp(ctx, next) {
     + 'frame-ancestors \'none\'; '
     + 'object-src \'none\'; '
     + 'form-action \'self\'; '
-    + `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' ${ctx.request.origin}; `
-    + `style-src-attr 'self' 'unsafe-inline' ${ctx.request.origin}; `
-    + `style-src-elem 'self' 'unsafe-inline' ${ctx.request.origin}; `
-    + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' ${ctx.request.origin}; `
-    + `script-src-attr 'self' 'nonce-${nonce}' ${ctx.request.origin}; `
-    + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.origin} *.apple-mapkit.com; `
-    + `img-src 'self' data: blob: ${ctx.request.origin} *; `
-    + `font-src 'self' ${ctx.request.origin}; `
-    + `media-src 'self' data: ${ctx.request.origin}; `
+    + `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `style-src-attr 'self' 'unsafe-inline' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `style-src-elem 'self' 'unsafe-inline' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `script-src-attr 'self' 'nonce-${nonce}' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.protocol}://${ctx.app.domain} *.apple-mapkit.com; `
+    + `img-src 'self' data: blob: ${ctx.request.protocol}://${ctx.app.domain} *; `
+    + `font-src 'self' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `media-src 'self' data: ${ctx.request.protocol}://${ctx.app.domain}; `
     + 'frame-src \'self\'; '
-    + `child-src 'self' blob: ${ctx.request.origin}; `
-    + `worker-src 'self' blob: ${ctx.request.origin}; `
-    + `manifest-src 'self' blob: ${ctx.request.origin}; `
-    + `connect-src 'self' blob: ${ctx.request.origin} *.ls.apple.com *.apple-mapkit.com *.geo.apple.com; `
+    + `child-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `worker-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `manifest-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `connect-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain} *.ls.apple.com *.apple-mapkit.com *.geo.apple.com; `
   ctx.set('Content-Security-Policy', policy)
   logg(`Content-Security-Policy: ${policy}`)
   try {
@@ -213,7 +213,7 @@ async function cors(ctx, next) {
   const err = error.extend('CORS')
   logg('Cors middleware checking headers.')
   ctx.set('Vary', 'Origin')
-  ctx.set('Access-Control-Allow-Origin', ctx.request.origin)
+  ctx.set('Access-Control-Allow-Origin', `${ctx.request.protocol}://${ctx.app.domain}`)
   ctx.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
   ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS')
   try {
@@ -226,7 +226,7 @@ async function cors(ctx, next) {
 
 async function acceptCH(ctx, next) {
   const err = error.extend('Accept-CH')
-  ctx.set('Accept-CH', 'Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Bitness, Sec-CH-UA-Wow64')
+  ctx.set('Accept-CH', 'Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Bitness, Sec-CH-UA-Wow64, Device-Memory, Width, Viewport-Width')
   try {
     await next()
   } catch (e) {
@@ -254,7 +254,7 @@ async function isMongo(ctx, next) {
 
 async function viewGlobals(ctx, next) {
   ctx.state.nonce = crypto.randomBytes(16).toString('base64')
-  ctx.state.origin = ctx.request.origin
+  ctx.state.origin = `${ctx.request.protocol}://${ctx.app.domain}`
   ctx.state.siteName = ctx.app.site
   ctx.state.appName = ctx.app.site.toProperCase()
   ctx.state.pageDescription = 'Inspect and edit the EXIF metadata in your photos.'
@@ -265,7 +265,7 @@ async function viewGlobals(ctx, next) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Exif Inspector: view and edit image metadata.',
-    url: ctx.request.origin,
+    url: `${ctx.request.protocol}://${ctx.app.domain}`,
   }
   await next()
 }
