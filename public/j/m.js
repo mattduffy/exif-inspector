@@ -390,9 +390,7 @@ submitButton.addEventListener('click', (e) => {
   }
   setFileInfo()
 })
-function _x() {
 
-}
 async function setFileInfo(file = null) {
   formData.append('csrfTokenHidden', form['csrf-token'].value)
   formData.append('tagSet', form.tagSet.value)
@@ -659,7 +657,6 @@ async function send(data) {
               const textfield = document.createElement('input')
               textfield.type = 'text'
               textfield.id = `loc_val_${i}_${m}`
-              // textfield.name = `${t.tag}:${s}`
               textfield.name = `${t.tag}:LatLon:${m}`
               const Slat = t.value[n].GPSLatitude
               const Slon = t.value[n].GPSLongitude
@@ -688,6 +685,31 @@ async function send(data) {
           }
         }
       })
+      const locationForm = document.createElement('form')
+      locationForm.id = 'locationForm'
+      locationForm.name = 'location'
+      locationForm.action = `${origin}/editLocation`
+      locationForm.method = 'POST'
+      locationForm.enctype = 'multipart/form-data'
+      const locationFieldset = document.createElement('fieldset')
+      locationForm.appendChild(locationFieldset)
+      const locationLegend = document.createElement('legend')
+      locationLegend.textContent = 'Update Image Location Metadata'
+      locationFieldset.appendChild(locationLegend)
+      const locationReset = document.createElement('input')
+      locationReset.type = 'reset'
+      // locationFieldset.appendChild(locationReset)
+      const locationSubmit = document.createElement('input')
+      locationSubmit.type = 'submit'
+      locationSubmit.id = 'locationSubmit_Id'
+      locationSubmit.name = 'locationSubmit'
+      locationForm.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        console.log(e)
+      })
+      locationFieldset.appendChild(locationSubmit)
+      div.appendChild(locationForm)
       if (mapPoints.length > 0) {
         addPointsToMap(mapPoints)
       }
