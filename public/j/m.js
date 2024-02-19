@@ -662,6 +662,12 @@ async function send(data) {
               const Slon = t.value[n].GPSLongitude
               textfield.value = `${Slat}, ${Slon}`
               textfield.disabled = t.disabled
+              if (!textfield.disabled) {
+                console.log('add change event listener to ', textfield.name)
+                textfield.addEventListener('change', (e) => {
+                  console.log(e.target, e.target?.value)
+                })
+              }
               ddTag.appendChild(textfield)
               dl.appendChild(ddTag)
               mapPoints.push({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon), tag: `${t.tag} #${m}` })
@@ -680,6 +686,12 @@ async function send(data) {
             textfield.name = t.tag
             textfield.value = t.value
             textfield.disabled = t.disabled
+            if (!textfield.disabled) {
+              console.log('add change event listener to ', textfield.name)
+              textfield.addEventListener('change', (e) => {
+                console.log(e.target, e.target?.value)
+              })
+            }
             ddTag.appendChild(textfield)
             dl.appendChild(ddTag)
           }
@@ -710,6 +722,7 @@ async function send(data) {
       })
       locationFieldset.appendChild(locationSubmit)
       div.appendChild(locationForm)
+      const locationFormData = new FormData(locationForm)
       if (mapPoints.length > 0) {
         addPointsToMap(mapPoints)
       }
