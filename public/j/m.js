@@ -408,6 +408,38 @@ function changeLocationTag(e) {
   }
   window.editedLocationTags.set(e.target.name, values)
 }
+async function submitLocationEdits(e) {
+  e.preventDefault()
+  e.stopPropagation()
+  // console.log(e)
+  if (window.editedLocationTags.size > 0) {
+    window.locationFormData.append('csrfTokenHidden', form['csrf-token'].value)
+    window.editedLocationTags.forEach((v, k) => {
+      window.locationFormData.append(k, v[1])
+    })
+  }
+  const entries = window.locationFormData.entries()
+  console.log(...entries)
+  const opts = {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${window.access}`,
+    },
+    body: window.locationFormData,
+  }
+  console.log(opts)
+  const url = new window.URL(`${origin}/editLocation`)
+  console.log(url.toString())
+  const request = new Request(url, opts)
+  console.log(request)
+  const response = await fetch(request, { credentials: 'same-origin' })
+  let results
+  if (response.status === 200) {
+    results = await response.json()
+    console.log(results)
+  }
+}
 function resetLocationTags(e) {
   console.log('reseting location tags: ', e)
   window.editedLocationTags.forEach((v, k) => {
@@ -600,13 +632,11 @@ async function send(data) {
       }
     }
     let x = 1
-    const seen = new Set()
     let showLocationTags = false
     let showOtherTags = false
     let showCARTags = false
     tags.forEach((tag) => {
-      const [g, t] = tag.split(':')
-      seen.add(g)
+      const [, t] = tag.split(':')
       x += 1
       const dtTag = document.createElement('dt')
       const ddTag = document.createElement('dd')
@@ -686,7 +716,7 @@ async function send(data) {
               textfield.value = `${Slat}, ${Slon}`
               textfield.disabled = t.disabled
               if (!textfield.disabled) {
-                console.log('add change event listener to ', textfield.name)
+                // console.log('add change event listener to ', textfield.name)
                 textfield.addEventListener('focus', focusLocationTag)
                 textfield.addEventListener('change', changeLocationTag)
               }
@@ -709,7 +739,7 @@ async function send(data) {
             textfield.value = t.value
             textfield.disabled = t.disabled
             if (!textfield.disabled) {
-              console.log('add change event listener to ', textfield.name)
+              // console.log('add change event listener to ', textfield.name)
               textfield.addEventListener('focus', focusLocationTag)
               textfield.addEventListener('change', changeLocationTag)
             }
@@ -739,18 +769,7 @@ async function send(data) {
       locationSubmit.name = 'locationSubmit'
       window.locationFormData = new FormData(locationForm)
       console.dir(window.locationFormData)
-      locationForm.addEventListener('submit', async (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        // console.log(e)
-        if (window.editedLocationTags.size > 0) {
-          window.editedLocationTags.forEach((v, k) => {
-            window.locationFormData.append(k, v[1])
-          })
-        }
-        const entries = window.locationFormData.entries()
-        console.log(...entries)
-      })
+      locationForm.addEventListener('submit', submitLocationEdits)
       locationFieldset.appendChild(locationSubmit)
       div.appendChild(locationForm)
       if (mapPoints.length > 0) {

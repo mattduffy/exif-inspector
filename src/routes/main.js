@@ -236,7 +236,8 @@ router.post('fileUpload', '/upload', async (ctx) => {
   }
 })
 
-router.post('editMetadata', '/editMetadata', async (ctx) => {
+// router.post('editMetadata', '/editMetadata', async (ctx) => {
+router.post('editLocation', '/editLocation', async (ctx) => {
   const log = mainLog.extend('POST-editMetadata')
   const error = mainError.extend('POST-editMetadata')
   const opts = {
@@ -278,7 +279,8 @@ router.post('editMetadata', '/editMetadata', async (ctx) => {
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
-    const res = { fields: JSON.parse(ctx.request.body.metadata[0]) }
+    // const res = { fields: JSON.parse(ctx.request.body.metadata[0]) }
+    const res = { fields: ctx.request.body }
     ctx.response.status = 200
     ctx.response.type = 'application/json; charset=utf-8'
     ctx.response.body = res.fields ?? { huh: 'whut?' }
