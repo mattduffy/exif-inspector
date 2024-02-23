@@ -393,58 +393,75 @@ submitButton.addEventListener('click', (e) => {
 
 window.editedLocationTags = new Map()
 function focusLocationTag(e) {
-  console.log('focus: ', e.target.name, e.target.value)
   if (!window.editedLocationTags.has(e.target.name)) {
+    console.log('focus: ', e.target.name, e.target.value)
     window.editedLocationTags.set(e.target.name, [e.target.value])
   }
 }
 function changeLocationTag(e) {
-  console.log('change: ', window.editedLocationTags.get(e.target.name))
   const values = window.editedLocationTags.get(e.target.name) ?? []
-  if (values[0] === undefined) {
-    values.push(e.target.value)
-  } else {
+  if (values[0] !== e.target.value) {
     values[1] = e.target.value
+    console.log('change: ', window.editedLocationTags.get(e.target.name))
+    window.editedLocationTags.set(e.target.name, values)
+  } else {
+    console.log('no change: ', window.editedLocationTags.get(e.target.name))
   }
-  window.editedLocationTags.set(e.target.name, values)
 }
 async function submitLocationEdits(e) {
   e.preventDefault()
   e.stopPropagation()
-  // console.log(e)
+  // console.log('pre ', ...window.locationFormData.entries())
   if (window.editedLocationTags.size > 0) {
-    window.locationFormData.append('csrfTokenHidden', form['csrf-token'].value)
     window.editedLocationTags.forEach((v, k) => {
-      window.locationFormData.append(k, v[1])
+      if (v[1] !== undefined) {
+        window.locationFormData.append(k, v[1])
+      }
     })
+    const entries = window.locationFormData.entries()
+    const empty = entries.next()
+    if (!empty.done) {
+      window.locationFormData.append('inspectedFilename', form.inspectedFilename.value)
+      window.locationFormData.append('csrfTokenHidden', form['csrf-token'].value)
+      // console.log('post ', ...entries)
+      const opts = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${window.access}`,
+        },
+        body: window.locationFormData,
+      }
+      console.log(opts)
+      const url = new window.URL(`${origin}/editLocation`)
+      console.log(url.toString())
+      const request = new Request(url, opts)
+      console.log(request)
+      let response
+      let results
+      try {
+        response = await fetch(request, { credentials: 'same-origin' })
+        if (response.status === 200) {
+          results = await response.json()
+          console.log(results)
+          window.editedLocationTags.clear()
+        }
+      } catch (err) {
+        console.info('problem with fetch or response')
+        console.info(err)
+      }
+      return true
+    }
   }
-  const entries = window.locationFormData.entries()
-  console.log(...entries)
-  const opts = {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${window.access}`,
-    },
-    body: window.locationFormData,
-  }
-  console.log(opts)
-  const url = new window.URL(`${origin}/editLocation`)
-  console.log(url.toString())
-  const request = new Request(url, opts)
-  console.log(request)
-  const response = await fetch(request, { credentials: 'same-origin' })
-  let results
-  if (response.status === 200) {
-    results = await response.json()
-    console.log(results)
-  }
+  console.info('clicked submit, but no changes made.')
+  return false
 }
 function resetLocationTags(e) {
   console.log('reseting location tags: ', e)
   window.editedLocationTags.forEach((v, k) => {
     [document.querySelector(`input[name="${k}"]`).value] = v
   })
+  window.editedLocationTags.clear()
 }
 async function setFileInfo(file = null) {
   formData.append('csrfTokenHidden', form['csrf-token'].value)
@@ -768,7 +785,7 @@ async function send(data) {
       locationSubmit.id = 'locationSubmit_Id'
       locationSubmit.name = 'locationSubmit'
       window.locationFormData = new FormData(locationForm)
-      console.dir(window.locationFormData)
+      // console.dir('locationFormData: ', ...window.locationFormData.entries())
       locationForm.addEventListener('submit', submitLocationEdits)
       locationFieldset.appendChild(locationSubmit)
       div.appendChild(locationForm)
