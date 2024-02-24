@@ -391,6 +391,78 @@ submitButton.addEventListener('click', (e) => {
   setFileInfo()
 })
 
+window.editedCARTags = new Map()
+function focusCARTag(e) {
+  if (!window.editedCARTags.has(e.target.name)) {
+    console.info('focus: ', e.target.name, e.target.value)
+    window.editedCARTags.set(e.target.name, [e.target.value])
+  }
+}
+function changeCARTag(e) {
+  const values = window.editedCARTags.get(e.target.name) ?? []
+  if (values[0] !== e.target.value) {
+    values[1] = e.target.value
+    console.info('change: ', window.editedCARTags.get(e.target.name))
+    window.editedCARTags.set(e.target.name, values)
+  } else {
+    console.info('no change: ', window.editedCARTags.get(e.target.name))
+  }
+}
+function resetCARTags(e) {
+  console.log('reseting CAR tags: ', e)
+  window.editedCARTags.forEach((v, k) => {
+    [document.querySelector(`input[name="${k}"]`).value] = v
+  })
+  window.editedCARTags.clear()
+}
+async function submitCAREdits(e) {
+  e.preventDefault()
+  e.stopPropagation()
+  // console.log('pre ', ...window.carFormData.entries())
+  if (window.editedCARTags.size > 0) {
+    window.editedCARTags.forEach((v, k) => {
+      if (v[1] !== undefined) {
+        window.carFormData.append(k, v[1])
+      }
+    })
+    const entries = window.carFormData.entries()
+    const empty = entries.next()
+    if (!empty.done) {
+      window.carFormData.append('inspectedFilename', form.inspectedFilename.value)
+      window.carFormData.append('csrfTokenHidden', form['csrf-token'].value)
+      // console.log('post ', ...entries)
+      const opts = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${window.access}`,
+        },
+        body: window.carFormData,
+      }
+      console.log(opts)
+      const url = new window.URL(`${origin}/editCAR`)
+      console.log(url.toString())
+      const request = new Request(url, opts)
+      console.log(request)
+      let response
+      let results
+      try {
+        response = await fetch(request, { credentials: 'same-origin' })
+        if (response.status === 200) {
+          results = await response.json()
+          console.log(results)
+          window.editedCARTags.clear()
+        }
+      } catch (err) {
+        console.info('problem with fetch or response')
+        console.info(err)
+      }
+      return true
+    }
+  }
+  console.info('clicked submit, but no changes made.')
+  return false
+}
 window.editedLocationTags = new Map()
 function focusLocationTag(e) {
   if (!window.editedLocationTags.has(e.target.name)) {
@@ -774,7 +846,8 @@ async function send(data) {
       const locationFieldset = document.createElement('fieldset')
       locationForm.appendChild(locationFieldset)
       const locationLegend = document.createElement('legend')
-      locationLegend.textContent = 'Update Image Location Metadata'
+      locationLegend.textContent = 'Update Location Metadata'
+      locationLegend.classList.add('mono')
       locationFieldset.appendChild(locationLegend)
       const locationReset = document.createElement('input')
       locationReset.type = 'reset'
@@ -812,10 +885,40 @@ async function send(data) {
           textarea.rows = 3
           textarea.style.width = '95%'
           textarea.value = t.value
+          if (!textarea.disabled) {
+            // console.log('add change event listener to ', textarea.name)
+            textarea.addEventListener('focus', focusCARTag)
+            textarea.addEventListener('change', changeCARTag)
+          }
           ddTag.appendChild(textarea)
           dl.appendChild(ddTag)
         }
       })
+      const carForm = document.createElement('form')
+      carForm.id = 'carForm'
+      carForm.name = 'car'
+      carForm.action = `${origin}/editCAR`
+      carForm.method = 'POST'
+      carForm.enctype = 'multipart/form-data'
+      const carFieldset = document.createElement('fieldset')
+      carForm.appendChild(carFieldset)
+      const carLegend = document.createElement('legend')
+      carLegend.textContent = 'Update Content, Rights, and Attribution Metadata'
+      carLegend.classList.add('mono')
+      carFieldset.appendChild(carLegend)
+      const carReset = document.createElement('input')
+      carReset.type = 'reset'
+      carFieldset.appendChild(carReset)
+      carReset.addEventListener('click', resetCARTags)
+      const carSubmit = document.createElement('input')
+      carSubmit.type = 'submit'
+      carSubmit.id = 'carSubmit_Id'
+      carSubmit.name = 'carSubmit'
+      window.carFormData = new FormData(carForm)
+      // console.dir('carFormData: ', ...window.carFormData.entries())
+      carForm.addEventListener('submit', submitCAREdits)
+      carFieldset.appendChild(carSubmit)
+      div.appendChild(carForm)
       document.querySelector('div#contentzone').classList.remove('hidden')
     }
     const zones = window.metadataSection.children
