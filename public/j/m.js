@@ -849,10 +849,6 @@ async function send(data) {
       locationLegend.textContent = 'Update Location Metadata'
       locationLegend.classList.add('mono')
       locationFieldset.appendChild(locationLegend)
-      const locationReset = document.createElement('input')
-      locationReset.type = 'reset'
-      locationFieldset.appendChild(locationReset)
-      locationReset.addEventListener('click', resetLocationTags)
       const locationSubmit = document.createElement('input')
       locationSubmit.type = 'submit'
       locationSubmit.id = 'locationSubmit_Id'
@@ -861,6 +857,10 @@ async function send(data) {
       // console.dir('locationFormData: ', ...window.locationFormData.entries())
       locationForm.addEventListener('submit', submitLocationEdits)
       locationFieldset.appendChild(locationSubmit)
+      const locationReset = document.createElement('input')
+      locationReset.type = 'reset'
+      locationReset.addEventListener('click', resetLocationTags)
+      locationFieldset.appendChild(locationReset)
       div.appendChild(locationForm)
       if (mapPoints.length > 0) {
         addPointsToMap(mapPoints)
@@ -901,15 +901,10 @@ async function send(data) {
       carForm.method = 'POST'
       carForm.enctype = 'multipart/form-data'
       const carFieldset = document.createElement('fieldset')
-      carForm.appendChild(carFieldset)
       const carLegend = document.createElement('legend')
       carLegend.textContent = 'Update Content, Rights, and Attribution Metadata'
       carLegend.classList.add('mono')
       carFieldset.appendChild(carLegend)
-      const carReset = document.createElement('input')
-      carReset.type = 'reset'
-      carFieldset.appendChild(carReset)
-      carReset.addEventListener('click', resetCARTags)
       const carSubmit = document.createElement('input')
       carSubmit.type = 'submit'
       carSubmit.id = 'carSubmit_Id'
@@ -918,6 +913,11 @@ async function send(data) {
       // console.dir('carFormData: ', ...window.carFormData.entries())
       carForm.addEventListener('submit', submitCAREdits)
       carFieldset.appendChild(carSubmit)
+      const carReset = document.createElement('input')
+      carReset.type = 'reset'
+      carReset.addEventListener('click', resetCARTags)
+      carFieldset.appendChild(carReset)
+      carForm.appendChild(carFieldset)
       div.appendChild(carForm)
       document.querySelector('div#contentzone').classList.remove('hidden')
     }

@@ -79,6 +79,9 @@ fieldset {
   min-height: 100px;
   min-width: 200px;
   max-width: 610px;
+  margin-left: 2%;
+  margin-right: 4%;
+  margin-bottom: 2%;
 }
 
 fieldset.tagSelect {
