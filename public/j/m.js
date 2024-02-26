@@ -535,6 +535,19 @@ function resetLocationTags(e) {
   })
   window.editedLocationTags.clear()
 }
+function insertLink(link) {
+  const linkSection = document.createElement('section')
+  linkSection.id = 'linkSection'
+  const div = document.createElement('div')
+  const a = document.createElement('a')
+  a.href = `${origin}/inspected/${link}`
+  a.innerText = 'Save your image with metadata edits.'
+  a.setAttribute('target', '_blank')
+  div.appendChild(a)
+  linkSection.appendChild(div)
+  const parent = document.querySelector('div#main-content')
+  parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
+}
 async function setFileInfo(file = null) {
   formData.append('csrfTokenHidden', form['csrf-token'].value)
   formData.append('tagSet', form.tagSet.value)
@@ -633,17 +646,7 @@ async function send(data) {
     list.id = 'tagList'
     imgMetadata = results.metadata
     if (results?.modifiedFile && results.modifiedFile !== '') {
-      const linkSection = document.createElement('section')
-      linkSection.id = 'linkSection'
-      const div = document.createElement('div')
-      const a = document.createElement('a')
-      a.href = `${origin}/inspected/${results.modifiedFile}`
-      a.innerText = 'Save your image with metadata edits.'
-      a.setAttribute('target', '_blank')
-      div.appendChild(a)
-      linkSection.appendChild(div)
-      const parent = document.querySelector('div#main-content')
-      parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
+      insertLink(results.modifiedFile)
     }
     tags = Object.keys(results.metadata[0])
     tags.sort()
