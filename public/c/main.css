@@ -119,6 +119,10 @@ input[type='radio'] {
   margin-right: 15px;
 }
 
+input[type='reset'] {
+  margin-left: 2em;
+}
+
 span.or {
   font-weight: 600;
   font-style: italic;

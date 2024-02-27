@@ -5,7 +5,9 @@
  * @file src/routes/main.js The router for the top level app URLs.
  */
 
-import { readFile, rename, writeFile } from 'node:fs/promises'
+import {
+  readFile, rename, stat, writeFile,
+} from 'node:fs/promises'
 import path from 'node:path'
 import formidable from 'formidable'
 import Router from '@koa/router'
@@ -322,6 +324,16 @@ router.post('editLocation', '/editLocation', async (ctx) => {
     ctx.status = 401
     ctx.body = { error: 'csrf token mismatch' }
   } else {
+    const [filename] = ctx.request.body.inspectedFilename ?? null
+    const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
+    let stats
+    try {
+      stats = await stat(imageFile)
+      log(stats)
+    } catch (e) {
+      error(`Could't find requested image file: ${imageFile}`)
+      error(e)
+    }
     log('csrf token check passed')
     const res = { fields: ctx.request.body }
     ctx.response.status = 200
