@@ -71,11 +71,11 @@ window.locationtags = [
   { tag: 'IPTC:Country-PrimaryLocationName', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationCode', value: '' },
 
-  { tag: 'XMP:LocationShown', value: '', disabled: true },
-  { tag: 'XMP:LocationShownGPSLatitude', value: '', disabled: true },
-  { tag: 'XMP:LocationShownGPSLongitude', value: '', disabled: true },
+  { tag: 'XMP:LocationShown', value: '', disabled: false },
+  { tag: 'XMP:LocationShownGPSLatitude', value: '', disabled: false },
+  { tag: 'XMP:LocationShownGPSLongitude', value: '', disabled: false },
   { tag: 'XMP:LocationShownGPSAltitude', value: '', disabled: true },
-  { tag: 'XMP:LocationCreated', value: '', disabled: true },
+  { tag: 'XMP:LocationCreated', value: '', disabled: false },
   { tag: 'XMP:LocationCreatedGPSLatitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSLongitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSAltitude', value: '', disabled: true },
@@ -806,7 +806,8 @@ async function send(data) {
               const Slat = t.value[n].GPSLatitude
               const Slon = t.value[n].GPSLongitude
               textfield.value = `${Slat}, ${Slon}`
-              textfield.disabled = t.disabled
+              textfield.disabled = t.disabled ?? false
+              console.info(t, t.disabled)
               if (!textfield.disabled) {
                 // console.log('add change event listener to ', textfield.name)
                 textfield.addEventListener('focus', focusLocationTag)
