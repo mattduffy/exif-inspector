@@ -68,6 +68,7 @@ window.locationtags = [
   // { tag: 'IPTC:Sub-location', value: '', disabled: true },
   { tag: 'IPTC:City', value: '' },
   { tag: 'IPTC:Province-State', value: '' },
+  { tag: 'IPTC:Sub-location', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationName', value: '' },
   { tag: 'IPTC:Country-PrimaryLocationCode', value: '' },
 

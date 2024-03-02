@@ -259,7 +259,7 @@ router.post('editCAR', '/editCAR', async (ctx) => {
       }
       log('Multipart form data was successfully parsed.')
       ctx.request.body = fields
-      log(fields)
+      // log(fields)
       resolve()
     })
   })
@@ -278,6 +278,23 @@ router.post('editCAR', '/editCAR', async (ctx) => {
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
+    const [filename] = ctx.request.body.inspectedFilename ?? null
+    const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
+    delete ctx.request.body.inspectedFilename
+    delete ctx.request.body.csrfTokenHidden
+    let stats
+    try {
+      stats = await stat(imageFile)
+      // log(stats)
+      if (stats.isFile()) {
+        Object.keys(ctx.request.body).forEach((t) => {
+          log(t, ctx.request.body[t].join())
+        })
+      }
+    } catch (e) {
+      error(`Could't find requested image file: ${imageFile}`)
+      error(e)
+    }
     const res = { fields: ctx.request.body }
     ctx.response.status = 200
     ctx.response.type = 'application/json; charset=utf-8'
@@ -329,7 +346,10 @@ router.post('editLocation', '/editLocation', async (ctx) => {
     let stats
     try {
       stats = await stat(imageFile)
-      log(stats)
+      // log(stats)
+      if (stats.isFile()) {
+        
+      }
     } catch (e) {
       error(`Could't find requested image file: ${imageFile}`)
       error(e)
