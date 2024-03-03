@@ -76,6 +76,11 @@ window.locationtags = [
   { tag: 'XMP:LocationShownGPSLatitude', value: '', disabled: false },
   { tag: 'XMP:LocationShownGPSLongitude', value: '', disabled: false },
   { tag: 'XMP:LocationShownGPSAltitude', value: '', disabled: true },
+  { tag: 'XMP:LocationShownCity', value: '', disabled: true },
+  { tag: 'XMP:LocationShownProvinceState', value: '', disabled: true },
+  { tag: 'XMP:LocationShownCountryName', value: '', disabled: true },
+  { tag: 'XMP:LocationShownCountryCode', value: '', disabled: true },
+  { tag: 'XMP:LocationShownSublocation', value: '', disabled: true },
   { tag: 'XMP:LocationCreated', value: '', disabled: false },
   { tag: 'XMP:LocationCreatedGPSLatitude', value: '', disabled: true },
   { tag: 'XMP:LocationCreatedGPSLongitude', value: '', disabled: true },
@@ -177,6 +182,7 @@ function getLocationCoordinates(type, meta) {
     lon = parseFloat(meta['XMP:LocationShown']?.[0]?.GPSLongitude);
     [EW] = meta['XMP:LocationShown']?.[0]?.GPSLongitude.match(/[EW]/i) ?? ''
     if (/w/i.test(EW)) lon *= (-1)
+    tag = 'XMP Location Shown (struct)'
   } else {
     lat = 0
     lon = 0
@@ -649,8 +655,8 @@ async function send(data) {
     if (results?.modifiedFile && results.modifiedFile !== '') {
       insertLink(results.modifiedFile)
     }
-    tags = Object.keys(results.metadata[0])
-    tags.sort()
+    // tags = Object.keys(results.metadata[0])
+    // tags.sort()
     // check if location info is present to display map
     let lat
     let NS
@@ -660,8 +666,22 @@ async function send(data) {
     const locationTagType = hasLocationTags(results.metadata[0])
     if (locationTagType) {
       [lat, lon, NS, EW, tagLocation] = getLocationCoordinates(locationTagType, results.metadata[0])
+      if (NS === undefined) {
+        NS = (parseFloat(lat) > 0) ? 'North' : 'South'
+      }
+      if (EW === undefined) {
+        EW = (parseFloat(lon) > 0) ? 'East' : 'West'
+      }
       if (lat !== null && lon !== null) {
         console.log(`image location: lat ${lat} ${NS}, lon ${lon} ${EW}`)
+        console.log('locationTagType', locationTagType)
+        console.log('tagLocation', tagLocation)
+        if (results.metadata[0]?.['EXIF:GPSLatitude'] === undefined) {
+          results.metadata[0]['EXIF:GPSLatitude'] = lat
+          results.metadata[0]['EXIF:GPSLatitudeRef'] = NS
+          results.metadata[0]['EXIF:GPSLongitude'] = lon
+          results.metadata[0]['EXIF:GPSLongitudeRef'] = EW
+        }
         await main(lat, lon, tagLocation)
         const map = document.querySelector('div#mapzone')
         map.classList.remove('hidden')
@@ -721,6 +741,7 @@ async function send(data) {
           }
           newLat.value = `${latitude}\tor\t${parseFloat(latitude) * negLat} ${cLatitude}`
           newLon.value = `${longitude}\tor\t${parseFloat(longitude) * negLon} ${cLongitude}`
+          
         })
       }
     }
@@ -728,6 +749,8 @@ async function send(data) {
     let showLocationTags = false
     let showOtherTags = false
     let showCARTags = false
+    tags = Object.keys(results.metadata[0])
+    tags.sort()
     tags.forEach((tag) => {
       const [, t] = tag.split(':')
       x += 1
@@ -789,9 +812,31 @@ async function send(data) {
           console.log('%s is an array of tag values', t.tag)
         }
         if (t.value !== '') {
+          console.log('t.value', t.tag, t.value)
           if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated') && Array.isArray(t.value)) {
             t.value.forEach((s, n) => {
-              console.log(s)
+              console.log('s', typeof s, s)
+              if (typeof s === 'object') {
+                Object.entries(s).forEach((xmp) => {
+                  const sLabel = document.createElement('label')
+                  sLabel.setAttribute('for', `XMP:${xmp[0]}_id`)
+                  sLabel.textContent = `XMP:${xmp[0]}`
+                  const dtTag = document.createElement('dt')
+                  const ddTag = document.createElement('dd')
+                  dtTag.appendChild(sLabel)
+                  dl.appendChild(dtTag)
+                  const sTextfield = document.createElement('input')
+                  sTextfield.type = 'text'
+                  sTextfield.id = `XMP:${xmp[0]}_id`
+                  sTextfield.name = `XMP:${xmp[0]}`;
+                  [, sTextfield.value] = xmp
+                  sTextfield.disabled = t.disabled ?? false
+                  sTextfield.addEventListener('focus', focusLocationTag)
+                  sTextfield.addEventListener('change', changeLocationTag)
+                  ddTag.appendChild(sTextfield)
+                  dl.appendChild(ddTag)
+                })
+              }
               const m = n + 1
               const label = document.createElement('label')
               label.setAttribute('for', `loc_val_${i}_${m}`)

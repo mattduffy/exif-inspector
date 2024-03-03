@@ -37,6 +37,20 @@ function sanitizeFilename(filename) {
   return cleanName
 }
 
+function removeServerDetails(data) {
+  delete data.metadata[0]?.SourceFile
+  delete data.metadata[0]?.['File:FileName']
+  delete data.metadata[0]?.['File:Directory']
+  delete data.metadata[0]?.['File:FileModifyDate']
+  delete data.metadata[0]?.['File:FileAccessDate']
+  delete data.metadata[0]?.['File:FilePermissions']
+  delete data.metadata[0]?.['File:FileTypeExtension']
+  delete data.metadata[0]?.['File:FileInodeChangeDate']
+  // delete data.metadata[0]['ExifTool:ExifToolVersion']
+  delete data.metadata[1]
+  return data
+}
+
 const router = new Router()
 async function hasFlash(ctx, next) {
   const log = mainLog.extend('hasFlash')
@@ -221,20 +235,12 @@ router.post('fileUpload', '/upload', async (ctx) => {
       response.e = e
     }
     // don't leak system info to the web page
-    delete response.metadata[0]?.SourceFile
-    delete response.metadata[0]?.['File:FileName']
-    delete response.metadata[0]?.['File:Directory']
-    delete response.metadata[0]?.['File:FileModifyDate']
-    delete response.metadata[0]?.['File:FileAccessDate']
-    delete response.metadata[0]?.['File:FilePermissions']
-    delete response.metadata[0]?.['File:FileTypeExtension']
-    delete response.metadata[0]?.['File:FileInodeChangeDate']
-    delete response.metadata[0]['ExifTool:ExifToolVersion']
-    delete response.metadata[1]
+    const cleanResponse = removeServerDetails(response)
 
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
-    ctx.body = response
+    // ctx.body = response
+    ctx.body = cleanResponse
   }
 })
 
@@ -344,11 +350,26 @@ router.post('editLocation', '/editLocation', async (ctx) => {
     const [filename] = ctx.request.body.inspectedFilename ?? null
     const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
     let stats
+    let exiftool = new Exiftool()
+    let newLocation
+    let result
     try {
       stats = await stat(imageFile)
       // log(stats)
       if (stats.isFile()) {
-        
+        exiftool = await exiftool.init(imageFile)
+        const expandStructs = true
+        exiftool.enableXMPStructTagOutput(expandStructs)
+        exiftool.setGPSCoordinatesOutputFormat('+gps')
+        exiftool.enableBinaryTagOutput(true)
+        exiftool.setOverwriteOriginal(true)
+        await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+        const stripLocationFirst = await exiftool.stripLocation()
+        log('stripLocationFirst', stripLocationFirst)
+        newLocation = await exiftool.setLocation()
+        log('newLocation', newLocation)
+        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+        log('result', result)
       }
     } catch (e) {
       error(`Could't find requested image file: ${imageFile}`)
