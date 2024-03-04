@@ -222,7 +222,8 @@ router.post('fileUpload', '/upload', async (ctx) => {
           const original = path.parse(result.original)
           response.originalFile = original.base
         }
-        response.modifiedFile = result[0]['File:FileorName']
+        // response.modifiedFile = result[0]['File:FileorName']
+        response.modifiedFile = (await exiftool.getPath()).file
         log(result)
       } else {
         result = await exiftool.getMetadata('', exifShortcut, '--ICC_Profile:all')
@@ -349,37 +350,60 @@ router.post('editLocation', '/editLocation', async (ctx) => {
   } else {
     const [filename] = ctx.request.body.inspectedFilename ?? null
     const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
+    const response = {}
+    const tags = ctx.request.body
     let stats
     let exiftool = new Exiftool()
     let newLocation
     let result
+    /* eslint-disable no-nested-ternary */
+    const coordinates = {
+      latitude: (tags?.['EXIF:GPSLatitude']) ? tags['EXIF:GPSLatitude'][0] : ((tags?.['XMP:GPSLatitude']) ? tags['XMP:GPSLatitude'][0] : null) ?? null,
+      longitude: (tags?.['EXIF:GPSLongitude']) ? tags['EXIF:GPSLongitude'][0] : ((tags?.['XMP:GPSLongitude']) ? tags['XMP:GPSLongitude'][0] : null) ?? null,
+      city: (tags?.['IPTC:City']) ? tags['IPTC:City'][0] : ((tags?.['XMP:City']) ? tags['XMP:City'][0] : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0] : null)) ?? undefined,
+      state: (tags?.['IPTC:Province-State']) ? tags['IPTC:Province-State'][0] : ((tags?.['XMP:State']) ? tags['XMP:State'][0] : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0] : null)) ?? undefined,
+      country: (tags?.['IPTC:Country-PrimaryLocationName']) ? tags['IPTC:Country-PrimaryLocationName'][0] : ((tags?.['XMP:Country']) ? tags['XMP:Country'][0] : ((tags?.['XMP:LocationShownCountryName']) ? tags['XMP:LocationShownCountryName'][0] : null)) ?? undefined,
+      countryCode: (tags?.['IPTC:Country-PrimaryLocationCode']) ? tags['IPTC:Country-PrimaryLocationCode'][0] : ((tags?.['XMP:CountryCode']) ? tags['XMP:CountryCode'][0] : ((tags?.['XMP:LocationShownCountryCode']) ? tags['XMP:LocationShownCountryCode'][0] : null)) ?? undefined,
+      location: (tags?.['IPTC:Sub-location']) ? tags['IPTC:Sub-location'][0] : ((tags?.['XMP:Location']) ? (tags['XMP:Location'][0]) : null) ?? undefined,
+    }
+    /* eslint-enable no-nested-ternary */
     try {
+      log('imageFile', imageFile)
       stats = await stat(imageFile)
       // log(stats)
       if (stats.isFile()) {
+        log('init ', imageFile)
         exiftool = await exiftool.init(imageFile)
         const expandStructs = true
         exiftool.enableXMPStructTagOutput(expandStructs)
         exiftool.setGPSCoordinatesOutputFormat('+gps')
         exiftool.enableBinaryTagOutput(true)
         exiftool.setOverwriteOriginal(true)
+        log('setting new config path')
         await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+        log('stripping initial location data')
         const stripLocationFirst = await exiftool.stripLocation()
         log('stripLocationFirst', stripLocationFirst)
-        newLocation = await exiftool.setLocation()
+        log('setting new location', newLocation)
+        log('new coordinates', coordinates)
+        newLocation = await exiftool.setLocation(coordinates)
         log('newLocation', newLocation)
         result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
         log('result', result)
+        // response.modifiedFile = result[0]['File:FileorName']
+        response.modifiedFile = result[0]['File:FileName']
+        response.metadata = result
       }
     } catch (e) {
       error(`Could't find requested image file: ${imageFile}`)
       error(e)
     }
     log('csrf token check passed')
-    const res = { fields: ctx.request.body }
+    // const res = { fields: ctx.request.body }
+    // ctx.response.body = res.fields ?? { huh: 'whut?' }
     ctx.response.status = 200
     ctx.response.type = 'application/json; charset=utf-8'
-    ctx.response.body = res.fields ?? { huh: 'whut?' }
+    ctx.response.body = response ?? { huh: 'whut?' }
   }
 })
 

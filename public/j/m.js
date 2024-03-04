@@ -524,6 +524,10 @@ async function submitLocationEdits(e) {
           results = await response.json()
           console.log(results)
           window.editedLocationTags.clear()
+          if (results.modifiedFile !== undefined) {
+            insertLink(results.modifiedFile)
+          }
+          window.newLocationResults = response
         }
       } catch (err) {
         console.info('problem with fetch or response')
@@ -741,7 +745,6 @@ async function send(data) {
           }
           newLat.value = `${latitude}\tor\t${parseFloat(latitude) * negLat} ${cLatitude}`
           newLon.value = `${longitude}\tor\t${parseFloat(longitude) * negLon} ${cLongitude}`
-          
         })
       }
     }
@@ -819,8 +822,8 @@ async function send(data) {
               if (typeof s === 'object') {
                 Object.entries(s).forEach((xmp) => {
                   const sLabel = document.createElement('label')
-                  sLabel.setAttribute('for', `XMP:${xmp[0]}_id`)
-                  sLabel.textContent = `XMP:${xmp[0]}`
+                  sLabel.setAttribute('for', `XMP:LocationShown${xmp[0]}_id`)
+                  sLabel.textContent = `XMP:LocationShown${xmp[0]}`
                   const dtTag = document.createElement('dt')
                   const ddTag = document.createElement('dd')
                   dtTag.appendChild(sLabel)
