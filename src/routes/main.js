@@ -38,17 +38,18 @@ function sanitizeFilename(filename) {
 }
 
 function removeServerDetails(data) {
-  delete data.metadata[0]?.SourceFile
-  delete data.metadata[0]?.['File:FileName']
-  delete data.metadata[0]?.['File:Directory']
-  delete data.metadata[0]?.['File:FileModifyDate']
-  delete data.metadata[0]?.['File:FileAccessDate']
-  delete data.metadata[0]?.['File:FilePermissions']
-  delete data.metadata[0]?.['File:FileTypeExtension']
-  delete data.metadata[0]?.['File:FileInodeChangeDate']
-  // delete data.metadata[0]['ExifTool:ExifToolVersion']
-  delete data.metadata[1]
-  return data
+  const d = data
+  delete d.metadata[0]?.SourceFile
+  delete d.metadata[0]?.['File:FileName']
+  delete d.metadata[0]?.['File:Directory']
+  delete d.metadata[0]?.['File:FileModifyDate']
+  delete d.metadata[0]?.['File:FileAccessDate']
+  delete d.metadata[0]?.['File:FilePermissions']
+  delete d.metadata[0]?.['File:FileTypeExtension']
+  delete d.metadata[0]?.['File:FileInodeChangeDate']
+  // delete d.metadata[0]['ExifTool:ExifToolVersion']
+  delete d.metadata[1]
+  return d
 }
 
 const router = new Router()
@@ -284,28 +285,68 @@ router.post('editCAR', '/editCAR', async (ctx) => {
     ctx.status = 401
     ctx.body = { error: 'csrf token mismatch' }
   } else {
-    log('csrf token check passed')
     const [filename] = ctx.request.body.inspectedFilename ?? null
     const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
-    delete ctx.request.body.inspectedFilename
-    delete ctx.request.body.csrfTokenHidden
+    const response = {}
+    const tagArray = []
     let stats
+    let exiftool = new Exiftool()
+    let newCARs
+    let result
+    const tags = ctx.request.body
+    delete tags.inspectedFilename
+    delete tags.csrfTokenHidden
+    log(tags)
+    /* eslint-disable no-nested-ternary */
+    const description = (tags?.['IPTC:Caption-Abstract']) ? tags['IPTC:Caption-Abstract'][0]
+      : ((tags?.['EXIF:ImageDescription']) ? tags['EXIF:ImageDescription'][0]
+        : tags?.['XMP:Description']) ? tags['XMP:Description'][0] : null ?? undefined
+    log('-MWG:Description', description)
+    if (description) {
+      tagArray.push(`-MWG:Description= -MWG:Description="${description}"`)
+      delete tags['IPTC:Caption-Abstract']
+      delete tags['EXIF:ImageDescription']
+      delete tags['XMP:Description']
+    }
+    const keywords = (tags?.['IPTC:Keywords']) ? tags['IPTC:Keywords'][0]
+      : ((tags?.['XMP:Subject']) ? tags['XMP:Subject'][0] : null) ?? undefined
+    if (keywords) {
+      tagArray.push(`-MWG:Keywords= -MWG:keywords="${keywords}"`)
+      delete tags['IPTC:Keywords']
+      delete tags['XMP:Subject']
+    }
+    /* eslint-enable no-nested-ternary */
     try {
+      log('imageFile', imageFile)
       stats = await stat(imageFile)
       // log(stats)
       if (stats.isFile()) {
-        Object.keys(ctx.request.body).forEach((t) => {
-          log(t, ctx.request.body[t].join())
+        Object.keys(tags).forEach((t) => {
+          log(t, tags[t].join())
+          tagArray.push(`-${t}="${tags[t].join()}"`)
         })
+        exiftool = await exiftool.init(imageFile)
+        exiftool.setOverwriteOriginal(true)
+        log('setting new config path')
+        await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+        log('tagArray: %o', tagArray)
+        newCARs = await exiftool.writeMetadataToTag(tagArray)
+        log('newCARs', newCARs)
+        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+        response.metadata = result
+        // response.modifiedFile = result[0]['File:FileName']
+        response.modifiedFile = (await exiftool.getPath()).file
+        log('result', response)
       }
     } catch (e) {
-      error(`Could't find requested image file: ${imageFile}`)
+      error(`Failed to update requested image file: ${imageFile}`)
       error(e)
     }
-    const res = { fields: ctx.request.body }
+    log('csrf token check passed')
+    // const res = { fields: ctx.request.body }
     ctx.response.status = 200
     ctx.response.type = 'application/json; charset=utf-8'
-    ctx.response.body = res.fields ?? { huh: 'whut?' }
+    ctx.response.body = response ?? { huh: 'whut?' }
   }
 })
 
@@ -358,13 +399,31 @@ router.post('editLocation', '/editLocation', async (ctx) => {
     let result
     /* eslint-disable no-nested-ternary */
     const coordinates = {
-      latitude: (tags?.['EXIF:GPSLatitude']) ? tags['EXIF:GPSLatitude'][0] : ((tags?.['XMP:GPSLatitude']) ? tags['XMP:GPSLatitude'][0] : null) ?? null,
-      longitude: (tags?.['EXIF:GPSLongitude']) ? tags['EXIF:GPSLongitude'][0] : ((tags?.['XMP:GPSLongitude']) ? tags['XMP:GPSLongitude'][0] : null) ?? null,
-      city: (tags?.['IPTC:City']) ? tags['IPTC:City'][0] : ((tags?.['XMP:City']) ? tags['XMP:City'][0] : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0] : null)) ?? undefined,
-      state: (tags?.['IPTC:Province-State']) ? tags['IPTC:Province-State'][0] : ((tags?.['XMP:State']) ? tags['XMP:State'][0] : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0] : null)) ?? undefined,
-      country: (tags?.['IPTC:Country-PrimaryLocationName']) ? tags['IPTC:Country-PrimaryLocationName'][0] : ((tags?.['XMP:Country']) ? tags['XMP:Country'][0] : ((tags?.['XMP:LocationShownCountryName']) ? tags['XMP:LocationShownCountryName'][0] : null)) ?? undefined,
-      countryCode: (tags?.['IPTC:Country-PrimaryLocationCode']) ? tags['IPTC:Country-PrimaryLocationCode'][0] : ((tags?.['XMP:CountryCode']) ? tags['XMP:CountryCode'][0] : ((tags?.['XMP:LocationShownCountryCode']) ? tags['XMP:LocationShownCountryCode'][0] : null)) ?? undefined,
-      location: (tags?.['IPTC:Sub-location']) ? tags['IPTC:Sub-location'][0] : ((tags?.['XMP:Location']) ? (tags['XMP:Location'][0]) : null) ?? undefined,
+      latitude: (tags?.['EXIF:GPSLatitude']) ? tags['EXIF:GPSLatitude'][0]
+        : ((tags?.['XMP:GPSLatitude']) ? tags['XMP:GPSLatitude'][0]
+          : null) ?? null,
+      longitude: (tags?.['EXIF:GPSLongitude']) ? tags['EXIF:GPSLongitude'][0]
+        : ((tags?.['XMP:GPSLongitude']) ? tags['XMP:GPSLongitude'][0]
+          : null) ?? null,
+      city: (tags?.['IPTC:City']) ? tags['IPTC:City'][0]
+        : ((tags?.['XMP:City']) ? tags['XMP:City'][0]
+          : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0]
+            : null)) ?? undefined,
+      state: (tags?.['IPTC:Province-State']) ? tags['IPTC:Province-State'][0]
+        : ((tags?.['XMP:State']) ? tags['XMP:State'][0]
+          : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0]
+            : null)) ?? undefined,
+      country: (tags?.['IPTC:Country-PrimaryLocationName']) ? tags['IPTC:Country-PrimaryLocationName'][0]
+        : ((tags?.['XMP:Country']) ? tags['XMP:Country'][0]
+          : ((tags?.['XMP:LocationShownCountryName']) ? tags['XMP:LocationShownCountryName'][0]
+            : null)) ?? undefined,
+      countryCode: (tags?.['IPTC:Country-PrimaryLocationCode']) ? tags['IPTC:Country-PrimaryLocationCode'][0]
+        : ((tags?.['XMP:CountryCode']) ? tags['XMP:CountryCode'][0]
+          : ((tags?.['XMP:LocationShownCountryCode']) ? tags['XMP:LocationShownCountryCode'][0]
+            : null)) ?? undefined,
+      location: (tags?.['IPTC:Sub-location']) ? tags['IPTC:Sub-location'][0]
+        : ((tags?.['XMP:Location']) ? (tags['XMP:Location'][0])
+          : null) ?? undefined,
     }
     /* eslint-enable no-nested-ternary */
     try {
@@ -390,12 +449,11 @@ router.post('editLocation', '/editLocation', async (ctx) => {
         log('newLocation', newLocation)
         result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
         log('result', result)
-        // response.modifiedFile = result[0]['File:FileorName']
         response.modifiedFile = result[0]['File:FileName']
         response.metadata = result
       }
     } catch (e) {
-      error(`Could't find requested image file: ${imageFile}`)
+      error(`Failed to update requested image file: ${imageFile}`)
       error(e)
     }
     log('csrf token check passed')

@@ -277,6 +277,9 @@ function addPointsToMap(points) {
   window.map.showItems(annotations)
 }
 function convertFromPolarToScalar(coord) {
+  if (Number.isFinite(coord)) {
+    return coord
+  }
   const x = coord.match(/(?<sign>\+|-)?(?<n>\d{1,3}\.?\d{0,9})\s?(?<c>[NSEW])?/i)
   if (x.groups.sign !== undefined) {
     return parseFloat(`${(x.groups.sign === '-' ? '-' : '')}${x.groups.n}`)
@@ -459,6 +462,10 @@ async function submitCAREdits(e) {
           results = await response.json()
           console.log(results)
           window.editedCARTags.clear()
+          if (results.modifiedFile !== undefined) {
+            insertLink(results.modifiedFile)
+          }
+          window.newCARResults = response
         }
       } catch (err) {
         console.info('problem with fetch or response')
