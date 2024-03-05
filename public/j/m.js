@@ -428,7 +428,6 @@ function resetCARTags(e) {
 async function submitCAREdits(e) {
   e.preventDefault()
   e.stopPropagation()
-  // console.log('pre ', ...window.carFormData.entries())
   if (window.editedCARTags.size > 0) {
     window.editedCARTags.forEach((v, k) => {
       if (v[1] !== undefined) {
@@ -456,17 +455,23 @@ async function submitCAREdits(e) {
       console.log(request)
       let response
       let results
+      let msg
       try {
         response = await fetch(request, { credentials: 'same-origin' })
         if (response.status === 200) {
           results = await response.json()
-          console.log(results)
+          // console.log(results)
           window.editedCARTags.clear()
           if (results.modifiedFile !== undefined) {
-            insertLink(results.modifiedFile)
+            insertLink(results.modifiedFile, response.status)
           }
           window.newCARResults = response
+          msg = 'Image metadata was updated.  The link to save the file is listed above.'
+        } else {
+          insertLink(results.modifiedFile, response.status)
+          msg = 'Content, Attributions, and Rights metadata update failed 🤷'
         }
+        updateFormStatus(e.target.elements[0], msg)
       } catch (err) {
         console.info('problem with fetch or response')
         console.info(err)
@@ -525,17 +530,23 @@ async function submitLocationEdits(e) {
       console.log(request)
       let response
       let results
+      let msg
       try {
         response = await fetch(request, { credentials: 'same-origin' })
         if (response.status === 200) {
           results = await response.json()
-          console.log(results)
+          // console.log(results)
           window.editedLocationTags.clear()
           if (results.modifiedFile !== undefined) {
-            insertLink(results.modifiedFile)
+            insertLink(results.modifiedFile, response.status)
           }
           window.newLocationResults = response
+          msg = 'Location metadata was updated.  The link to save the file is listed above.'
+        } else {
+          insertLink(results.modifiedFile, response.status)
+          msg = 'Location metadata update failed 🤷'
         }
+        updateFormStatus(e.target.elements[0], msg)
       } catch (err) {
         console.info('problem with fetch or response')
         console.info(err)
@@ -553,15 +564,33 @@ function resetLocationTags(e) {
   })
   window.editedLocationTags.clear()
 }
-function insertLink(link) {
+function updateFormStatus(fieldset, status) {
+  if (fieldset && status) {
+    const msg = document.createTextNode(status)
+    const div = document.createElement('div')
+    div.classList.add('mono')
+    div.style.margin = '1em .5em .5em 1em'
+    div.appendChild(msg)
+    fieldset.appendChild(div)
+  }
+}
+function insertLink(link, code) {
   const linkSection = document.createElement('section')
   linkSection.id = 'linkSection'
   const div = document.createElement('div')
-  const a = document.createElement('a')
-  a.href = `${origin}/inspected/${link}`
-  a.innerText = 'Save your image with metadata edits.'
-  a.setAttribute('target', '_blank')
-  div.appendChild(a)
+  if (code === 200) {
+    const a = document.createElement('a')
+    a.href = `${origin}/inspected/${link}`
+    a.innerText = 'Save your image with metadata edits.'
+    a.setAttribute('target', '_blank')
+    div.appendChild(a)
+  } else if ((code > 400) && (code < 500)) {
+    const error4xx = document.createTextNode(`Metadata edit was unsuccesful for image ${link}.`)
+    div.appendChild(error4xx)
+  } else {
+    const error5xx = document.createTextNode('The server was unable to do it\'s job for some reason...')
+    div.appendChild(error5xx)
+  }
   linkSection.appendChild(div)
   const parent = document.querySelector('div#main-content')
   parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
@@ -664,7 +693,7 @@ async function send(data) {
     list.id = 'tagList'
     imgMetadata = results.metadata
     if (results?.modifiedFile && results.modifiedFile !== '') {
-      insertLink(results.modifiedFile)
+      insertLink(results.modifiedFile, response.status)
     }
     // tags = Object.keys(results.metadata[0])
     // tags.sort()
