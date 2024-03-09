@@ -479,7 +479,13 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
       log(edittedFilePath)
       edittedFile = await readFile(edittedFilePath)
       const { ext } = path.parse(edittedFilePath)
-      const type = `image/${ext.slice(1)}`
+      const _original = file.match(/(?<name>.*)\.{1}(?<type>jpeg|jpg|png|heic|webp|gif)_original$/i)
+      let type
+      if (_original?.groups?.type) {
+        type = _original.groups.type
+      } else {
+        type = `image/${ext.slice(1)}`
+      }
       log(ctx.response.status, type, edittedFile)
       ctx.response.status = 200
       ctx.response.type = type
