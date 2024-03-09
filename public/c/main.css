@@ -56,7 +56,6 @@ div#dragzone h2 {
 
 .dragTarget {
   background-color: aliceblue;
-  color: 
 }
 
 div#mapzone {
@@ -134,7 +133,10 @@ section#linkSection {
 }
 
 section#linkSection > div {
-  padding: 0em 5em 1em 0em;
+  padding: 1em 5em 1em 1em;
+  background-color: aliceblue;
+  border-radius: .5rem; 
+  max-width: 550px;
 }
 
 section#linkSection > div > a {

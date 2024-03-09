@@ -567,15 +567,23 @@ function resetLocationTags(e) {
 function updateFormStatus(fieldset, status) {
   if (fieldset && status) {
     const msg = document.createTextNode(status)
+    const a = document.createElement('a')
+    a.href = '#linkSection'
+    a.textContent = ' # '
     const div = document.createElement('div')
     div.classList.add('mono')
     div.style.margin = '1em .5em .5em 1em'
     div.appendChild(msg)
+    div.appendChild(a)
     fieldset.appendChild(div)
   }
 }
 function insertLink(link, code) {
-  const linkSection = document.createElement('section')
+  let linkSection = document.querySelector('section#linkSection')
+  if (linkSection) {
+    linkSection.removeChild(linkSection.children[0])
+  }
+  linkSection = document.createElement('section')
   linkSection.id = 'linkSection'
   const div = document.createElement('div')
   if (code === 200) {
@@ -583,6 +591,7 @@ function insertLink(link, code) {
     a.href = `${origin}/inspected/${link}`
     a.innerText = 'Save your image with metadata edits.'
     a.setAttribute('target', '_blank')
+    div.classList.add('save')
     div.appendChild(a)
   } else if ((code > 400) && (code < 500)) {
     const error4xx = document.createTextNode(`Metadata edit was unsuccesful for image ${link}.`)
