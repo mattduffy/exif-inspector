@@ -97,7 +97,7 @@ const submitButton = form.submit_Id
 const dragzone = document.querySelector('div#dragzone')
 const infozone = document.querySelector('div#infozone')
 // const metazone = document.querySelector('div#metazone')
-const mapzone = document.querySelector('div#mapzone')
+let mapzone = document.querySelector('div#mapzone')
 const formData = new FormData()
 function isCARTag(tag) {
   let found
@@ -578,13 +578,81 @@ function updateFormStatus(fieldset, status) {
     fieldset.appendChild(div)
   }
 }
+function insertClearButton() {
+  let clearSection = document.querySelector('section#clearSection')
+  if (clearSection) {
+    clearSection.removeChild(clearSection.children[0])
+  } else {
+    clearSection = document.createElement('section')
+    clearSection.id = 'clearSection'
+    console.info('clear results seciton created.')
+  }
+  const div = document.createElement('div')
+  div.classList.add('clear')
+  const clearButton = document.createElement('button')
+  clearButton.textContent = 'Clear Results'
+  clearButton.setAttribute('id', 'clearResults_Id')
+  clearButton.setAttribute('name', 'clearResults')
+  clearButton.addEventListener('click', window.clearResults)
+  div.appendChild(clearButton)
+  clearSection.appendChild(div)
+  const parent = document.querySelector('div#main-content')
+  parent.insertBefore(clearSection, document.querySelector('section#metadataSection'))
+  console.info('clear results button added.')
+}
+window.clearResults = (e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  const parent = e.target.parentElement.parentElement
+  console.info('clearbutton section:', parent)
+  parent.parentElement.removeChild(parent)
+  document.forms.uploaderId.hiddenFields_Id.elements[0].value = ''
+  const clearInfoZone = document.querySelector('div#infozone')
+  if (clearInfoZone && clearInfoZone.children.length > 1) {
+    clearInfoZone.removeChild((clearInfoZone.children).item(1))
+    clearInfoZone.classList.add('hidden')
+  }
+  const clearLocationZone = document.querySelector('div#locationzone')
+  if (clearLocationZone && clearLocationZone.children.length > 1) {
+    clearLocationZone.removeChild((clearLocationZone.children).item(1))
+    clearLocationZone.removeChild((clearLocationZone.children).item(1))
+    clearLocationZone.classList.add('hidden')
+    // recreate weird hidden mapzone div if necessary
+    // let mapDiv = document.querySelector('div#mapzone')
+    mapzone = document.querySelector('div#mapzone')
+    if (!mapzone) {
+      mapzone = document.createElement('div')
+      mapzone.id = 'mapzone'
+      mapzone.classList.add('hidden')
+      clearLocationZone.parentElement.appendChild(mapzone)
+    }
+  }
+  const clearContentZone = document.querySelector('div#contentzone')
+  if (clearContentZone && clearContentZone.children.length > 1) {
+    console.info(clearContentZone.children)
+    clearContentZone.removeChild((clearContentZone.children).item(1))
+    clearContentZone.removeChild((clearContentZone.children).item(1))
+    clearContentZone.classList.add('hidden')
+  }
+  const clearMetaZone = document.querySelector('div#metazone')
+  if (clearMetaZone && clearMetaZone.children.length > 1) {
+    clearMetaZone.removeChild((clearMetaZone.children).item(1))
+    clearMetaZone.classList.add('hidden')
+  }
+  document.querySelector('input#url_Id').value = ''
+  /* eslint-disable no-param-reassign */
+  window.cartags.forEach((c) => { c.value = '' })
+  window.locationtags.forEach((l) => { l.value = '' })
+  /* eslint-enable no-param-reassign */
+}
 function insertLink(link, code) {
   let linkSection = document.querySelector('section#linkSection')
   if (linkSection) {
     linkSection.removeChild(linkSection.children[0])
+  } else {
+    linkSection = document.createElement('section')
+    linkSection.id = 'linkSection'
   }
-  linkSection = document.createElement('section')
-  linkSection.id = 'linkSection'
   const div = document.createElement('div')
   if (code === 200) {
     const a = document.createElement('a')
@@ -608,11 +676,10 @@ async function setFileInfo(file = null) {
   formData.append('csrfTokenHidden', form['csrf-token'].value)
   formData.append('tagSet', form.tagSet.value)
   infozone.classList.remove('hidden')
-  // metazone.classList.remove('hidden')
   if (file !== null) {
-    // metazone.innerHTML = ''
-    if (infozone.contains(document.querySelector('ul#fileInfo'))) {
-      infozone.removeChild(document.querySelector('ul#fileInfo'))
+    const ul = document.querySelector('ul#fileInfo')
+    if (infozone.contains(ul)) {
+      infozone.removeChild(ul)
     }
     const info = document.createElement('dl')
     info.id = 'fileInfo'
@@ -628,7 +695,7 @@ async function setFileInfo(file = null) {
     const img = document.createElement('dd')
     if (/heic$/i.test(file.type)) {
       // chrome doesn't natively display .HEIC image format
-      img.appendChild(document.createTextNode('HEIC image format is tough to display.'))
+      img.appendChild(document.createTextNode('HEIC images are too tough for poor wittle Chrome to display.'))
     } else {
       const preview = document.createElement('img')
       preview.classList.add('smallImgPreview')
@@ -667,6 +734,7 @@ async function setFileInfo(file = null) {
   console.log(`url: ${formData.get('url')}`)
   try {
     await send(formData)
+    insertClearButton()
   } catch (e) {
     console.warn('something caused the send method to fail')
     console.error(e)
@@ -952,7 +1020,7 @@ async function send(data) {
       locationSubmit.id = 'locationSubmit_Id'
       locationSubmit.name = 'locationSubmit'
       window.locationFormData = new FormData(locationForm)
-      // console.dir('locationFormData: ', ...window.locationFormData.entries())
+      console.dir('locationFormData: ', ...window.locationFormData.entries())
       locationForm.addEventListener('submit', submitLocationEdits)
       locationFieldset.appendChild(locationSubmit)
       const locationReset = document.createElement('input')
@@ -964,6 +1032,7 @@ async function send(data) {
         addPointsToMap(mapPoints)
       }
       normalizeCoordinateTags()
+      window.locationzone.classList.remove('hidden')
     }
     if (showCARTags) {
       const div = tagListDiv('contentzone')

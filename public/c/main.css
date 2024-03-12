@@ -139,6 +139,17 @@ section#linkSection > div {
   max-width: 550px;
 }
 
+section#clearSection {
+  margin: 1em;
+}
+
+section#clearSection > div {
+  padding: 1em 5em 1em 1em;
+  background-color: aliceblue;
+  border-radius: .5rem; 
+  max-width: 550px;
+}
+
 section#linkSection > div > a {
   
 }
