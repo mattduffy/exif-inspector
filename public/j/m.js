@@ -734,7 +734,7 @@ async function setFileInfo(file = null) {
   console.log(`url: ${formData.get('url')}`)
   try {
     await send(formData)
-    insertClearButton()
+    // insertClearButton()
   } catch (e) {
     console.warn('something caused the send method to fail')
     console.error(e)
