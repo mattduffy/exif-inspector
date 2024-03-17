@@ -295,7 +295,7 @@ async function logRequest(ctx, next) {
           geo.city = city?.city?.names?.en
           geo.subdivision = city?.subdivision?.[0]?.names?.en
           geo.zip = city?.postal?.code
-          geo.coords = [city?.location?.latitude, city?.lcoation?.longitue]
+          geo.coords = [city?.location?.latitude, city?.location?.longitude]
           logEntry.geo = geo
           logg('Request ip geo:     %0', geo)
         } catch (e) {
