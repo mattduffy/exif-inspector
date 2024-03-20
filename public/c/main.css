@@ -1,3 +1,22 @@
+body {
+  margin: 0px 8px;
+}
+
+div.grid {
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: 1fr auto;
+}
+
+div.grid-content {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+div.grid-footer {
+ margin-top: 1em; 
+}
+
 .hidden {
   display: none;
 }
@@ -203,6 +222,31 @@ section#metadataSection > div#contentzone > h3 {
 
 pre {
   display: inline-block;
+}
+
+footer {
+  background-color: aliceblue;
+  width: 100%;
+  padding: 0px 0px;
+  margin: 0px auto;
+}
+
+section#mastfoot {
+  width: 400px;
+  margin: 0px;
+}
+
+section#mastfoot > h4 {
+  font-weight: normal;
+  font-size: 1em;
+  margin-top: 0em;
+  padding: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+section#mastfoot > h4 > a, #mastfoot > h4 > a:active, #mastfoot > h4 > a:visited {
+  color: #ffffff;
+  text-decoration: none;
 }
 
 @media screen and (max-width: 430px) {

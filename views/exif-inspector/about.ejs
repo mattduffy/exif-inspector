@@ -1,0 +1,25 @@
+    <section id="headerSection">
+        <h1><%= siteName %></h1>
+        <h2>View and edit your image metadata.</h2>
+        <p>Built using the excellent <a href="https://exiftool.org" target="_blank">Exiftool</a> by Phil Harvey,
+        this app lets you inspect the metadata tags embedded in your image files, edit existing tags, 
+        or remove the metadata entirely.</p>
+        <% if (flash?.info) { %>
+        <div id="info" class="info">
+            <span><%= flash.info %></span>
+        </div>
+        <% } %>
+        <% if (flash?.message) { %>
+        <div id="messages" class="messages">
+            <span><%= flash.message %></span>
+        </div>
+        <% } %>
+        <% if (flash?.error) { %>
+        <div id="errors" class="errors">
+            <span><%= flash.error %></span>
+        </div>
+        <% } %>
+        <% if (isAuthenticated) { %>
+
+        <% } %>
+    </section>

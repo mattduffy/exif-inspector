@@ -27,10 +27,18 @@
     <link rel="stylesheet" href="/c/main.css">
   </head>
   <body>
-    <div class="grid-content" id="main-content">
-      <%# main %>
-      <%- body %>
-      <%# main end %>
+    <div class="grid" id="grid-layout">
+      <div class="grid-content" id="main-content">
+        <%# main %>
+        <%- body %>
+        <%# main end %>
+      </div>
+
+      <div class="grid-footer">
+        <%# footer %>
+        <%- await include('./partials/body-footer-lite.ejs') -%>
+        <%# footer end %>
+      </div>
     </div>
   </body>
 </html>
