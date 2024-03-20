@@ -212,6 +212,10 @@ section#metadataSection > div#contentzone > h3 {
   margin: .5em;
 }
 
+section#metadataSection > div#xmpzone > h3 {
+  margin: .5em;
+}
+
 .smallImgPreview {
   max-width: 350px;
 }

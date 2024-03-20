@@ -43,6 +43,8 @@ window.cartags = [
   { tag: 'XMP:WebStatement', value: '' },
   { tag: 'XMP:LicensorURL', value: '' },
 ]
+window.xmptags = [
+]
 window.locationtags = [
   { tag: '', value: '' },
   //
@@ -99,6 +101,17 @@ const infozone = document.querySelector('div#infozone')
 // const metazone = document.querySelector('div#metazone')
 let mapzone = document.querySelector('div#mapzone')
 const formData = new FormData()
+function isXMPTag(tag) {
+  const xmp = tag.match(/^xmp:(?<preset>[^(loc.*)|city|country.+)].*)/i)
+  if (xmp?.groups?.preset) {
+    // console.log(xmp.groups.preset)
+    // const x = {}
+    // x[tag] = imgMetadata[0][tag]
+    // window.xmptags.push(x)
+    return true
+  }
+  return false
+}
 function isCARTag(tag) {
   let found
   window.cartags.some((t, i) => {
@@ -865,6 +878,7 @@ async function send(data) {
     let showLocationTags = false
     let showOtherTags = false
     let showCARTags = false
+    let showXMPTags = false
     tags = Object.keys(results.metadata[0])
     tags.sort()
     tags.forEach((tag) => {
@@ -904,6 +918,12 @@ async function send(data) {
         // content, attributions, and rights
         window.cartags[carTagIndex].value = imgMetadata[0][tag]
         showCARTags = true
+      } else if (isXMPTag(tag)) {
+        // adobe xmp develop / preset / look tags
+        const preset = {}
+        preset[tag] = imgMetadata[0][tag]
+        window.xmptags.push(preset)
+        showXMPTags = true
       } else {
         // all other metadata tags
         const otherMetadata = tagListDiv('metazone')
@@ -1087,6 +1107,11 @@ async function send(data) {
       carForm.appendChild(carFieldset)
       div.appendChild(carForm)
       document.querySelector('div#contentzone').classList.remove('hidden')
+    }
+    if (showXMPTags) {
+      console.log('showing xmp tags')
+      console.dir(window.xmptags)
+      // document.querySelector('div#xmpzone').classList.remove('hidden')
     }
     const zones = window.metadataSection.children
     if (zones.locationzone) {
