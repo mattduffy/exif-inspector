@@ -498,19 +498,21 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
   }
 })
 
-// router.get('about', '/about', hasFlash, async (ctx) => {
-//   const log = mainLog.extend('about')
-//   // const error = mainError.extend('about')
-//   log('inside index router: /about')
-//   ctx.status = 200
-//   await ctx.render('about', {
-//     body: ctx.body,
-//     title: `${ctx.app.site}: About`,
-//     sessionUser: ctx.state.sessionUser,
-//     isAuthenticated: ctx.state.isAuthenticated,
-//   })
-// })
-//
+router.get('about', '/about', hasFlash, async (ctx) => {
+  const log = mainLog.extend('about')
+  // const error = mainError.extend('about')
+  log('inside index router: /about')
+  ctx.status = 200
+  const locals = {}
+  locals.origin = ctx.request.href
+  locals.flash = ctx.flash?.index ?? {}
+  locals.title = `${ctx.app.site}: Home`
+  locals.sessionUser = ctx.state.sessionUser
+  locals.accessToken = ctx.state.searchJwtAccess
+  locals.isAuthenticated = ctx.state.isAuthenticated
+  await ctx.render('about', locals)
+})
+
 // router.get('contact', '/contact', hasFlash, async (ctx) => {
 //   const log = mainLog.extend('contact')
 //   // const error = mainError.extend('contact')
