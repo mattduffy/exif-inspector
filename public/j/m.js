@@ -101,15 +101,14 @@ const infozone = document.querySelector('div#infozone')
 // const metazone = document.querySelector('div#metazone')
 let mapzone = document.querySelector('div#mapzone')
 const formData = new FormData()
-function isXMPTag(tag) {
-  const xmp = tag.match(/^xmp:(?<preset>[^(loc.*)|city|country.+)].*)/i)
+function isXMPTagNotLocation(tag) {
+  // console.log(`isXMPTag: ${tag}`)
+  const xmp = tag.match(/^(?<group>xmp):(?<preset>(?!(location.*|city|country.+)).*)/i)
   if (xmp?.groups?.preset) {
-    // console.log(xmp.groups.preset)
-    // const x = {}
-    // x[tag] = imgMetadata[0][tag]
-    // window.xmptags.push(x)
+    // console.log('yes: ', xmp.groups.group, xmp.groups.preset)
     return true
   }
+  // console.log('no', tag)
   return false
 }
 function isCARTag(tag) {
@@ -908,22 +907,18 @@ async function send(data) {
         const fileInfo = document.querySelector('dl#fileInfo')
         fileInfo.appendChild(dtTag)
         fileInfo.appendChild(ddTag)
-        // eslint-disable-next-line
-      } else if (locationTagIndex = isLocationTag(tag)) {
+      } else if (isXMPTagNotLocation(tag)) {
+        // adobe xmp develop / preset / look tags
+        window.xmptags.push({ tag, value: imgMetadata[0][tag] })
+        showXMPTags = true
+      } else if (locationTagIndex = isLocationTag(tag)) { // eslint-disable-line
         // location tags
         window.locationtags[locationTagIndex].value = imgMetadata[0][tag]
         showLocationTags = true
-        // eslint-disable-next-line
-      } else if (carTagIndex = isCARTag(tag)) {
+      } else if (carTagIndex = isCARTag(tag)) { // eslint-disable-line
         // content, attributions, and rights
         window.cartags[carTagIndex].value = imgMetadata[0][tag]
         showCARTags = true
-      } else if (isXMPTag(tag)) {
-        // adobe xmp develop / preset / look tags
-        const preset = {}
-        preset[tag] = imgMetadata[0][tag]
-        window.xmptags.push(preset)
-        showXMPTags = true
       } else {
         // all other metadata tags
         const otherMetadata = tagListDiv('metazone')
@@ -948,7 +943,7 @@ async function send(data) {
           console.log('%s is an array of tag values', t.tag)
         }
         if (t.value !== '') {
-          console.log('t.value', t.tag, t.value)
+          // console.log('t.value', t.tag, t.value)
           if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated') && Array.isArray(t.value)) {
             t.value.forEach((s, n) => {
               console.log('s', typeof s, s)
@@ -1111,7 +1106,26 @@ async function send(data) {
     if (showXMPTags) {
       console.log('showing xmp tags')
       console.dir(window.xmptags)
-      // document.querySelector('div#xmpzone').classList.remove('hidden')
+      const div = tagListDiv('xmpzone')
+      const dl = div.querySelector(':scope > dl')
+      window.xmptags.forEach((t) => {
+        if (t.value !== '' && /(?<group>xmp):(?<tag>(?!history).*)/i.test(t.tag)) {
+          const dtTag = document.createElement('dt')
+          dtTag.textContent = t.tag
+          const ddTag = document.createElement('dd')
+          if (Array.isArray(t.value)) {
+            console.log(`${t.tag} is array: ${t.value}`)
+            // ddTag.textContent = 'Array of values'
+            ddTag.innerHTML = t.value.join('\n<br>\n')
+          } else {
+            ddTag.textContent = `${t.value}`
+          }
+          dl.appendChild(dtTag)
+          dl.appendChild(ddTag)
+        }
+      })
+      div.appendChild(dl)
+      document.querySelector('div#xmpzone').classList.remove('hidden')
     }
     const zones = window.metadataSection.children
     if (zones.locationzone) {
