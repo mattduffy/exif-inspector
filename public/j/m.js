@@ -1128,7 +1128,7 @@ async function send(data) {
       document.querySelector('div#xmpzone').classList.remove('hidden')
     }
     const zones = window.metadataSection.children
-    if (!zones?.locationzone.classList.contains('hidden')) {
+    if (zones.locationzone && !zones?.locationzone?.classList?.contains('hidden')) {
       zones.infozone.after(zones.locationzone)
       if (zones.locationzone.children[0].tagName !== 'H3') {
         const h3 = document.createElement('h3')
@@ -1137,15 +1137,15 @@ async function send(data) {
         zones.locationzone.children[0].before(h3)
       }
     }
-    if (!zones?.contentzone.classList.contains('hidden')) {
-      if (zones.locationzone) {
+    if (!zones?.contentzone?.classList?.contains('hidden')) {
+      if (zones?.locationzone) {
         zones.locationzone.after(zones.contentzone)
       } else {
         zones.infozone.after(zones.contentzone)
       }
     }
-    if (!zones?.xmpzone.classList.contains('hidden')) {
-      if (!zones?.contentnzone.classList.contains('hidden')) {
+    if (!zones?.xmpzone?.classList?.contains('hidden')) {
+      if (!zones?.contentnzone?.classList?.contains('hidden')) {
         zones.contentzone.after(zones.xmpzone)
       } else {
         zones.infozone.after(zones.xmpzone)
