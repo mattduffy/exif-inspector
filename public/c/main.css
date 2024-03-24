@@ -176,7 +176,7 @@ section#linkSection > div > a {
 section#metadataSection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 450px));
-  grid-gap: 1rem;
+  grid-gap: 10px;
   grid-auto-flow: row dense;
 }
 
@@ -249,8 +249,8 @@ section#mastfoot > h4 {
 }
 
 section#mastfoot > h4 > a, #mastfoot > h4 > a:active, #mastfoot > h4 > a:visited {
-  color: #ffffff;
-  text-decoration: none;
+  color: #000000;
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 430px) {

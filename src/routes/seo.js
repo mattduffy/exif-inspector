@@ -27,21 +27,22 @@ router.get('seoSitemap', '/sitemap.xml', async (ctx) => {
   const locals = {
     layout: false,
     origin: ctx.request.origin,
+    pages: ['', 'about'],
   }
   info(locals)
   if (!locals) {
     error('template locals doesn\'t exist, somehow.')
   }
   let sitemap
-  let filePath
+  const filePath = `${path.resolve(ctx.app.dirs.public.dir)}/sitemap.xml`
+  log(`sitemap.xml save path: ${filePath}`)
   try {
     sitemap = await ctx.render('sitemap.xml', locals)
-    filePath = path.resolve(ctx.app.dirs.public.dir, 'sitemap.xml')
-    log(`sitemap.xml save path: ${filePath}`)
     const sitemapData = new Uint8Array(Buffer.from(sitemap))
     const file = await writeFile(filePath, sitemapData)
     info(`saved sitemap.xml file: ${file}`)
   } catch (e) {
+    error(e)
     error(`Failed to save sitemap to ${filePath}`)
   }
   ctx.type = 'application/xml'
