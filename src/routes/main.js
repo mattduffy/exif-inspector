@@ -471,7 +471,7 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
   const file = sanitize(ctx.params.f)
   if (!file || file === '') {
     error('Missing required file name url parameter.')
-    ctx.reponse.status = 401
+    ctx.response.status = 401
   } else {
     let edittedFile
     const edittedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
@@ -492,6 +492,34 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
       ctx.response.body = edittedFile
     } catch (e) {
       error(`Failed to open ${edittedFilePath} `)
+      error(e)
+      ctx.response.status = 404
+    }
+  }
+})
+
+router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
+  const log = mainLog.extend('GET-xmpData')
+  const error = mainError.extend('GET-xmpData')
+  const file = sanitize(ctx.params.f)
+  if (!file || file === '') {
+    error('Missing requried file name url parameter.')
+    ctx.response.status = 401
+  } else {
+    let xmp
+    let xmpResults
+    const inspectedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+    log(inspectedFilePath)
+    try {
+      xmp = await new Exiftool().init(inspectedFilePath)
+      xmp.setOutputFormat('xml')
+      xmpResults = await xmp.getMetadata('', null, '-xmp:*')
+      log('getting xmp data for adobe preset file. %o', xmpResults)
+      ctx.response.status = 200
+      ctx.response.type = 'application/rdf+xml'
+      ctx.response.body = xmpResults
+    } catch (e) {
+      error(`Failed to open ${inspectedFilePath}`)
       error(e)
       ctx.response.status = 404
     }
