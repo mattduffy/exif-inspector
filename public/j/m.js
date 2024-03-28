@@ -1126,6 +1126,10 @@ async function send(data) {
       })
       div.appendChild(dl)
       document.querySelector('div#xmpzone').classList.remove('hidden')
+      if (results.metadata[0]['XMP:Look'] !== undefined || results.metadata[0]['XMP:ToneCurvePV2012'] !== undefined) {
+        // const a = document.createElement('a')
+        console.log('create link for downloading presets.xmp file.')
+      }
     }
     const zones = window.metadataSection.children
     if (zones.locationzone && !zones?.locationzone?.classList?.contains('hidden')) {

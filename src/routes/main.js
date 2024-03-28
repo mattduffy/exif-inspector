@@ -506,18 +506,27 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
     error('Missing requried file name url parameter.')
     ctx.response.status = 401
   } else {
+    let downloadName
+    const match = file.match(/^(([0-9abcdefghjkmnpqrstvwxyz]{25}_)+)(?<goodpart>.*)$/ig)
+    if (match?.groups?.goodpart) {
+      downloadName = `${(path.parse(match.groups.goodpart)).name}.xmp`
+    } else {
+      downloadName = 'adobe_presets.xmp'
+    }
     let xmp
-    let xmpResults
+    let xmpPacket
     const inspectedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
     log(inspectedFilePath)
     try {
       xmp = await new Exiftool().init(inspectedFilePath)
       xmp.setOutputFormat('xml')
-      xmpResults = await xmp.getMetadata('', null, '-xmp:*')
-      log('getting xmp data for adobe preset file. %o', xmpResults)
+      // xmpResults = await xmp.getMetadata('', null, '-xmp:*')
+      xmpPacket = await xmp.getXmpPacket()
+      log('getting xmp data for adobe preset file. %o', xmpPacket)
       ctx.response.status = 200
       ctx.response.type = 'application/rdf+xml'
-      ctx.response.body = xmpResults
+      ctx.attachment(downloadName)
+      ctx.response.body = xmpPacket.xmp
     } catch (e) {
       error(`Failed to open ${inspectedFilePath}`)
       error(e)
