@@ -76,6 +76,7 @@ router.get('index', '/', hasFlash, async (ctx) => {
   ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
   locals.csrfToken = csrfToken
   locals.body = ctx.body
+  locals.domain = ctx.state.origin
   locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
@@ -541,6 +542,8 @@ router.get('about', '/about', hasFlash, async (ctx) => {
   log('inside index router: /about')
   ctx.status = 200
   const locals = {}
+  locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
+  locals.domain = ctx.state.origin
   locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
