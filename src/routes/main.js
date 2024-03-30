@@ -487,9 +487,9 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
       } else {
         type = `image/${ext.slice(1)}`
       }
-      log(ctx.response.status, type, edittedFile)
       ctx.response.status = 200
       ctx.response.type = type
+      log(ctx.response.status, type, edittedFile)
       ctx.response.body = edittedFile
     } catch (e) {
       error(`Failed to open ${edittedFilePath} `)
@@ -505,10 +505,15 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
   const file = sanitize(ctx.params.f)
   if (!file || file === '') {
     error('Missing requried file name url parameter.')
-    ctx.response.status = 401
+    // ctx.response.status = 401
+    ctx.redirect('/')
+    ctx.body = 'Redirecting to index page.  Missing required file name url parameter.'
   } else {
     let downloadName
-    const match = file.match(/^(([0-9abcdefghjkmnpqrstvwxyz]{25}_)+)(?<goodpart>.*)$/ig)
+    // log(file)
+    // log(/^(([0-9abcdefghjkmnpqrstvwxyz]{25}_)+)(?<goodpart>.*)$/i)
+    const match = file.match(/^(([0-9abcdefghjkmnpqrstvwxyz]{25}_)+)(?<goodpart>.*)$/i)
+    // log(match)
     if (match?.groups?.goodpart) {
       downloadName = `${(path.parse(match.groups.goodpart)).name}.xmp`
     } else {
@@ -517,7 +522,7 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
     let xmp
     let xmpPacket
     const inspectedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
-    log(inspectedFilePath)
+    // log(inspectedFilePath)
     try {
       xmp = await new Exiftool().init(inspectedFilePath)
       xmp.setOutputFormat('xml')
@@ -534,6 +539,14 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
       ctx.response.status = 404
     }
   }
+})
+
+router.get('getXMPData-missing-file', '/getxmpdata', async (ctx) => {
+  ctx.redirect('/')
+})
+
+router.post('getXMPDAta-wrong-method-missing-file', '/getxmpdata', async (ctx) => {
+  ctx.redirect('/')
 })
 
 router.get('about', '/about', hasFlash, async (ctx) => {

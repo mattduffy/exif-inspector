@@ -224,6 +224,26 @@ section#metadataSection > div#xmpzone > h3 {
   font-family: monospace;
 }
 
+div#adobe_presets_link {
+  margin: 1em .25em;
+}
+
+a.presets {
+  padding: 10px 15px;
+  background-color: lightgrey;
+  border-radius: 25px;
+  margin: 0px 10px 0px 0px;
+}
+
+a:active.presets {
+}
+
+a:visited.presets {
+}
+
+a:hover.presets {
+}
+
 pre {
   display: inline-block;
 }

@@ -1105,7 +1105,7 @@ async function send(data) {
     }
     if (showXMPTags) {
       console.log('showing xmp tags')
-      console.dir(window.xmptags)
+      // console.dir(window.xmptags)
       const div = tagListDiv('xmpzone')
       const dl = div.querySelector(':scope > dl')
       window.xmptags.forEach((t) => {
@@ -1114,7 +1114,7 @@ async function send(data) {
           dtTag.textContent = t.tag
           const ddTag = document.createElement('dd')
           if (Array.isArray(t.value)) {
-            console.log(`${t.tag} is array: ${t.value}`)
+            // console.log(`${t.tag} is array: ${t.value}`)
             // ddTag.textContent = 'Array of values'
             ddTag.innerHTML = t.value.join('\n<br>\n')
           } else {
@@ -1127,8 +1127,18 @@ async function send(data) {
       div.appendChild(dl)
       document.querySelector('div#xmpzone').classList.remove('hidden')
       if (results.metadata[0]['XMP:Look'] !== undefined || results.metadata[0]['XMP:ToneCurvePV2012'] !== undefined) {
-        // const a = document.createElement('a')
+        const a = document.createElement('a')
+        a.setAttribute('download', 'presets.xmp')
+        a.textContent = 'Download Adobe preset xmp file.'
+        a.classList.add('presets')
+        const u = new URL(`/getxmpdata/${(document.querySelector('input[id="inspectedFilename_Id"]')).value}`, `${origin}`)
+        a.href = u.href
         console.log('create link for downloading presets.xmp file.')
+        console.log(u.href)
+        const d = document.createElement('div')
+        d.id = 'adobe_presets_link'
+        d.appendChild(a)
+        div.insertBefore(d, div.children[1])
       }
     }
     const zones = window.metadataSection.children
