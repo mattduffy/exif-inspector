@@ -235,6 +235,10 @@ a.presets {
   margin: 0px 10px 0px 0px;
 }
 
+li.linklist {
+  margin: 1em 0em;
+}
+
 a:active.presets {
 }
 

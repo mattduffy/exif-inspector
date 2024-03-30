@@ -539,14 +539,36 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
       ctx.response.status = 404
     }
   }
-})
-
-router.get('getXMPData-missing-file', '/getxmpdata', async (ctx) => {
+}).get('getXMPData-missing-file', '/getxmpdata', async (ctx) => {
+  ctx.redirect('/')
+}).post('getXMPDAta-wrong-method-missing-file', '/getxmpdata', async (ctx) => {
   ctx.redirect('/')
 })
 
-router.post('getXMPDAta-wrong-method-missing-file', '/getxmpdata', async (ctx) => {
-  ctx.redirect('/')
+router.get('listUploadedImages', '/x', async (ctx) => {
+  const log = mainLog.extend('listuploadedimages')
+  const error = mainLog.extend('listuploadedimages')
+  log('Displaying list of images on the server.')
+  let images
+  let tool
+  try {
+    tool = new Exiftool()
+    images = await tool.raw('/usr/local/bin/exiftool -json --ext md -groupNames -b -thumbnailimage -File:Filename -File:MIMEType ./inspected')
+  } catch (e) {
+    error('Failed to exiftool inspected images.')
+    error(e)
+  }
+  const locals = {}
+  locals.images = images || []
+  locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
+  locals.domain = ctx.state.origin
+  locals.origin = ctx.request.href
+  locals.flash = ctx.flash?.index ?? {}
+  locals.title = `${ctx.app.site}: Home`
+  locals.sessionUser = ctx.state.sessionUser
+  locals.accessToken = ctx.state.searchJwtAccess
+  locals.isAuthenticated = ctx.state.isAuthenticated
+  await ctx.render('listUploadedImages', locals)
 })
 
 router.get('about', '/about', hasFlash, async (ctx) => {

@@ -1,0 +1,54 @@
+    <section id="headerSection">
+        <h1><%= siteName %></h1>
+        <h2>Uploaded Images.</h2>
+        <% if (flash?.info) { %>
+        <div id="info" class="info">
+            <span><%= flash.info %></span>
+        </div>
+        <% } %>
+        <% if (flash?.message) { %>
+        <div id="messages" class="messages">
+            <span><%= flash.message %></span>
+        </div>
+        <% } %>
+        <% if (flash?.error) { %>
+        <div id="errors" class="errors">
+            <span><%= flash.error %></span>
+        </div>
+        <% } %>
+        <% if (isAuthenticated) { %>
+
+        <% } %>
+        <% if (images && images.length > 0) { %>
+        <ul id="links">
+        </ul>
+        <% } else { %>
+            <p>All images have been deleted.</p>
+        <% } %>
+        <script nonce="<%= nonce %>" type="module">
+            let origin = '<%= domain %>'
+            let access = '<%= accessToken %>'
+            let images = <%- JSON.stringify(images) %>
+            // images.forEach((o, i, a) => {a.i = JSON.parse(o)})
+            const ul = document.querySelector('ul#links')
+            images.forEach((i) => {
+                if (i.SourceFile) {
+                    const li = document.createElement('li')
+                    li.classList.add('linklist')
+                    const a = document.createElement('a')
+                    a.href = `${origin}/${i.SourceFile.slice(2)}`
+                    a.setAttribute('target', '_blank')
+                    a.textContent = i['File:FileName']
+                    // if (i?.['EXIF:ThumbnailImage'] !== undefined) {
+                    if (i['EXIF:ThumbnailImage']) {
+                        const preview = document.createElement('img')
+                        preview.classList.add('smallImgPreview')
+                        preview.src = `data:${i['File:MIMEType']};base64,${i['EXIF:ThumbnailImage'].slice(7)}`
+                        li.appendChild(preview)
+                    }
+                    li.appendChild(a)
+                    ul.appendChild(li)
+                }
+            })
+        </script> 
+    </section>
