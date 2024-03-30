@@ -375,6 +375,11 @@ export async function errors(ctx, next) {
   if (ctx.status >= 400) {
     ctx.response.type = 'html'
     const locals = {
+      structuredData: JSON.stringify(ctx.state.structuredData, null, '\t'),
+      domain: ctx.state.origin,
+      origin: ctx.request.href,
+      flash: ctx.flash?.index ?? {},
+      accessToken: ctx.state.searchJwtAccess,
       title: ctx.response.status,
       sessionUser: ctx.state?.sessionUser ?? {},
       isAuthenticated: ctx.state.isAuthenticated,
@@ -399,6 +404,11 @@ export async function errorHandlers(ctx, next) {
       ctx.status = 404
       const locals = {
         body: ctx.body,
+        structuredData: JSON.stringify(ctx.state.structuredData, null, '\t'),
+        domain: ctx.state.origin,
+        origin: ctx.request.href,
+        flash: ctx.flash?.index ?? {},
+        accessToken: ctx.state.searchJwtAccess,
         title: `${ctx.app.site}: 404`,
         sessionUser: ctx.state.sessionUser,
         isAuthenticated: ctx.state.isAuthenticated,
@@ -410,6 +420,11 @@ export async function errorHandlers(ctx, next) {
       error('500, How get here?')
       const locals = {
         body: ctx.body,
+        structuredData: JSON.stringify(ctx.state.structuredData, null, '\t'),
+        domain: ctx.state.origin,
+        origin: ctx.request.href,
+        flash: ctx.flash?.index ?? {},
+        accessToken: ctx.state.searchJwtAccess,
         title: `${ctx.app.site}: 500`,
         user: ctx.state.sessionUser,
         isAuthenticated: ctx.state.isAuthenticated,
