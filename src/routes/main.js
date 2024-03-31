@@ -553,7 +553,8 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   let tool
   try {
     tool = new Exiftool()
-    images = await tool.raw('/usr/local/bin/exiftool -json --ext md -groupNames -b -thumbnailimage -File:Filename -File:MIMEType ./inspected')
+    images = await tool.raw('/usr/local/bin/exiftool -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -FileModifyDate -ThumbnailImage -PreviewPNG -PreviewImage ./inspected')
+    images.sort((a, b) => b['File:FileModifyDate'] - a['File:FileModifyDate'])
   } catch (e) {
     error('Failed to exiftool inspected images.')
     error(e)

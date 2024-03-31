@@ -1,6 +1,6 @@
     <section id="headerSection">
         <h1><%= siteName %></h1>
-        <h2>Uploaded Images.</h2>
+        <h2></span>Uploaded Images.</h2>
         <% if (flash?.info) { %>
         <div id="info" class="info">
             <span><%= flash.info %></span>
@@ -31,8 +31,10 @@
             let images = <%- JSON.stringify(images) %>
             // images.forEach((o, i, a) => {a.i = JSON.parse(o)})
             const ul = document.querySelector('ul#links')
+            let count = 0
             images.forEach((i) => {
                 if (i.SourceFile) {
+                    count += 1
                     const li = document.createElement('li')
                     li.classList.add('linklist')
                     const a = document.createElement('a')
@@ -50,5 +52,7 @@
                     ul.appendChild(li)
                 }
             })
+            const h2 = document.querySelector('h2')
+            h2.textContent = `${count} ${h2.textContent}`
         </script> 
     </section>
