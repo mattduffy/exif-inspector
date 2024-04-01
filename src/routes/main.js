@@ -6,7 +6,7 @@
  */
 
 import {
-  readFile, rename, stat, writeFile,
+  rm, readFile, rename, stat, writeFile,
 } from 'node:fs/promises'
 import path from 'node:path'
 import formidable from 'formidable'
@@ -570,6 +570,63 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
   await ctx.render('listUploadedImages', locals)
+})
+
+router.delete('deleteImage', '/deleteimage', async (ctx) => {
+  const log = mainLog.extend('DELETE-deleteimage')
+  const error = mainError.extend('DELETE-deleteimage')
+  const opts = {
+    encoding: 'utf-8',
+    uploadDir: ctx.app.dirs.private.uploads,
+    keepExtensions: true,
+    multipart: true,
+  }
+  const form = formidable(opts)
+  await new Promise((resolve, reject) => {
+    form.parse(ctx.req, (err, fields, files) => {
+      if (err) {
+        error('There was a problem parsing the multipart form data.')
+        error(err)
+        reject(err)
+        return
+      }
+      log('Multipart form data was successfully parsed.')
+      ctx.request.body = fields
+      log(fields)
+      resolve()
+    })
+  })
+  const csrfTokenCookie = ctx.cookies.get('csrfToken')
+  const csrfTokenSession = ctx.session.csrfToken
+  const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
+  if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
+  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
+  if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
+  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+    error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
+    error(`                     hidden:${csrfTokenHidden}`)
+    error(`                    session:${csrfTokenSession}`)
+    ctx.type = 'application/json; charset=utf-8'
+    ctx.status = 401
+    ctx.body = { error: 'csrf token mismatch' }
+  } else {
+    log('csrf token check passed')
+    const imageToDelete = path.resolve('./inspected', ctx.body.image[0])
+    log(`imageToDelete: ${imageToDelete}`)
+    let isDeleted
+    try {
+      isDeleted = await rm(imageToDelete, { force: true })
+      ctx.status = 200
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.body = { status: 'ok', isDeleted }
+    } catch (e) {
+      error(`Failed to delete image: ${imageToDelete}`)
+      error(e)
+      ctx.status = 418
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.body = { error: e.message }
+    }
+  }
 })
 
 router.get('about', '/about', hasFlash, async (ctx) => {

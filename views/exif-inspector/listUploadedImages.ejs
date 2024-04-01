@@ -41,7 +41,6 @@
                     a.href = `${origin}/${i.SourceFile.slice(2)}`
                     a.setAttribute('target', '_blank')
                     a.textContent = i['File:FileName']
-                    // if (i?.['EXIF:ThumbnailImage'] !== undefined) {
                     if (i['EXIF:ThumbnailImage']) {
                         const preview = document.createElement('img')
                         preview.classList.add('smallImgPreview')
@@ -49,6 +48,16 @@
                         li.appendChild(preview)
                     }
                     li.appendChild(a)
+                    const span = document.createElement('span')
+                    span.classList.add('trashcan')
+                    span.setAttribute('title', 'Delete this image.')
+                    const trashcan = document.createElement('img')
+                    trashcan.dataset.file = i['File:Filename']
+                    trashcan.id = count
+                    trashcan.src = `${origin}/i/delete.svg`
+                    trashcan.classList.add('trashcan')
+                    span.appendChild(trashcan)
+                    li.appendChild(span)
                     ul.appendChild(li)
                 }
             })

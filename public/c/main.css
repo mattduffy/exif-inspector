@@ -239,6 +239,13 @@ li.linklist {
   margin: 1em 0em;
 }
 
+.trashcan {
+  position: relative;
+  top: 3px;
+  left: .5em;
+  width: 20px;
+}
+
 a:active.presets {
 }
 
