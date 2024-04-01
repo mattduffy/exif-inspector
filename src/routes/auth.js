@@ -35,6 +35,7 @@ router.get('getLogin', '/login', async (ctx, next) => {
   // const flashMessage = ctx.flash
   const locals = {
     body: ctx.body,
+    domain: ctx.state.origin,
     title: `${ctx.app.site}: Login`,
     sessionUser: ctx.state.sessionUser,
     csrfToken,

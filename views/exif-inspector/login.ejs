@@ -4,7 +4,7 @@
       <h1 class="login">Login</h1>
       <form name="login" id="login" action="/login" method="POST" enctype="multipart/form-data">
         <fieldset id="login_fieldset" name="login_fieldset" form="login" class="login_fieldset" title="Login Form">
-          <legend>Mattmadethese</legend>
+          <legend>Exif Inspector</legend>
             <% if (login?.info) { %>
             <div id="info" class="info">
               <span><%= login.info %></span>
@@ -23,12 +23,13 @@
             <div class="wrapper">
               <label for="username">Username: </label>
               <input type="text" size="45" tabindex="1" id="username" name="username" required autocomplete="username" value="<% if (login) { %><%=login?.username %><% } %>">
-
+              <br>
               <label for="password">Password: </label>
               <input type="password" size="45" tabindex="2" id="password" name="password" required autocomplete="current-password" value="">
 
               <input type="hidden" id="csrf-token" name="csrf-token" value="<%= csrfToken   %>">
             </div>
+            <br>
             <input type="submit" tabindex="3" id="submit" name="submit" value="Login">
             <input type="reset" id="reset" name="reset" value="Reset">
         </fieldset>

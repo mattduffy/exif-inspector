@@ -548,6 +548,10 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
 router.get('listUploadedImages', '/x', async (ctx) => {
   const log = mainLog.extend('listuploadedimages')
   const error = mainLog.extend('listuploadedimages')
+  ctx.state.sessionUser = ctx.state.sessionUser ?? {}
+  if (!ctx.state.isAuthenticated) {
+    ctx.redirect('/')
+  }
   log('Displaying list of images on the server.')
   let images
   let tool

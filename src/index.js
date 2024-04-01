@@ -256,6 +256,7 @@ async function isMongo(ctx, next) {
 async function viewGlobals(ctx, next) {
   ctx.state.nonce = crypto.randomBytes(16).toString('base64')
   ctx.state.origin = `${ctx.request.protocol}://${ctx.app.domain}`
+  ctx.state.domain = `${ctx.request.protocol}://${ctx.app.domain}`
   ctx.state.siteName = ctx.app.site
   ctx.state.appName = ctx.app.site.toProperCase()
   ctx.state.pageDescription = 'Inspect and edit the EXIF metadata in your photos.'
