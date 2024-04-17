@@ -118,7 +118,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
-  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
+  if (csrfTokenCookie === csrfTokenHidden) log('cookie === hidden')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
   if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
