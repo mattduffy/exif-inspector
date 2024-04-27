@@ -24,31 +24,41 @@
         <% } %>
     </section>
     <section id="formSection">
+        
         <form id="uploaderId" name="uploader" action="<%= origin %>upload" method="POST" enctype="multiplart/form-data">
+            <h3>Step 1: First, choose the type of metadata you want to inspect.</h3>
             <fieldset id="hiddenFields_Id" name="hiddenFields" form="uploaderId" class="hiddenFieldset" title="">
                 <input id="inspectedFilename_Id" name="inspectedFilename" type="hidden" value="">
                 <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
             </fieldset>
             <fieldset id="tagSelect_Id" name="tagSelect" form="uploaderId" class="tagSelect" title="Metadata to display">
-                <legend>View Image Metadata Tags</legend>
-                <label for="full_Id">Full metadata</label>
-                <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0" checked> 
-                <label for="common_Id">Common metadata</label>
-                <input id="common_Id" name="tagSet" type="radio" value="Common" tabeindex="0">
-                <label for="location_Id">Location metadata</label>
-                <input id="location_Id" name="tagSet" type="radio" value="Location" tabeindex="0">
-                <label for="car_Id">Content &amp; Rights</label>
-                <input id="car_Id" name="tagSet" type="radio" value="CAR" tabeindex="0">
+                <legend>Step 1a: View Image Metadata Tags</legend>
+                <label for="full_Id" class="radioLabel">Full metadata
+                    <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0" checked> 
+                </label>
+                <label for="xmp_Id" class="radioLabel">Just Adobe XMP
+                    <input id="xmp_Id" name="tagSet" type="radio" value="XMP" tabeindex="0">
+                </label>
+                <label for="location_Id" class="radioLabel">Just location metadata
+                    <input id="location_Id" name="tagSet" type="radio" value="Location" tabeindex="0">
+                </label>
+                <label for="car_Id" class="radioLabel">Just Content &amp; Rights
+                    <input id="car_Id" name="tagSet" type="radio" value="CAR" tabeindex="0">
+                </label>
             </fieldset>
+            <span class="or">or</span>
             <fieldset id="tagEditSelect_Id" name="tagEditSelect" form="uploaderId" class="tagSelect" title="Metadata to edit">
-                <legend>Clear Image Metadata Tags</legend>
-                <label for="stripAllTags_Id">Clear all tags</label>
-                <input id="stripAllTags_Id" name="tagSet" type="radio" value="StripAllTags" tabindex="0">
-                <label for="stripLocationTags_Id">Clear location tags</label>
-                <input id="stripLocationTags_Id" name="tagSet" type="radio" value="StripLocation" tabindex="0">
+                <legend>Step 1b: Clear Image Metadata Tags</legend>
+                <label for="stripAllTags_Id" class="radioLabel">Clear all tags
+                    <input id="stripAllTags_Id" name="tagSet" type="radio" value="StripAllTags" tabindex="0">
+                </label>
+                <label for="stripLocationTags_Id" class="radioLabel">Clear just location tags
+                    <input id="stripLocationTags_Id" name="tagSet" type="radio" value="StripLocation" tabindex="0">
+                </label>
             </fieldset>
+            <h3>Step 2: Then, select your local image file.</h3>
             <fieldset id="filesId" name="files" form="uploaderId" class="" title="Upload image to inspect" tabeindex="0">
-                <legend>Upload an image to inspect its metadata.</legend>
+                <legend>Step 2b: Upload an image to inspect its metadata.</legend>
                 <div id="dragzone">
                     <h2>Drop a photo here to inspect its metadata.</h2>
                     <br>
@@ -57,12 +67,15 @@
             </fieldset>
             <span class="or">or</span>
             <fieldset id="urlInspectId" name="urlInspect" form="uploaderId" class="urlFieldset" title="Paset URL to image to inspect">
-                <label for="url_Id">URL of an image to inspect: </label>
-                <input id="url_Id" name="url" type="text" value="" tabeindex="0">
+                <legend>Step 2b: Find an image online.</legend>
+                <label for="url_Id">URL of an image to inspect:
+                    <input id="url_Id" name="url" type="text" value="" tabeindex="0">
+                </label>
                 <input id="submit_Id" name="submit" type="submit" value="Inspect Image" tabindex="0">
             </fieldset>
         </form>
     </section>
+    <h3>Step 3: Finally, your image metadata will display here.</h3>
     <section id="metadataSection">
         <div id="infozone" class="hidden">
             <h3 class="mono">File Information</h3>

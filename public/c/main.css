@@ -62,7 +62,7 @@ div#dragzone {
 }
 
 fieldset#filesId > legend {
-  display: none;
+  display: inline-block;
 }
 
 div#dragzone h2 {
@@ -97,9 +97,9 @@ fieldset {
   min-height: 100px;
   min-width: 200px;
   max-width: 610px;
-  margin-left: 2%;
+  margin-left: 1%;
   margin-right: 4%;
-  margin-bottom: 2%;
+  margin-bottom: .5em;
 }
 
 fieldset.tagSelect {
@@ -141,10 +141,19 @@ input[type='reset'] {
   margin-left: 2em;
 }
 
+label.radioLabel {
+  background-color: #f0f8ff;
+  margin: .25em 1em .25em 0em;
+  padding: .25em 0em .25em .25em;
+  border-radius: .5em;
+}
+
 span.or {
   font-weight: 600;
   font-style: italic;
-  text-transform: uppercase;
+  text-transform: capitalize;
+  margin: 0% 0% 1% 2%;
+  display: inline-block;
 }
 
 section#linkSection {
@@ -285,12 +294,28 @@ section#mastfoot > h4 > a, #mastfoot > h4 > a:active, #mastfoot > h4 > a:visited
 }
 
 @media screen and (max-width: 430px) {
+  p {
+    max-width: 95%;
+  }
+
+
   input[type='file'] {
     visibility: visible;
   }
 
   input[type='text']#url_Id {
     width: 65%;
+  }
+
+  label.radioLabel {
+    background-color: #f0f8ff;
+    margin: .25em 1em .5em 0em;
+    padding: .25em 0em .25em .25em;
+    border-radius: .5em;
+    white-space: nowrap;
+    display: block;
+    max-width: 50%;
+    width: fit-content;
   }
 
   fieldset#filesId {
@@ -328,5 +353,3 @@ section#mastfoot > h4 > a, #mastfoot > h4 > a:active, #mastfoot > h4 > a:visited
   }
 
 }
-
-

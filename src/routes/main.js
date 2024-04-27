@@ -139,6 +139,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
       Location: 'Location',
       CAR: 'CAR',
       Full: null,
+      XMP: 'XMP',
       StripAllTags: 'StripAllTags',
       StripLocation: 'StripGPS',
     }
@@ -572,7 +573,7 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   locals.domain = ctx.state.origin
   locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
-  locals.title = `${ctx.app.site}: Home`
+  locals.title = `${ctx.app.site}: List Uploaded Images`
   locals.sessionUser = ctx.state.sessionUser
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
@@ -599,6 +600,7 @@ router.delete('deleteImage', '/deleteimage', async (ctx) => {
       }
       log('Multipart form data was successfully parsed.')
       ctx.request.body = fields
+      ctx.request.files = files
       log(fields)
       resolve()
     })
