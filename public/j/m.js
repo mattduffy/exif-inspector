@@ -793,7 +793,15 @@ async function send(data = null, review = null) {
     const request = new Request(url, opts)
     console.log(request)
     response = await fetch(request, { credentials: 'same-origin' })
-    if (response.status !== 200) {
+    if (response.status === 404) {
+      const responseErrDiv = document.createElement('div')
+      responseErrDiv.id = 'responseError'
+      const text = document.createTextNode(response.statusText)
+      responseErrDiv.appendChild(text)
+      window.fileInfo.insertBefore(responseErrDiv, window.fileInfo.children[0])
+      return
+    }
+    if (response.status > 200) {
       const responseErrDiv = document.createElement('div')
       responseErrDiv.id = 'responseError'
       const text = document.createTextNode(response.statusText)
@@ -812,8 +820,6 @@ async function send(data = null, review = null) {
     const reviewLinkP = document.createElement('p')
     reviewLinkP.appendChild(reviewLink)
     // console.log(`reviewLink: ${reviewLinkP}`)
-    const h3s = document.querySelectorAll('h3')
-    h3s[3].insertBefore(reviewLinkP, h3s[3].lastChild)
   } else {
     results = review
     response = { status: 200 }

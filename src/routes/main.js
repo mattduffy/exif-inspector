@@ -474,16 +474,35 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   const response = {}
   let reviewFile
   const reviewFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
-  log(reviewFile)
-  log(reviewFilePath)
+  log(`reviewFile:     ${reviewFile}`)
+  log(`reviewFilePath: ${reviewFilePath}`)
   if (!file || file === '') {
     error('Missing required file name url parameter.')
     ctx.response.status = 401
   } else {
     try {
-      await stat(reviewFilePath)
+      const stats = await stat(reviewFilePath)
+      log(stats)
     } catch (e) {
-      ctx.response.status = 404
+      error(`Missing file to review: ${reviewFilePath}`)
+      const csrfToken = ulid()
+      const locals = {}
+      locals.metadata = JSON.stringify({ status: 404, file, href: `${ctx.state.origin}/inspected/${file}` }, null, '\t')
+      locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
+      ctx.session.csrfToken = csrfToken
+      ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
+      locals.csrfToken = csrfToken
+      locals.body = ctx.body
+      locals.domain = ctx.state.origin
+      locals.origin = `${ctx.request.origin}/`
+      locals.flash = ctx.flash?.index ?? {}
+      locals.title = `${ctx.app.site}: Review`
+      locals.sessionUser = ctx.state.sessionUser
+      locals.accessToken = ctx.state.searchJwtAccess
+      locals.isAuthenticated = ctx.state.isAuthenticated
+      // ctx.response.status = 200
+      ctx.response.type = 'application/json; charset=utf-8'
+      return ctx.render('index', locals)
     }
     let exiftool = new Exiftool()
     try {
@@ -520,7 +539,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   locals.domain = ctx.state.origin
   locals.origin = `${ctx.request.origin}/`
   locals.flash = ctx.flash?.index ?? {}
-  locals.title = `${ctx.app.site}: Home`
+  locals.title = `${ctx.app.site}: Review`
   locals.sessionUser = ctx.state.sessionUser
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated

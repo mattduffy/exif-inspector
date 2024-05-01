@@ -105,9 +105,17 @@
         let access = '<%= accessToken %>'
         <% if (locals?.metadata !== undefined) { %>
         window.metadata = <%- metadata %>
-        document.addEventListener('DOMContentLoaded', (e) => {
-            setFileInfo(null, window.metadata)
-        })
+        if (window.metadata.status === 404) {
+            const expiredLinkText = `Sorry, but the link to review ${window.metadata.file}'s metadata has expired.`
+            const expiredLinkP = document.createElement('p')
+            expiredLinkP.textContent = expiredLinkText
+            const h3s = document.querySelectorAll('h3')
+            h3s[2].parentElement.insertBefore(expiredLinkP, h3s[2].nextSibling)
+         } else {
+            document.addEventListener('DOMContentLoaded', (e) => {
+                setFileInfo(null, window.metadata)
+            })
+        }
         <% } %>
     </script>
     <script src="<%=origin %>j/m.js" nonce="<%= nonce %>" type="module">
