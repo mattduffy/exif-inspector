@@ -467,6 +467,67 @@ router.post('editLocation', '/editLocation', async (ctx) => {
   }
 })
 
+router.get('getReviewFile', '/review/:f', async (ctx) => {
+  const log = mainLog.extend('GET-reviewFile')
+  const error = mainError.extend('GET-reviewFile')
+  const file = sanitize(ctx.params.f)
+  const response = {}
+  let reviewFile
+  const reviewFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+  log(reviewFile)
+  log(reviewFilePath)
+  if (!file || file === '') {
+    error('Missing required file name url parameter.')
+    ctx.response.status = 401
+  } else {
+    try {
+      await stat(reviewFilePath)
+    } catch (e) {
+      ctx.response.status = 404
+    }
+    let exiftool = new Exiftool()
+    try {
+      // run exif command here
+      exiftool = await exiftool.init(reviewFilePath)
+      const expandStructs = true
+      exiftool.enableXMPStructTagOutput(expandStructs)
+      exiftool.setGPSCoordinatesOutputFormat('+gps')
+      exiftool.enableBinaryTagOutput(true)
+      exiftool.setOverwriteOriginal(false)
+      const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+      // log(`exiftool config path set: ${result.toString()}`)
+      log('exiftool config path set: %o', newConfigPath)
+      const result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+      response.metadata = result
+      response.href = `${ctx.state.origin}/inspected/${file}`
+      response.inspectedFile = file
+    } catch (e) {
+      error(e)
+      error(`Failed to run exif command on ${reviewFilePath}`)
+      response.msg = `Failed to run exif command on ${reviewFilePath}`
+      response.e = e
+    }
+  }
+  const cleanResponse = removeServerDetails(response)
+  const csrfToken = ulid()
+  const locals = {}
+  locals.metadata = JSON.stringify(cleanResponse, null, '\t')
+  locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
+  ctx.session.csrfToken = csrfToken
+  ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
+  locals.csrfToken = csrfToken
+  locals.body = ctx.body
+  locals.domain = ctx.state.origin
+  locals.origin = `${ctx.request.origin}/`
+  locals.flash = ctx.flash?.index ?? {}
+  locals.title = `${ctx.app.site}: Home`
+  locals.sessionUser = ctx.state.sessionUser
+  locals.accessToken = ctx.state.searchJwtAccess
+  locals.isAuthenticated = ctx.state.isAuthenticated
+  ctx.response.status = 200
+  await ctx.render('index', locals)
+})
+
 router.get('getEditedFile', '/inspected/:f', async (ctx) => {
   const log = mainLog.extend('GET-editedFile')
   const error = mainError.extend('GET-editedFile')

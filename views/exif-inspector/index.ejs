@@ -98,11 +98,17 @@
           data-callback="initMapKit"
           data-libraries="full-map,services"
           data-initial-token=""
+          nonce="<%= nonce %>"
         ></script>
     <script nonce="<%= nonce %>" type="module">
         let origin = '<%= origin %>'
         let access = '<%= accessToken %>'
-        
+        <% if (locals?.metadata !== undefined) { %>
+        window.metadata = <%- metadata %>
+        document.addEventListener('DOMContentLoaded', (e) => {
+            setFileInfo(null, window.metadata)
+        })
+        <% } %>
     </script>
     <script src="<%=origin %>j/m.js" nonce="<%= nonce %>" type="module">
     </script>

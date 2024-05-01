@@ -248,6 +248,15 @@ li.linklist {
   margin: 1em 0em;
 }
 
+.magnifyingGlass {
+  transform: scale(-1, 1);
+  margin-right: .5em;
+  position: relative;
+  top: 3px;
+  left: .5em;
+  width: 1.125em;
+}
+
 .trashcan {
   position: relative;
   top: 3px;

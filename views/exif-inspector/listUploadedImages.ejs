@@ -32,6 +32,15 @@
             // images.forEach((o, i, a) => {a.i = JSON.parse(o)})
             const ul = document.querySelector('ul#links')
             let count = 0
+            function reviewHandeler(e) {
+                e.preventDefault()
+                e.stopPropagation()
+                const dataset = e.target.dataset
+                console.log(dataset)
+                const link = new URL(`/review/${dataset.file}`, origin)
+                console.log(link)
+                location.assign(link)
+            }
             images.forEach((i) => {
                 if (i.SourceFile) {
                     count += 1
@@ -48,12 +57,23 @@
                         li.appendChild(preview)
                     }
                     li.appendChild(a)
+                    const span1 = document.createElement('span')
+                    span1.classList.add('magnifyingGlass')
+                    span1.setAttribute('title', 'Review this image.')
+                    const magnifyingGlass = document.createElement('img')
+                    magnifyingGlass.dataset.file = i['File:FileName']
+                    magnifyingGlass.id = `review_${count}`
+                    magnifyingGlass.classList.add('magnifyingGlass')
+                    magnifyingGlass.src = `${origin}/i/magnifying-glass.svg`
+                    magnifyingGlass.addEventListener('click', reviewHandeler)
+                    span1.appendChild(magnifyingGlass)
+                    li.appendChild(span1)
                     const span = document.createElement('span')
                     span.classList.add('trashcan')
                     span.setAttribute('title', 'Delete this image.')
                     const trashcan = document.createElement('img')
-                    trashcan.dataset.file = i['File:Filename']
-                    trashcan.id = count
+                    trashcan.dataset.file = i['File:FileName']
+                    trashcan.id = `delete_${count}`
                     trashcan.src = `${origin}/i/delete.svg`
                     trashcan.classList.add('trashcan')
                     span.appendChild(trashcan)
