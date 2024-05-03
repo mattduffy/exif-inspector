@@ -26,7 +26,7 @@
     <section id="formSection">
         
         <form id="uploaderId" name="uploader" action="<%= origin %>upload" method="POST" enctype="multiplart/form-data">
-            <h3>Step 1: First, choose the type of metadata you want to inspect.</h3>
+            <h3 id="step1">Step 1: First, choose the type of metadata you want to inspect.</h3>
             <fieldset id="hiddenFields_Id" name="hiddenFields" form="uploaderId" class="hiddenFieldset" title="">
                 <input id="inspectedFilename_Id" name="inspectedFilename" type="hidden" value="">
                 <input id="csrf-token_Id" name="csrf-token" type="hidden" value="<%= csrfToken  %>">
@@ -34,7 +34,7 @@
             <fieldset id="tagSelect_Id" name="tagSelect" form="uploaderId" class="tagSelect" title="Metadata to display">
                 <legend>Step 1a: View Image Metadata Tags</legend>
                 <label for="full_Id" class="radioLabel">Full metadata
-                    <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0" checked> 
+                    <input id="full_Id" name="tagSet" type="radio" value="Full" tabeindex="0"> 
                 </label>
                 <label for="xmp_Id" class="radioLabel">Just Adobe XMP
                     <input id="xmp_Id" name="tagSet" type="radio" value="XMP" tabeindex="0">
@@ -56,7 +56,7 @@
                     <input id="stripLocationTags_Id" name="tagSet" type="radio" value="StripLocation" tabindex="0">
                 </label>
             </fieldset>
-            <h3>Step 2: Then, select your local image file.</h3>
+            <h3 id="step2">Step 2: Then, select your local image file.</h3>
             <fieldset id="filesId" name="files" form="uploaderId" class="" title="Upload image to inspect" tabeindex="0">
                 <legend>Step 2b: Upload an image to inspect its metadata.</legend>
                 <div id="dragzone">
@@ -75,7 +75,7 @@
             </fieldset>
         </form>
     </section>
-    <h3>Step 3: Finally, your image metadata will display here.</h3>
+    <h3 id="step3">Step 3: Finally, your image metadata will display here.</h3>
     <section id="metadataSection">
         <div id="infozone" class="hidden">
             <h3 class="mono">File Information</h3>
