@@ -686,7 +686,7 @@ function insertLink(link, code) {
 }
 async function setFileInfo(file = null, review = null) {
   formData.append('csrfTokenHidden', form['csrf-token'].value)
-  if (form.tagSet.value === '') {
+  if (form.tagSet.value === '' && !review) {
     console.log(form.tagSet.value)
     const h3 = document.querySelector('h3[id="step1"]')
     h3.style.color = 'orangered'
