@@ -464,7 +464,7 @@ async function submitCAREdits(e) {
       const url = new window.URL(`${origin}/editCAR`)
       console.log(url.toString())
       const request = new Request(url, opts)
-      console.log(request)
+      // console.log(request)
       let response
       let results
       let msg

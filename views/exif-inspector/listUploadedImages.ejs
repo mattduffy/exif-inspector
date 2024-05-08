@@ -32,7 +32,7 @@
             // images.forEach((o, i, a) => {a.i = JSON.parse(o)})
             const ul = document.querySelector('ul#links')
             let count = 0
-            function reviewHandeler(e) {
+            function reviewHandler(e) {
                 e.preventDefault()
                 e.stopPropagation()
                 const dataset = e.target.dataset
@@ -40,6 +40,58 @@
                 const link = new URL(`/review/${dataset.file}`, origin)
                 console.log(link)
                 location.assign(link)
+            }
+            async function deleteHandler(e) {
+                e.preventDefault()
+                e.stopPropagation()
+                const li = e.target.parentElement.parentElement
+                const image = e.target.dataset.file
+                console.log(li)
+                console.log(image)
+                const formData = new FormData()
+                formData.append('file', image)
+                formData.append('csrfTokenHidden', '<%= csrfToken %>')
+                formData.append('_method', 'delete')
+                for (const x of formData.entries()) {
+                    console.log(x)
+                }
+                const opts = {
+                  method: 'POST',
+                  headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${window.access}`,
+                    'X-Http-Method-Override': 'delete',
+                  },
+                  body: formData,
+                }
+                console.log(opts)
+                const url = new window.URL(`${origin}/delete/image/${image}`)
+                console.log(url.toString())
+                const request = new Request(url, opts)
+                let response
+                let json
+                try {
+                    response = await fetch(request, { credentials: 'same-origin' }) 
+                    if (!response.ok) {
+                        throw new Error('bad response', { cause: e })
+                    }
+                } catch (e) {
+                    console.info(e)
+                    li.style.backgroundColor = 'orange'
+                    return
+                }
+                try {
+                    json = await response.json()
+                    console.log(json)
+                    li.style.backgroundColor = 'green'
+                    setTimeout((image) => {
+                        li.parentElement.removeChild(li)
+                    }, 750)
+                } catch (e) {
+                    console.info(e)
+                    li.style.backgroundColor = 'yellow'
+                    return
+                }
             }
             images.forEach((i) => {
                 if (i.SourceFile) {
@@ -65,7 +117,7 @@
                     magnifyingGlass.id = `review_${count}`
                     magnifyingGlass.classList.add('magnifyingGlass')
                     magnifyingGlass.src = `${origin}/i/magnifying-glass.svg`
-                    magnifyingGlass.addEventListener('click', reviewHandeler)
+                    magnifyingGlass.addEventListener('click', reviewHandler)
                     span1.appendChild(magnifyingGlass)
                     li.appendChild(span1)
                     const span = document.createElement('span')
@@ -76,6 +128,7 @@
                     trashcan.id = `delete_${count}`
                     trashcan.src = `${origin}/i/delete.svg`
                     trashcan.classList.add('trashcan')
+                    trashcan.addEventListener('click', deleteHandler)
                     span.appendChild(trashcan)
                     li.appendChild(span)
                     ul.appendChild(li)

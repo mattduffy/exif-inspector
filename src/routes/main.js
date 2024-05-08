@@ -647,9 +647,13 @@ router.get('listUploadedImages', '/x', async (ctx) => {
     error('Failed to exiftool inspected images.')
     error(e)
   }
+  const csrfToken = ulid()
+  ctx.session.csrfToken = csrfToken
+  ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
   const locals = {}
   locals.images = images || []
   locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
+  locals.csrfToken = csrfToken
   locals.domain = ctx.state.origin
   locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
@@ -660,7 +664,7 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   await ctx.render('listUploadedImages', locals)
 })
 
-router.delete('deleteImage', '/deleteimage', async (ctx) => {
+router.delete('deleteImage', '/delete/image/:file', async (ctx) => {
   const log = mainLog.extend('DELETE-deleteimage')
   const error = mainError.extend('DELETE-deleteimage')
   const opts = {
@@ -700,7 +704,7 @@ router.delete('deleteImage', '/deleteimage', async (ctx) => {
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
-    const imageToDelete = path.resolve('./inspected', ctx.body.image[0])
+    const imageToDelete = path.resolve('./inspected', ctx.params.file)
     log(`imageToDelete: ${imageToDelete}`)
     let isDeleted
     try {
