@@ -824,8 +824,10 @@ async function send(data = null, review = null) {
     reviewLink.textContent = reviewLinkText
     reviewLink.classList.add('reviewLink')
     const reviewLinkP = document.createElement('p')
+    reviewLinkP.style.margin = '.5em'
     reviewLinkP.appendChild(reviewLink)
-    // console.log(`reviewLink: ${reviewLinkP}`)
+    console.log('reviewLink: %o', reviewLinkP)
+    infozone.insertBefore(reviewLinkP, infozone.children[1])
   } else {
     results = review
     response = { status: 200 }
@@ -835,7 +837,6 @@ async function send(data = null, review = null) {
     form.inspectedFilename.value = results.inspectedFile
   }
   window.results = results
-  
 
   const list = document.createElement('dl')
   list.classList.add('mono')
