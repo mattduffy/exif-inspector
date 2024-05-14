@@ -108,6 +108,10 @@ fieldset.tagSelect {
   max-width: 100%;
 }
 
+fieldset#filesId {
+  cursor: pointer;
+}
+
 fieldset.urlFieldset {
   border: none;
   min-height: 20px;
