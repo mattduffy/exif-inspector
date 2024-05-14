@@ -122,6 +122,7 @@ function isCARTag(tag) {
     found = false
     return false
   })
+  console.log('found: ', window.cartags[found])
   return found
 }
 function isLocationTag(tag) {
@@ -976,6 +977,7 @@ async function send(data = null, review = null) {
     } else if (carTagIndex = isCARTag(tag)) { // eslint-disable-line
       // content, attributions, and rights
       window.cartags[carTagIndex].value = imgMetadata[0][tag]
+      console.log(window.cartags[carTagIndex].value)
       showCARTags = true
     } else {
       // all other metadata tags
@@ -1111,7 +1113,8 @@ async function send(data = null, review = null) {
     const div = tagListDiv('contentzone')
     const dl = div.querySelector(':scope > dl')
     window.cartags.forEach((t, i) => {
-      if (t.value !== '') {
+      // if (t.value !== '') {
+      if (t.value !== undefined) {
         const label = document.createElement('label')
         label.setAttribute('for', `car_val_${x}_${i}`)
         label.innerText = t.tag
