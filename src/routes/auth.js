@@ -115,7 +115,7 @@ router.post('postLogin', '/login', async (ctx) => {
           error: null,
         },
       }
-      ctx.redirect('/')
+      ctx.redirect('/x')
     }
   } else {
     error('csrf token mismatch')
