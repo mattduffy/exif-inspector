@@ -1,6 +1,6 @@
     <section id="headerSection">
         <h1><%= siteName %></h1>
-        <h2></span>Uploaded Images.</h2>
+        <h2><span></span>Uploaded Images.</h2>
         <% if (flash?.info) { %>
         <div id="info" class="info">
             <span><%= flash.info %></span>
@@ -40,6 +40,11 @@
                 const link = new URL(`/review/${dataset.file}`, origin)
                 console.log(link)
                 location.assign(link)
+            }
+            function updateFileCount(x) {
+                const h2 = document.querySelector('h2')
+                const text = h2.textContent.slice(h2.textContent.lastIndexOf(' Uploaded Images.'))
+                h2.textContent = `${x} ${text}`
             }
             async function deleteHandler(e) {
                 e.preventDefault()
@@ -86,6 +91,7 @@
                     li.style.backgroundColor = 'green'
                     setTimeout((image) => {
                         li.parentElement.removeChild(li)
+                        updateFileCount(Number.parseInt(document.querySelector('section#headerSection > h2').textContent, 10) -1)
                     }, 750)
                 } catch (e) {
                     console.info(e)
