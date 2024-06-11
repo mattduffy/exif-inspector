@@ -473,7 +473,12 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   const file = sanitize(ctx.params.f)
   const response = {}
   let reviewFile
-  const reviewFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+  let reviewFilePath
+  if (file === 'IPTC-PhotometadataRef-Std2021.1.jpg') {
+    reviewFilePath = path.resolve(`${ctx.app.root}/public/i/${file}`)
+  } else {
+    reviewFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+  }
   log(`reviewFile:     ${reviewFile}`)
   log(`reviewFilePath: ${reviewFilePath}`)
   if (!file || file === '') {
@@ -543,7 +548,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   locals.sessionUser = ctx.state.sessionUser
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
-  ctx.response.status = 200
+  ctx.status = 200
   await ctx.render('index', locals)
 })
 
