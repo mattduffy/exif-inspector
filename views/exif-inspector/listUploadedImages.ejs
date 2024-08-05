@@ -100,7 +100,7 @@
                 }
             }
             images.forEach((i) => {
-                if (i.SourceFile) {
+                if (i.SourceFile && !/IPTC-Photometa/i.test(i.SourceFile)) {
                     count += 1
                     const li = document.createElement('li')
                     li.classList.add('linklist')
