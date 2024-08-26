@@ -4,21 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <meta name="description" content="<%= pageDescription %>">
-    <% if (structuredData !== null) { %>
+    <% if (openGraph) { %>
+        <%- openGraph %>
+    <% } %>
+    <% if (structuredData) { %>
     <script type="application/ld+json" nonce="<%= nonce %>">
-      <%- structuredData %>
+        <%- structuredData %>
     </script>
     <% } %>
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="<%= domain %>">
-    <meta property="og:title" content="Image metadata inspector">
-    <meta property="og:image" content="<%= domain %>/i/ei-ogEmbed-450x295.png">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="450">
-    <meta property="og:image:height" content="295">
-    <meta property="og:image:alt" content="Image metadata inspector.">
-    <meta property="og:description" content="Inspect and edit the metadata embedded in your images.">
-    
     <title><%= title %></title>
     <link rel="icon" type="image/x-icon" href="<%= domain %>/favicon.ico"> 
     <link rel="apple-touch-icon" sizes="180x180" href="<%= domain %>/apple-touch-icon.png">

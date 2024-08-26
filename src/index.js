@@ -289,12 +289,12 @@ async function viewGlobals(ctx, next) {
   ctx.state.pageDescription = 'Inspect and edit the EXIF metadata in your photos.'
   ctx.state.stylesheets = []
   ctx.state.caching = false
-  ctx.state.structuredData = JSON.stringify({
+  ctx.state.structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
+    '@type': 'website',
     name: 'Exif Inspector: view and edit image metadata.',
     url: ctx.state.origin,
-  }, null, 2)
+  }
   ctx.state.searchJwtAccess = appEnv.SEARCHJWTACCESS
   ctx.state.searchAccessToken = appEnv.SEARCHACCESSTOKEN
   await next()
