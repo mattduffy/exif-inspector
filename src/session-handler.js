@@ -56,17 +56,17 @@ const redisConnOpts = {
 const redis = redisStore(redisConnOpts)
 
 const config = {
+  store: redis,
   key: 'session',
   maxAge: (86400000 * 3),
-  autoCommit: true,
-  overwrite: true,
-  httpOnly: true,
-  signed: true,
   rolling: true,
   renew: true,
+  overwrite: true,
+  autoCommit: true,
+  sameSite: 'strict',
   secure: false,
-  sameSite: true,
-  store: redis,
+  httpOnly: true,
+  signed: true,
 }
 
 export { session, config, redis }

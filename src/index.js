@@ -125,8 +125,8 @@ const o = {
 let isHTTPS
 log(`isHTTPS: ${isHTTPS}`)
 app.use(async (ctx, next) => {
+  log('isHTTPS: ', ctx.request.secure)
   if (!ctx.request.secure) {
-    log('isHTTPS: ', ctx.request.secure)
     isHTTPS = false
     config.secure = false
   }
