@@ -38,7 +38,6 @@ const redisConnOpts = {
   username: redisEnv.REDIS_USER,
   password: redisEnv.REDIS_PASSWORD,
   connectionName: 'glp-sessions',
-  // keyPrefix: 'koasessions:',
   keyPrefix: `${redisEnv.REDIS_KEY_PREFIX}:sessions:` ?? 'koa:sessions:',
   enableTLSForSentinelMode: true,
   sentinelRetryStrategy: 100,
@@ -57,16 +56,16 @@ const redis = redisStore(redisConnOpts)
 
 const config = {
   store: redis,
-  key: 'session',
-  maxAge: (86400000 * 3),
-  rolling: true,
-  renew: true,
+  key: redisEnv.SESSION_KEY ?? 'session',
+  maxAge: redisEnv.SESSION_1_day * 2 ?? (86400000 * 2),
+  rolling: redisEnv.SESSION_ROLLING ?? true,
+  renew: redisEnv.SESSION_RENEW ?? true,
   overwrite: true,
   autoCommit: true,
+  secure: redisEnv.SESSION_SECURE ?? true,
+  httpOnly: redisEnv.SESSION_HTTPONLY ?? true,
+  signed: redisEnv.SESSION_SIGNED ?? true,
   sameSite: 'strict',
-  secure: false,
-  httpOnly: true,
-  signed: true,
 }
 
 export { session, config, redis }
