@@ -947,7 +947,7 @@ async function send(data = null, review = null) {
     dtTag.id = `tag_${x}`
     dtTag.innerHTML = `${tag}`
     ddTag.id = `val_${x}`
-    if (/ThumbnailTIFF|ThumbnailImage|PreviewImage|MPImage2/i.test(t)) {
+    if (/ThumbnailTIFF|ThumbnailImage|PreviewImage|MPImage2|C2PAThumbnailClaimJpegData/i.test(t)) {
       console.log('thumbnail tag found: ', t)
       const img = document.createElement('img')
       img.classList.add('smallImgPreview')

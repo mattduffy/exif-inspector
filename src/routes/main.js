@@ -643,7 +643,11 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   let tool
   try {
     tool = new Exiftool()
-    images = await tool.raw('/usr/local/bin/exiftool -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -FileModifyDate -ThumbnailImage -PreviewPNG -PreviewImage ./inspected')
+    const configPath = `${ctx.app.dirs.config}/exiftool.config`
+    const dir = './inspected'
+    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -FileModifyDate -AllThumbs ${dir}`
+    log(`raw exiftool cmd: ${raw}`)
+    images = await tool.raw(raw)
     log('images: ', images)
     if (images.length > 0) {
       images.sort((a, b) => b['File:FileModifyDate'] - a['File:FileModifyDate'])

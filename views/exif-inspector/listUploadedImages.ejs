@@ -114,6 +114,12 @@
                         preview.src = `data:${i['File:MIMEType']};base64,${i['EXIF:ThumbnailImage'].slice(7)}`
                         li.appendChild(preview)
                     }
+                    if (i['JUMBF:C2PAThumbnailClaimJpegData']) {
+                        const preview = document.createElement('img')
+                        preview.classList.add('smallImgPreview')
+                        preview.src = `data:${i['File:MIMEType']};base64,${i['JUMBF:C2PAThumbnailClaimJpegData'].slice(7)}`
+                        li.appendChild(preview)
+                    }
                     li.appendChild(a)
                     const span1 = document.createElement('span')
                     span1.classList.add('magnifyingGlass')
