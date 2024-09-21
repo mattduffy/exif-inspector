@@ -1,5 +1,5 @@
 /**
- * @module @mattduffy/koa-stub
+ * @module @mattduffy/exif-inspector
  * @author Matthew Duffy <mattduffy@gmail.com>
  * @file src/session-handler.js The setup and configuration of the koa app session handler.
  */
@@ -65,7 +65,7 @@ const config = {
   secure: (redisEnv.SESSION_SECURE.toLowerCase() === 'true') ?? true,
   httpOnly: (redisEnv.SESSION_HTTPONLY.toLowerCase() === 'true') ?? true,
   signed: (redisEnv.SESSION_SIGNED.toLowerCase() === 'true') ?? true,
-  sameSite: 'strict',
+  sameSite: null,
 }
 
 export { session, config, redis }

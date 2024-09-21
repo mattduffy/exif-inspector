@@ -130,16 +130,17 @@ app.use(async (ctx, next) => {
     isHTTPS = false
     config.secure = false
   }
-  // log(config)
+  log(config)
   return next()
 })
 log(`isHTTPS: ${isHTTPS}`)
 if (!isHTTPS) {
   // config.secure = false
   log('request is NOT secure.')
-  log('session cookies stored in the clear.')
+  log('session cookie stored in the clear.')
 }
 app.use(session(config, app))
+
 if (app.env === 'development') {
   app.use(migrations(o, app))
 }
