@@ -549,7 +549,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
   ctx.status = 200
-  await ctx.render('index', locals)
+  return ctx.render('index', locals)
 })
 
 router.get('getEditedFile', '/inspected/:f', async (ctx) => {
@@ -645,10 +645,10 @@ router.get('listUploadedImages', '/x', async (ctx) => {
     tool = new Exiftool()
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     const dir = './inspected'
-    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -FileModifyDate -AllThumbs ${dir}`
+    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -EXIF:Thumbnail* ${dir}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
-    log('images: ', images)
+    // log('images: ', images)
     if (images.length > 0) {
       images.sort((a, b) => b['File:FileModifyDate'] - a['File:FileModifyDate'])
     }

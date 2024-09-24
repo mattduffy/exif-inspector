@@ -613,6 +613,9 @@ function insertClearButton() {
   parent.insertBefore(clearSection, document.querySelector('section#metadataSection'))
   console.info('clear results button added.')
 }
+if (!insertClearButton) {
+  console.log('no clear button function.')
+}
 window.clearResults = (e) => {
   e.preventDefault()
   e.stopPropagation()
