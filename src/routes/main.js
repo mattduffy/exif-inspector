@@ -32,7 +32,9 @@ function sanitizeFilename(filename) {
   // Remove whitespace characters from filename.
   // Remove non-word characters from filename.
   /* eslint-disable-next-line */
-  const cleanName = filename.replace(/[\s!@#\$%&*\(\)](?!(\.\w{1,4}$))/g, '_')
+  // const cleanName = filename.replace(/[\s!@#\$%&*\(\)|(%\d\d)](?!(\.\w{1,4}$))/g, '_')
+  // const cleanName = filename.replaceAll(/[(\s?)!@#\$%&*\(\)]|(?<=%)\d{2}(?!(\.\D{1,4}$))/g, '_') // eslint-disable-line
+  const cleanName = filename.replaceAll(/[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g, '_') // eslint-disable-line
   console.log(`Sanitizing filename ${filename} to ${cleanName}`)
   return cleanName
 }
