@@ -231,7 +231,7 @@ router.post('fileUpload', '/upload', async (ctx) => {
         response.modifiedFile = (await exiftool.getPath()).file
         log(result)
       } else {
-        result = await exiftool.getMetadata('', exifShortcut, '--ICC_Profile:all')
+        result = await exiftool.getMetadata('', exifShortcut, '-AllThunbs --ICC_Profile:all')
       }
       response.metadata = result
     } catch (e) {
@@ -523,7 +523,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
       const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
       // log(`exiftool config path set: ${result.toString()}`)
       log('exiftool config path set: %o', newConfigPath)
-      const result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+      const result = await exiftool.getMetadata('', null, 'All', '-Photoshop:PhotoshopThumbnail', '--ICC_Profile:all')
       response.metadata = result
       response.href = `${ctx.state.origin}/inspected/${file}`
       response.inspectedFile = file
@@ -647,7 +647,7 @@ router.get('listUploadedImages', '/x', async (ctx) => {
     tool = new Exiftool()
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     const dir = './inspected'
-    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -EXIF:Thumbnail* ${dir}`
+    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
     // log('images: ', images)
