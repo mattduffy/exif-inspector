@@ -20,8 +20,8 @@
 
         <% } %>
         <% if (images && images.length > 0) { %>
-        <ul id="links">
-        </ul>
+        <ol id="links">
+        </ol>
         <% } else { %>
             <p>All images have been deleted.</p>
         <% } %>
@@ -30,7 +30,7 @@
             let access = '<%= accessToken %>'
             let images = <%- JSON.stringify(images) %>
             // images.forEach((o, i, a) => {a.i = JSON.parse(o)})
-            const ul = document.querySelector('ul#links')
+            const ul = document.querySelector('ol#links')
             let count = 0
             function reviewHandler(e) {
                 e.preventDefault()
@@ -99,7 +99,7 @@
                     return
                 }
             }
-            images.forEach((i) => {
+            images.forEach((i, e) => {
                 if (i.SourceFile && !/IPTC-Photometa/i.test(i.SourceFile)) {
                     count += 1
                     const li = document.createElement('li')
@@ -112,6 +112,18 @@
                         const preview = document.createElement('img')
                         preview.classList.add('smallImgPreview')
                         preview.src = `data:${i['File:MIMEType']};base64,${i['EXIF:ThumbnailImage'].slice(7)}`
+                        li.appendChild(preview)
+                    }
+                    if (i['Photoshop:PhotoshopThumbnail']) {
+                        const preview = document.createElement('img')
+                        preview.classList.add('smallImgPreview')
+                        preview.src = `data:${i['File:MIMEType']};base64,${i['Photoshop:PhotoshopThumbnail'].slice(7)}`
+                        li.appendChild(preview)
+                    }
+                    if (i['JFIF:ThumbnailTIFF']) {
+                        const preview = document.createElement('img')
+                        preview.classList.add('smallImgPreview')
+                        preview.src = `data:${i['File:MIMEType']};base64,${i['JFIF:ThumbnailTIFF'].slice(7)}`
                         li.appendChild(preview)
                     }
                     if (i['JUMBF:C2PAThumbnailClaimJpegData']) {

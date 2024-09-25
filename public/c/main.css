@@ -236,6 +236,7 @@ section#metadataSection > div#xmpzone > h3 {
 
 .smallImgPreview {
   max-width: 350px;
+  margin-right: 10px;
 }
 
 .mono {
