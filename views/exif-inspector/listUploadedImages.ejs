@@ -20,7 +20,7 @@
 
         <% } %>
         <% if (images && images.length > 0) { %>
-        <ol id="links">
+        <ol id="links" reversed>
         </ol>
         <% } else { %>
             <p>All images have been deleted.</p>
@@ -104,6 +104,11 @@
                     count += 1
                     const li = document.createElement('li')
                     li.classList.add('linklist')
+                    const d = document.createElement('span')
+                    d.style.marginRight = '.5em'
+                    d.innerText = new Date(i['File:FileModifyDate']).toDateString()
+                    // d.innerText = i['File:FileModifyDate']
+                    li.appendChild(d)
                     const a = document.createElement('a')
                     a.href = `${origin}/${i.SourceFile.slice(2)}`
                     a.setAttribute('target', '_blank')
