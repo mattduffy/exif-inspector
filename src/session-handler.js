@@ -57,7 +57,7 @@ const redis = redisStore(redisConnOpts)
 const config = {
   store: redis,
   key: redisEnv.SESSION_KEY ?? 'session',
-  maxAge: redisEnv.SESSION_1_DAY * 2 ?? (86400000 * 2),
+  maxAge: redisEnv.SESSION_1_DAY * 3 ?? (86400000 * 3),
   rolling: (redisEnv.SESSION_ROLLING.toLowerCase() === 'true') ?? true,
   renew: (redisEnv.SESSION_RENEW.toLowerCase() === 'true') ?? true,
   overwrite: true,
