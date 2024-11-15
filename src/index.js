@@ -333,7 +333,7 @@ async function logRequest(ctx, next) {
               geo.coords = [city?.location?.latitude, city?.location?.longitude]
               logEntry[`geo_${i}`] = geo
               geos.push(geo)
-              logg('Request ip geo:     %0', geo)
+              logg('Request ip geo:     %o', geo)
             })
           } else {
             const city = geoIPCity.city(ctx.request.ip)
@@ -346,11 +346,13 @@ async function logRequest(ctx, next) {
             geo.coords = [city?.location?.latitude, city?.location?.longitude]
             logEntry.geo = geo
             geos.push(geo)
-            logg('Request ip geo:     %0', geo)
+            logg('Request ip geo:     %O', geo)
           }
         } catch (e) {
           err(e.message)
         }
+      } else {
+        logg(`failed to log ip geo for ${ctx.request.ips}`)
       }
       logEntry.date = new Date()
       logEntry.method = ctx.method
@@ -358,7 +360,7 @@ async function logRequest(ctx, next) {
       logEntry.httpVersion = `${ctx.req.httpVersionMajor}.${ctx.req.httpVersionMinor}`
       logEntry.referer = ctx.request.headers?.referer
       logEntry.userAgent = ctx.request.headers['user-agent']
-      ctx.state.logEntry = { ip: logEntry.remoteIp, geos }
+      ctx.state.logEntry = { ip: logEntry.remoteIps, geos }
       await mainLog.insertOne(logEntry)
     }
     logg(`Request href:        ${ctx.request.href}`)
