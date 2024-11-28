@@ -40,10 +40,11 @@ class App {
     // const error = appError.extend('constructor')
     this.log('The App model constructor.')
     // this.log('the config argument: %O', config)
+
     this._keyDir = config.keyDir ?? './keys'
     this._dbHandle = config?.db
     this._db = config?.db.collection(COLLECTION)
-    this._siteName = config.siteName ?? process.env.SITE_NAME ?? 'website'
+    this._siteName = config?.siteName ?? config?.SITE_NAME ?? process.env.SITE_NAME ?? 'website'
     this._keys = config.keys ?? { signing: [], encrypting: [] }
     // this.#cryptoKeys = new CryptoKeys({ dirs: { public: this._keyDir, private: this._keyDir } })
     this.RSA_SIG_KEY_FILENAME = config.appEnv.RSA_SIG_KEY_FILENAME
@@ -150,7 +151,6 @@ class App {
         // set filename and path for keys
         // save keys to file system
         const keyIndex = numEncKeys
-        // const filename = `app-${keyIndex}-${process.env.RSA_ENC_KEY_FILENAME}`
         const filename = `app-${keyIndex}-${this.RSA_ENC_KEY_FILENAME}`
         const pubKeyPath = path.resolve(this._keyDir, `${filename}-public.pem`)
         const jwkeyPath = path.resolve(this._keyDir, `${filename}.jwk`)
@@ -211,7 +211,7 @@ class App {
     const log = appLog.extend('rotate')
     // const error = appLog.extend('rotate')
     this.log('help')
-    log('Rotating server keys.')
+    log(`Rotating server ${this._siteName} keys.`)
   }
 
   get signingPublicKey() {
