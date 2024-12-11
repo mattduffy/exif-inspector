@@ -9,13 +9,17 @@ import {
   rm, readFile, rename, stat, writeFile,
 } from 'node:fs/promises'
 import path from 'node:path'
-import formidable from 'formidable'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
 /* eslint-disable-next-line */
 import { Exiftool } from '@mattduffy/exiftool'
 /* eslint-disable-next-line */
 import get from '@mattduffy/webfinger/get.js'
+import {
+  addIpToSession,
+  processFormData,
+  doTokensMatch,
+} from './middlewares.js'
 import {
   _log,
   _error,
@@ -89,40 +93,17 @@ router.get('index', '/', hasFlash, async (ctx) => {
   await ctx.render('index', locals)
 })
 
-router.post('fileUpload', '/upload', async (ctx) => {
+router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx) => {
   const log = mainLog.extend('POST-upload')
   const error = mainError.extend('POST-upload')
-  const opts = {
-    encoding: 'utf-8',
-    uploadDir: ctx.app.dirs.private.uploads,
-    keepExtensions: true,
-    multipart: true,
-  }
-  log(opts)
-  const form = formidable(opts)
-  await new Promise((resolve, reject) => {
-    form.parse(ctx.req, (err, fields, files) => {
-      if (err) {
-        error('There was a problem parsing the multipart form data.')
-        error(err)
-        reject(err)
-        return
-      }
-      log('Multipart form data was successfully parsed.')
-      ctx.request.body = fields
-      ctx.request.files = files
-      log(files)
-      log(fields)
-      resolve()
-    })
-  })
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenCookie === csrfTokenHidden) log('cookie === hidden')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
-  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
     error(`                    session:${csrfTokenSession}`)
@@ -250,38 +231,17 @@ router.post('fileUpload', '/upload', async (ctx) => {
   }
 })
 
-router.post('editCAR', '/editCAR', async (ctx) => {
+router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) => {
   const log = mainLog.extend('POST-editCAR')
   const error = mainError.extend('POST-editCAR')
-  const opts = {
-    encoding: 'utf-8',
-    uploadDir: ctx.app.dirs.private.uploads,
-    keepExtensions: true,
-    multipart: true,
-  }
-  log(opts)
-  const form = formidable(opts)
-  await new Promise((resolve, reject) => {
-    form.parse(ctx.req, (err, fields) => {
-      if (err) {
-        error('There was a problem parsing the multipart form data.')
-        error(err)
-        reject(err)
-        return
-      }
-      log('Multipart form data was successfully parsed.')
-      ctx.request.body = fields
-      // log(fields)
-      resolve()
-    })
-  })
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
   if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
-  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
     error(`                    session:${csrfTokenSession}`)
@@ -354,38 +314,17 @@ router.post('editCAR', '/editCAR', async (ctx) => {
   }
 })
 
-router.post('editLocation', '/editLocation', async (ctx) => {
+router.post('editLocation', '/editLocation', addIpToSession, processFormData, async (ctx) => {
   const log = mainLog.extend('POST-editLocation')
   const error = mainError.extend('POST-editLocation')
-  const opts = {
-    encoding: 'utf-8',
-    uploadDir: ctx.app.dirs.private.uploads,
-    keepExtensions: true,
-    multipart: true,
-  }
-  log(opts)
-  const form = formidable(opts)
-  await new Promise((resolve, reject) => {
-    form.parse(ctx.req, (err, fields) => {
-      if (err) {
-        error('There was a problem parsing the multipart form data.')
-        error(err)
-        reject(err)
-        return
-      }
-      log('Multipart form data was successfully parsed.')
-      ctx.request.body = fields
-      log(fields)
-      resolve()
-    })
-  })
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
   if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
-  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
     error(`                    session:${csrfTokenSession}`)
@@ -676,38 +615,17 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   await ctx.render('listUploadedImages', locals)
 })
 
-router.delete('deleteImage', '/delete/image/:file', async (ctx) => {
+router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormData, async (ctx) => {
   const log = mainLog.extend('DELETE-deleteimage')
   const error = mainError.extend('DELETE-deleteimage')
-  const opts = {
-    encoding: 'utf-8',
-    uploadDir: ctx.app.dirs.private.uploads,
-    keepExtensions: true,
-    multipart: true,
-  }
-  const form = formidable(opts)
-  await new Promise((resolve, reject) => {
-    form.parse(ctx.req, (err, fields, files) => {
-      if (err) {
-        error('There was a problem parsing the multipart form data.')
-        error(err)
-        reject(err)
-        return
-      }
-      log('Multipart form data was successfully parsed.')
-      ctx.request.body = fields
-      ctx.request.files = files
-      log(fields)
-      resolve()
-    })
-  })
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
-  if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
+  if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
     error(`                    session:${csrfTokenSession}`)
