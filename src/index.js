@@ -329,7 +329,7 @@ async function logRequest(ctx, next) {
   const err = error.extend('logRequest')
   try {
     /* eslint-disable-next-line */
-    const ignore = ['favicon', 'c/.+\.css']
+    const ignore = ['favicon', 'c/.+\.css', 'j/*.js']
     /* eslint-disable-next-line */
     function find(x) {
       const re = new RegExp(x)
@@ -339,11 +339,12 @@ async function logRequest(ctx, next) {
       const db = ctx.state.mongodb.client.db(ctx.state.mongodb.dbName)
       const mainLog = db.collection('mainLog')
       const logEntry = {}
-      logEntry.remoteIps = ctx.request.ips
+      // logEntry.remoteIps = ctx.request.ips
       const geos = []
       if (geoIPCity && ctx.request.ips) {
         try {
           if (Array.isArray(ctx.request.ips)) {
+            logEntry.remoteIps = ctx.request.ips
             ctx.request.ips.forEach((ip, i) => {
               const city = geoIPCity.city(ip)
               const geo = {}
@@ -358,6 +359,7 @@ async function logRequest(ctx, next) {
               logg('Request ip geo:     %o', geo)
             })
           } else {
+            logEntry.remoteIps = ctx.request.ips
             const city = geoIPCity.city(ctx.request.ip)
             const geo = {}
             geo.ip = ctx.request.ip
@@ -426,6 +428,21 @@ app.use(wellKnown.routes())
 app.use(Seo.routes())
 // app.use(activityV1.routes())
 app.use(apiV1.routes())
+
+app.on('session:missed', async (e) => {
+  console.log('koa-session emitted a missed event')
+  console.log(e)
+})
+
+app.on('session:invalid', async (e) => {
+  console.log('koa-session emitted a invalid event')
+  console.log(e)
+})
+
+app.on('session:expired', async (e) => {
+  console.log('koa-session emitted a expired event')
+  console.log(e)
+})
 
 app.on('error', async (err, ctx) => {
   error('***********************************')
