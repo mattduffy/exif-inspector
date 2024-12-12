@@ -70,7 +70,7 @@ async function hasFlash(ctx, next) {
   await next()
 }
 
-router.get('index', '/', hasFlash, async (ctx) => {
+router.get('index', '/', addIpToSession, hasFlash, async (ctx) => {
   const log = mainLog.extend('index')
   // const error = mainError.extend('index')
   log('inside main router: /')
