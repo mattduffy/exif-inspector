@@ -179,6 +179,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     try {
       log('saving file upload details to db.')
       const doc = {
+        date: new Date(),
         location: ctx.state.logEntry,
         uploadedFile: image.originalFilename,
         sanitizedFile: imageOriginalFilenameCleaned,
