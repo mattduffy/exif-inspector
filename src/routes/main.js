@@ -102,7 +102,6 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenCookie === csrfTokenHidden) log('cookie === hidden')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
-  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
   if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
@@ -177,6 +176,25 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
       error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
       response.msg = `Failed to move ${image.filepath} to the inspected/ dir.`
     }
+    try {
+      log('saving file upload details to db.')
+      const doc = {
+        location: ctx.state.logEntry,
+        uploadedFile: image.originalFilename,
+        sanitizedFile: imageOriginalFilenameCleaned,
+        inspectedFile: imageSaved,
+      }
+      log(doc)
+      const db = ctx.state.mongodb.client.db()
+      const collection = db.collection('images')
+      const dbSaved = await collection.insertOne(doc)
+      log(dbSaved)
+    } catch (e) {
+      error('failed to save image upload details to db.')
+      error(`upload image name:     ${image.originalFilename}`)
+      error(`sanitized image namee: ${imageOriginalFilenameCleaned}`)
+      error(e)
+    }
     let exiftool = new Exiftool()
     try {
       // run exif command here
@@ -212,7 +230,8 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         response.modifiedFile = (await exiftool.getPath()).file
         log(result)
       } else {
-        result = await exiftool.getMetadata('', exifShortcut, '-AllThunbs --ICC_Profile:all')
+        // result = await exiftool.getMetadata('', exifShortcut, '-AllThunbs --ICC_Profile:all')
+        result = await exiftool.getMetadata('', exifShortcut, 'All', '-Photoshop:PhotoshopThumbnail', '--ICC_Profile:all')
       }
       response.metadata = result
     } catch (e) {
@@ -240,7 +259,6 @@ router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) 
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
   if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
-  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
   if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
@@ -323,7 +341,6 @@ router.post('editLocation', '/editLocation', addIpToSession, processFormData, as
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
   if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
-  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
   if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
@@ -624,7 +641,6 @@ router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormD
   if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
   if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
   if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
-  // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
   if (!doTokensMatch(ctx)) {
     error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
     error(`                     hidden:${csrfTokenHidden}`)
