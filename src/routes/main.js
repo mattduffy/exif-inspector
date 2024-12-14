@@ -129,10 +129,15 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     // check if the url field was submitted
     let inspectedName
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
+    const uploadDoc = {
+      date: new Date(),
+      location: ctx.state.logEntry,
+    }
     if (urlToInspect !== null) {
       try {
         urlToInspect = new URL(ctx.request.body.url[0])
-        log(urlToInspect)
+        log(urlToInspect);
+        [uploadDoc.remoteUrl] = ctx.request.body.url
         const remoteFile = { url: urlToInspect }
         const remoteResponse = await get(urlToInspect)
         log(remoteResponse.statusCode)
@@ -141,6 +146,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         const filePath = path.parse(urlToInspect.pathname)
         const fileName = `${ulid()}_${filePath.base}`
         inspectedName = path.resolve(`${ctx.app.root}/inspected/${fileName}`)
+        uploadDoc.inspectedFile = inspectedName
         log(`remote file will be written to ${inspectedName}`)
         remoteFile.inspectedFile = fileName
         const written = await writeFile(inspectedName, new Uint8Array(remoteResponse.buffer))
@@ -161,16 +167,18 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet?.[0]}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
     try {
-      log(image?.size)
-      // if (image?.size > 0) {
       if (image !== null) {
+        log(`image size: ${image?.size}`)
         imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
         const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
         imageSaved = path.resolve(`${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
         const isMoved = await rename(image.filepath, imageSaved)
         log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
-        images.push(imageSaved)
         response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
+        uploadDoc.uploadedFile = image.originalFilename
+        uploadDoc.sanitizedFile = imageOriginalFilenameCleaned
+        uploadDoc.inspectedFile = imageSaved
+        images.push(imageSaved)
       }
     } catch (e) {
       error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
@@ -178,17 +186,10 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     }
     try {
       log('saving file upload details to db.')
-      const doc = {
-        date: new Date(),
-        location: ctx.state.logEntry,
-        uploadedFile: image.originalFilename,
-        sanitizedFile: imageOriginalFilenameCleaned,
-        inspectedFile: imageSaved,
-      }
-      log(doc)
+      log(uploadDoc)
       const db = ctx.state.mongodb.client.db()
       const collection = db.collection('images')
-      const dbSaved = await collection.insertOne(doc)
+      const dbSaved = await collection.insertOne(uploadDoc)
       log(dbSaved)
     } catch (e) {
       error('failed to save image upload details to db.')
