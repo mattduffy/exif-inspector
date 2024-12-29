@@ -718,6 +718,19 @@ async function setFileInfo(file = null, review = null) {
     if (/heic$/i.test(file.type)) {
       // chrome doesn't natively display .HEIC image format
       img.appendChild(document.createTextNode('HEIC images are too tough for poor wittle Chrome to display.'))
+    } else if (/(3gp)|(mp4)|(webm)$/i.test(file.type)) {
+      console.log('video embed')
+      const preview = document.createElement('video')
+      preview.classList.add('smallImgPreview')
+      preview.setAttribute('controls', true)
+      preview.setAttribute('width', 350)
+      const source = document.createElement('source')
+      const fileReader = new window.FileReader()
+      fileReader.addEventListener('load', (e) => {
+        source.src = e.target.result
+      })
+      preview.appendChild(source)
+      img.appendChild(preview)
     } else {
       const preview = document.createElement('img')
       preview.classList.add('smallImgPreview')
@@ -757,10 +770,25 @@ async function setFileInfo(file = null, review = null) {
     name.innerText = review.href
     info.appendChild(name)
     const img = document.createElement('dd')
-    const remoteThumbnail = document.createElement('img')
-    remoteThumbnail.classList.add('smallImgPreview')
-    remoteThumbnail.src = review.href
-    img.appendChild(remoteThumbnail)
+    if (/heic$/i.test(review.href)) {
+      // chrome doesn't natively display .HEIC image format
+      img.appendChild(document.createTextNode('HEIC images are too tough for poor wittle Chrome to display.'))
+    } else if (/(3gp)|(mp4)|(webm)$/i.test(review.href)) {
+      console.log('video embed')
+      const preview = document.createElement('video')
+      preview.classList.add('smallImgPreview')
+      preview.setAttribute('controls', true)
+      preview.setAttribute('width', 350)
+      const source = document.createElement('source')
+      source.src = review.href
+      preview.appendChild(source)
+      img.appendChild(preview)
+    } else {
+      const remoteThumbnail = document.createElement('img')
+      remoteThumbnail.classList.add('smallImgPreview')
+      remoteThumbnail.src = review.href
+      img.appendChild(remoteThumbnail)
+    }
     info.appendChild(img)
     infozone.appendChild(info)
   }
