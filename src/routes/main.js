@@ -6,8 +6,10 @@
  */
 
 import {
-  rm, readFile, rename, stat, writeFile,
+  rm, readFile, readdir, rename, stat, writeFile,
 } from 'node:fs/promises'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
 import path from 'node:path'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
@@ -601,10 +603,23 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   log('Displaying list of images on the server.')
   let images
   let tool
+  const dir = './inspected'
+  let dirContents
+  let cmd
+  try {
+    // dirContents = await readdir(dir)
+    cmd = promisify(exec)
+    const c = `ls -1t --ignore "Readme.md" ${dir}`
+    log(c)
+    const out = await cmd(c)
+    dirContents = out.stdout.split('\n')
+  } catch (e) {
+    error(`failed to list files in ${dir}`)
+    error(e)
+  }
   try {
     tool = new Exiftool()
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
-    const dir = './inspected'
     // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
     const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
     log(`raw exiftool cmd: ${raw}`)
@@ -617,11 +632,14 @@ router.get('listUploadedImages', '/x', async (ctx) => {
     error('Failed to exiftool inspected images.')
     error(e)
   }
+
   const csrfToken = ulid()
   ctx.session.csrfToken = csrfToken
   ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
   const locals = {}
   locals.images = images || []
+  locals.fileCount = dirContents.length || 0
+  locals.perPage = 50
   locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
   locals.csrfToken = csrfToken
   locals.domain = ctx.state.origin

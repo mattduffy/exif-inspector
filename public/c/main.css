@@ -157,6 +157,18 @@ label.radioLabel {
   border-radius: .5em;
 }
 
+nav#pages > ul {
+  list-style: none;
+}
+
+nav#pages > ul > li {
+  display: inline-block;
+}
+
+nav#pages > ul > li:not(:last-child):after {
+  content: ' | '; 
+}
+
 span.or {
   font-weight: 600;
   font-style: italic;

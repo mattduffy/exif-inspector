@@ -19,6 +19,16 @@
         <% if (isAuthenticated) { %>
 
         <% } %>
+        <nav id="pages">
+            <ul>
+                <%
+                let n = fileCount / perPage
+                let pages = (n > Math.trunc(n)) ? n += 1 : n
+                for (let i = 1; i <= pages; i++) { %>
+                <li>page <%= i %></li>
+                <% } %>
+            </ul>
+        </nav>
         <% if (images && images.length > 0) { %>
         <ol id="links" reversed>
         </ol>
@@ -29,7 +39,8 @@
             let origin = '<%= domain %>'
             let access = '<%= accessToken %>'
             let images = <%- JSON.stringify(images) %>
-            // images.forEach((o, i, a) => {a.i = JSON.parse(o)})
+            let fileCount = <%= fileCount %>
+            let perPage = <%= perPage %>
             const ul = document.querySelector('ol#links')
             let count = 0
             function reviewHandler(e) {
@@ -97,6 +108,24 @@
                     console.info(e)
                     li.style.backgroundColor = 'yellow'
                     return
+                }
+            }
+            console.log(images)
+            if (images.constructor.name !== 'Array' && !images?.stdout) {
+                console.info(`images is not an array: ${images.constructor.name}`)
+                console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
+                console.info(`stderr: ${(images?.stderr) ? images.stderr : 'no stderr provided'}`)
+                console.info(`stdout: ${(images?.stdout) ? images.stdout : 'no stdout provided'}`)
+            } else if (images.stdout !== '') {
+                console.info('images array may be corrupt or incomplete.')
+                console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
+                try {
+                    images = JSON.parse(images.stdout)
+                    console.info(images)
+                } catch (e) {
+                    console.info('failed to revive images json')
+                    console.info(e)
+                    images = []
                 }
             }
             images.forEach((i, e) => {
