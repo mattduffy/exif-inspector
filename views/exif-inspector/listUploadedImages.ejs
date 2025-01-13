@@ -1,6 +1,6 @@
     <section id="headerSection">
         <h1><%= siteName %></h1>
-        <h2><span></span>Uploaded Images.</h2>
+        <h2><span></span> Total Uploaded Images.</h2>
         <% if (flash?.info) { %>
         <div id="info" class="info">
             <span><%= flash.info %></span>
@@ -25,13 +25,14 @@
                 let n = fileCount / perPage
                 let pages = (n > Math.trunc(n)) ? n += 1 : n
                 for (let i = 1; i <= pages; i++) { %>
-                <li>page <%= i %></li>
+                <%= console.log(domain, i) %>
+                <li><a href="<%= domain%>/x/<%= i %>">page <%= i %></a></li>
                 <% } %>
             </ul>
         </nav>
         <% if (images && images.length > 0) { %>
-        <ol id="links" reversed>
-        </ol>
+        <ul id="links" reversed>
+        </ul>
         <% } else { %>
             <p>All images have been deleted.</p>
         <% } %>
@@ -41,7 +42,7 @@
             let images = <%- JSON.stringify(images) %>
             let fileCount = <%= fileCount %>
             let perPage = <%= perPage %>
-            const ul = document.querySelector('ol#links')
+            const ul = document.querySelector('ul#links')
             let count = 0
             function reviewHandler(e) {
                 e.preventDefault()
@@ -53,9 +54,10 @@
                 location.assign(link)
             }
             function updateFileCount(x) {
-                const h2 = document.querySelector('h2')
-                const text = h2.textContent.slice(h2.textContent.lastIndexOf(' Uploaded Images.'))
-                h2.textContent = `${x} ${text}`
+                const span = document.querySelector('section#headerSection > h2 > span')
+                // const text = span.textContent.slice(span.textContent.lastIndexOf(' Uploaded Images.'))
+                // h2.textContent = `${x} ${text}`
+                span.textContent = `${x}`
             }
             async function deleteHandler(e) {
                 e.preventDefault()
@@ -102,7 +104,7 @@
                     li.style.backgroundColor = 'green'
                     setTimeout((image) => {
                         li.parentElement.removeChild(li)
-                        updateFileCount(Number.parseInt(document.querySelector('section#headerSection > h2').textContent, 10) -1)
+                        updateFileCount(Number.parseInt(document.querySelector('section#headerSection > h2 > span').textContent, 10) -1)
                     }, 750)
                 } catch (e) {
                     console.info(e)
@@ -110,13 +112,14 @@
                     return
                 }
             }
-            console.log(images)
-            if (images.constructor.name !== 'Array' && !images?.stdout) {
+            // console.log(images)
+            if (images.constructor.name !== 'Array' && images?.stdout) {
                 console.info(`images is not an array: ${images.constructor.name}`)
                 console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
                 console.info(`stderr: ${(images?.stderr) ? images.stderr : 'no stderr provided'}`)
                 console.info(`stdout: ${(images?.stdout) ? images.stdout : 'no stdout provided'}`)
-            } else if (images.stdout !== '') {
+            }
+            if (images.stdout) {
                 console.info('images array may be corrupt or incomplete.')
                 console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
                 try {
@@ -192,7 +195,8 @@
                     ul.appendChild(li)
                 }
             })
-            const h2 = document.querySelector('h2')
-            h2.textContent = `${count} ${h2.textContent}`
+            const span = document.querySelector('section#headerSection > h2 > span')
+            span.textContent = `${count}`
+            span.textContent = fileCount 
         </script> 
     </section>

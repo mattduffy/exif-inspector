@@ -6,7 +6,7 @@
  */
 
 import {
-  rm, readFile, readdir, rename, stat, writeFile,
+  rm, readFile, rename, stat, writeFile,
 } from 'node:fs/promises'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -593,7 +593,11 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
   ctx.redirect('/')
 })
 
-router.get('listUploadedImages', '/x', async (ctx) => {
+router.get('redirectToPaginatedList', '/x', async (ctx) => {
+  ctx.redirect('/x/1')
+})
+
+router.get('listUploadedImages', '/x/:page', async (ctx) => {
   const log = mainLog.extend('listuploadedimages')
   const error = mainLog.extend('listuploadedimages')
   ctx.state.sessionUser = ctx.state.sessionUser ?? {}
@@ -601,33 +605,51 @@ router.get('listUploadedImages', '/x', async (ctx) => {
     ctx.redirect('/')
   }
   log('Displaying list of images on the server.')
+  log('URL parameters: ', ctx.params)
+  const page = (ctx.params?.page) ? (ctx.params.page - 1) : 0
   let images
   let tool
-  const dir = './inspected'
+  const dir = path.resolve(`${ctx.app.root}/inspected`)
   let dirContents
+  let dirSlice
+  const pageLimit = 20
+  let pageOffset
+  let limit
+  let fileString
   let cmd
   try {
-    // dirContents = await readdir(dir)
     cmd = promisify(exec)
     const c = `ls -1t --ignore "Readme.md" ${dir}`
     log(c)
     const out = await cmd(c)
     dirContents = out.stdout.split('\n')
+    pageOffset = page * pageLimit
+    limit = pageOffset + pageLimit
+    /*
+     * page = 0,                  page = 1,                  page = 2,                  page = 3,                  page = 4
+     * pageOffset = 0 * 50 = 0    pageOffset = 1 * 50 = 50   pageOffset = 2 * 50 = 100  pageOffset = 3 * 50 = 150  pageOffset = 4 * 50 = 200
+     *     limit = 0 + 50 = 50       limit = 50 + 50 = 100      limit = 100 + 50 = 150     limit = 150 + 50 = 200     limit = 200 + 50 = 250
+     */
+    log(`pageLimit (${pageLimit}), pageOffset (${pageOffset}), limit (${limit})`)
+    dirSlice = dirContents.slice(pageOffset, limit)
+    fileString = dirSlice.map((f) => `"${dir}/${f}"`).join(' ')
   } catch (e) {
     error(`failed to list files in ${dir}`)
     error(e)
+    fileString = dir
   }
   try {
     tool = new Exiftool()
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
-    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
+    // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
+    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${fileString}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
-    // log('images: ', images)
-    if (images.length > 0) {
-      images.sort((a, b) => new Date(b['File:FileModifyDate']) - new Date(a['File:FileModifyDate']))
-    }
+    log('images: ', images)
+    // if (images.length > 0) {
+    //   images.sort((a, b) => new Date(b['File:FileModifyDate']) - new Date(a['File:FileModifyDate']))
+    // }
   } catch (e) {
     error('Failed to exiftool inspected images.')
     error(e)
@@ -639,7 +661,7 @@ router.get('listUploadedImages', '/x', async (ctx) => {
   const locals = {}
   locals.images = images || []
   locals.fileCount = dirContents.length || 0
-  locals.perPage = 50
+  locals.perPage = pageLimit
   locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
   locals.csrfToken = csrfToken
   locals.domain = ctx.state.origin

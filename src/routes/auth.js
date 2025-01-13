@@ -130,7 +130,7 @@ router.post('postLogin', '/login', async (ctx) => {
           error: null,
         },
       }
-      ctx.redirect('/x')
+      ctx.redirect('/x/1')
     }
   }
 })
