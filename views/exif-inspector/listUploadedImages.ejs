@@ -132,17 +132,16 @@
                 }
             }
             images.forEach((i, e) => {
-                if (i.SourceFile && !/IPTC-Photometa/i.test(i.SourceFile)) {
+                if (i['File:FileName'] && !/IPTC-Photometa/i.test(i['File:FileName'])) {
                     count += 1
                     const li = document.createElement('li')
                     li.classList.add('linklist')
                     const d = document.createElement('span')
                     d.style.marginRight = '.5em'
                     d.innerText = new Date(i['File:FileModifyDate']).toDateString()
-                    // d.innerText = i['File:FileModifyDate']
                     li.appendChild(d)
                     const a = document.createElement('a')
-                    a.href = `${origin}/${i.SourceFile.slice(2)}`
+                    a.href = `${origin}/inspected/${i['File:FileName']}`
                     a.setAttribute('target', '_blank')
                     a.textContent = i['File:FileName']
                     if (i['EXIF:ThumbnailImage']) {
