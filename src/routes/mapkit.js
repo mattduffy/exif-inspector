@@ -5,6 +5,8 @@
  * @file src/routes/mapkit.js The router for the Apple MapKit api endpoints.
  */
 
+import path from 'node:path'
+import { readFile } from 'node:fs/promises'
 import Router from '@koa/router'
 // import { ulid } from 'ulid'
 // import { AggregateGroupByReducers, AggregateSteps } from 'redis'
@@ -68,8 +70,7 @@ router.get('mapkitGetToken', '/mapkit/getToken', async (ctx) => {
   if (ctx.state.isAsyncRequest === true) {
     log('Async query received.')
   }
-  const mapKitAccessToken = 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ikc4M1Y3MzJBNzYifQ.eyJpc3MiOiJXWThSNVBQOE43IiwiaWF0IjoxNzA0MzkxMDA0LCJleHAiOjE3MzU4NjI0MDAsIm9yaWdpbiI6Imh0dHBzOi8vZXhpZi1pbnNwZWN0b3IuY29tIn0.JYSdDPMvaI1Co9jnvB8TxOK6BpWLZKN-ruyzTm9-wdjYlpbK-V1YXBCHpIQzoj-HGzc29-xGbJOTOse0AupDDQ'
-  info(sanitize(mapKitAccessToken))
+  let mapKitAccessToken
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   info(`${csrfTokenCookie},\n${csrfTokenSession}`)
@@ -80,6 +81,17 @@ router.get('mapkitGetToken', '/mapkit/getToken', async (ctx) => {
     ctx.status = 401
     ctx.body = { error: 'csrf token mismatch' }
   } else {
+    try {
+      const mapKitTokenPath = path.resolve(ctx.app.dirs.keys, 'mapkit', 'mapkit.jwt')
+      mapKitAccessToken = await readFile(mapKitTokenPath, { encoding: 'utf-8' })
+      info(`mapkit token: ${sanitize(mapKitAccessToken)}`)
+    } catch (e) {
+      error(e)
+      error('Failed to get mapkit token from file.')
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 401
+      ctx.body = { error: 'Failed to get mapkit token from file.' }
+    }
     ctx.type = 'application/json; charset=utf-8'
     ctx.status = 200
     ctx.body = { tokenID: mapKitAccessToken }
