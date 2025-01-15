@@ -20,19 +20,25 @@
 
         <% } %>
         <nav id="pages">
+            <span>page: <%= pageInfo.page %></span><br>
+            <span>pageOffset: <%= pageInfo.pageOffset %></span><br>
+            <span>limit: <%= pageInfo.limit %></span><br>
             <ul>
                 <%
                 let n = fileCount / perPage
                 let pages = (n > Math.trunc(n)) ? n += 1 : n
                 for (let i = 1; i <= pages; i++) { %>
-                <%= console.log(domain, i) %>
+                <% if (pageInfo.page === i) { %>
+                <li style="background-color: lightgoldenrodyellow;"><b><a href="<%= domain%>/x/<%= i %>">page <%= i %></a></b></li>
+                    <% } else { %>
                 <li><a href="<%= domain%>/x/<%= i %>">page <%= i %></a></li>
+                    <% } %>
                 <% } %>
             </ul>
         </nav>
         <% if (images && images.length > 0) { %>
-        <ul id="links" reversed>
-        </ul>
+        <ol id="links"  start=<%= pageInfo.pageOffset + 1 %>>
+        </ol>
         <% } else { %>
             <p>All images have been deleted.</p>
         <% } %>
@@ -42,7 +48,7 @@
             let images = <%- JSON.stringify(images) %>
             let fileCount = <%= fileCount %>
             let perPage = <%= perPage %>
-            const ul = document.querySelector('ul#links')
+            const ul = document.querySelector('ol#links')
             let count = 0
             function reviewHandler(e) {
                 e.preventDefault()

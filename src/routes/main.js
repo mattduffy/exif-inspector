@@ -606,7 +606,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   }
   log('Displaying list of images on the server.')
   log('URL parameters: ', ctx.params)
-  const page = (ctx.params?.page) ? (ctx.params.page - 1) : 0
+  const page = Number.parseInt((ctx.params?.page) ? ctx.params.page : 1, 10)
   let images
   let tool
   const dir = path.resolve(`${ctx.app.root}/inspected`)
@@ -623,7 +623,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
     log(c)
     const out = await cmd(c)
     dirContents = out.stdout.split('\n')
-    pageOffset = page * pageLimit
+    pageOffset = (page === 1) ? 0 : (page - 1) * pageLimit
     limit = pageOffset + pageLimit
     /*
      * page = 0,                  page = 1,                  page = 2,                  page = 3,                  page = 4
@@ -660,6 +660,12 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
   const locals = {}
   locals.images = images || []
+  locals.pageInfo = {
+    page,
+    pageOffset,
+    limit,
+    pageLimit,
+  }
   locals.fileCount = dirContents.length || 0
   locals.perPage = pageLimit
   locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
