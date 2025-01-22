@@ -36,12 +36,9 @@
                 <% } %>
             </ul>
         </nav>
-        <% if (images && images.length > 0) { %>
         <ol id="links"  start=<%= pageInfo.pageOffset + 1 %>>
         </ol>
-        <% } else { %>
-            <p>All images have been deleted.</p>
-        <% } %>
+        <p id="noImages" class="hidden">All images have been deleted.</p>
         <script nonce="<%= nonce %>" type="module">
             let origin = '<%= domain %>'
             let access = '<%= accessToken %>'
@@ -129,77 +126,97 @@
                 console.info('images array may be corrupt or incomplete.')
                 console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
                 try {
-                    images = JSON.parse(images.stdout)
-                    console.info(images)
+                    const temp = JSON.parse(images.stdout)
+                    console.info(temp)
+                    if (Array.isArray(temp)) {
+                        images = temp
+                    } else {
+                        images = []
+                    }
                 } catch (e) {
                     console.info('failed to revive images json')
                     console.info(e)
                     images = []
                 }
             }
-            images.forEach((i, e) => {
-                if (i['File:FileName'] && !/IPTC-Photometa/i.test(i['File:FileName'])) {
-                    count += 1
-                    const li = document.createElement('li')
-                    li.classList.add('linklist')
-                    const d = document.createElement('span')
-                    d.style.marginRight = '.5em'
-                    d.innerText = new Date(i['File:FileModifyDate']).toDateString()
-                    li.appendChild(d)
-                    const a = document.createElement('a')
-                    a.href = `${origin}/inspected/${i['File:FileName']}`
-                    a.setAttribute('target', '_blank')
-                    a.textContent = i['File:FileName']
-                    if (i['EXIF:ThumbnailImage']) {
-                        const preview = document.createElement('img')
-                        preview.classList.add('smallImgPreview')
-                        preview.src = `data:${i['File:MIMEType']};base64,${i['EXIF:ThumbnailImage'].slice(7)}`
-                        li.appendChild(preview)
+            if (images.length === 0) {
+                document.querySelector('p#noImages').classList.remove('hidden')
+            } else {
+                images.forEach((i, e) => {
+                    if (i['File:FileName'] && !/IPTC-Photometa/i.test(i['File:FileName'])) {
+                        count += 1
+                        const li = document.createElement('li')
+                        li.classList.add('linklist')
+                        const d = document.createElement('span')
+                        d.style.marginRight = '.5em'
+                        d.style.whiteSpace = 'nowrap'
+                        d.innerText = new Date(i['File:FileModifyDate']).toDateString()
+                        li.appendChild(d)
+                        const s = document.createElement('span')
+                        s.style.marginRight = '.5em'
+                        s.style.whiteSpace = 'nowrap'
+                        s.textContent = i['File:FileSize']
+                        li.appendChild(s)
+                        const _s = document.createElement('span')
+                        _s.style.marginRight = '.5em'
+                        _s.style.whiteSpace = 'normal'
+                        _s.textContent = '' 
+                        li.appendChild(_s)
+                        const a = document.createElement('a')
+                        a.href = `${origin}/inspected/${i['File:FileName']}`
+                        a.setAttribute('target', '_blank')
+                        a.textContent = i['File:FileName']
+                        if (i['EXIF:ThumbnailImage']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['EXIF:ThumbnailImage'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        if (i['Photoshop:PhotoshopThumbnail']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['Photoshop:PhotoshopThumbnail'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        if (i['JFIF:ThumbnailTIFF']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['JFIF:ThumbnailTIFF'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        if (i['JUMBF:C2PAThumbnailClaimJpegData']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['JUMBF:C2PAThumbnailClaimJpegData'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        li.appendChild(a)
+                        const span1 = document.createElement('span')
+                        span1.classList.add('magnifyingGlass')
+                        span1.setAttribute('title', 'Review this image.')
+                        const magnifyingGlass = document.createElement('img')
+                        magnifyingGlass.dataset.file = i['File:FileName']
+                        magnifyingGlass.id = `review_${count}`
+                        magnifyingGlass.classList.add('magnifyingGlass')
+                        magnifyingGlass.src = `${origin}/i/magnifying-glass.svg`
+                        magnifyingGlass.addEventListener('click', reviewHandler)
+                        span1.appendChild(magnifyingGlass)
+                        li.appendChild(span1)
+                        const span = document.createElement('span')
+                        span.classList.add('trashcan')
+                        span.setAttribute('title', 'Delete this image.')
+                        const trashcan = document.createElement('img')
+                        trashcan.dataset.file = i['File:FileName']
+                        trashcan.id = `delete_${count}`
+                        trashcan.src = `${origin}/i/delete.svg`
+                        trashcan.classList.add('trashcan')
+                        trashcan.addEventListener('click', deleteHandler)
+                        span.appendChild(trashcan)
+                        li.appendChild(span)
+                        ul.appendChild(li)
                     }
-                    if (i['Photoshop:PhotoshopThumbnail']) {
-                        const preview = document.createElement('img')
-                        preview.classList.add('smallImgPreview')
-                        preview.src = `data:${i['File:MIMEType']};base64,${i['Photoshop:PhotoshopThumbnail'].slice(7)}`
-                        li.appendChild(preview)
-                    }
-                    if (i['JFIF:ThumbnailTIFF']) {
-                        const preview = document.createElement('img')
-                        preview.classList.add('smallImgPreview')
-                        preview.src = `data:${i['File:MIMEType']};base64,${i['JFIF:ThumbnailTIFF'].slice(7)}`
-                        li.appendChild(preview)
-                    }
-                    if (i['JUMBF:C2PAThumbnailClaimJpegData']) {
-                        const preview = document.createElement('img')
-                        preview.classList.add('smallImgPreview')
-                        preview.src = `data:${i['File:MIMEType']};base64,${i['JUMBF:C2PAThumbnailClaimJpegData'].slice(7)}`
-                        li.appendChild(preview)
-                    }
-                    li.appendChild(a)
-                    const span1 = document.createElement('span')
-                    span1.classList.add('magnifyingGlass')
-                    span1.setAttribute('title', 'Review this image.')
-                    const magnifyingGlass = document.createElement('img')
-                    magnifyingGlass.dataset.file = i['File:FileName']
-                    magnifyingGlass.id = `review_${count}`
-                    magnifyingGlass.classList.add('magnifyingGlass')
-                    magnifyingGlass.src = `${origin}/i/magnifying-glass.svg`
-                    magnifyingGlass.addEventListener('click', reviewHandler)
-                    span1.appendChild(magnifyingGlass)
-                    li.appendChild(span1)
-                    const span = document.createElement('span')
-                    span.classList.add('trashcan')
-                    span.setAttribute('title', 'Delete this image.')
-                    const trashcan = document.createElement('img')
-                    trashcan.dataset.file = i['File:FileName']
-                    trashcan.id = `delete_${count}`
-                    trashcan.src = `${origin}/i/delete.svg`
-                    trashcan.classList.add('trashcan')
-                    trashcan.addEventListener('click', deleteHandler)
-                    span.appendChild(trashcan)
-                    li.appendChild(span)
-                    ul.appendChild(li)
-                }
-            })
+                })
+            }
             const span = document.querySelector('section#headerSection > h2 > span')
             span.textContent = `${count}`
             span.textContent = fileCount 

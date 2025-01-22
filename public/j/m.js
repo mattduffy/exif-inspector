@@ -689,6 +689,15 @@ function insertLink(link, code) {
   parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
 }
 async function setFileInfo(file = null, review = null) {
+  const ua = window.navigator.userAgent
+  console.log(ua)
+  // const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i)
+  const iOS = !!ua.match(/iP[ad|hone]/i)
+  const webkit = !!ua.match(/WebKit/i)
+  const Safari = (iOS || webkit) && !ua.match(/Chrome/i)
+  console.log(`is iOS? ${iOS}`)
+  console.log(`is webkit? ${webkit}`)
+  console.log(`is safari? ${Safari}`)
   formData.append('csrfTokenHidden', form['csrf-token'].value)
   if (form.tagSet.value === '' && !review) {
     console.log(form.tagSet.value)
@@ -715,9 +724,9 @@ async function setFileInfo(file = null, review = null) {
     info.appendChild(type)
     info.appendChild(size)
     const img = document.createElement('dd')
-    if (/heic$/i.test(file.type)) {
+    if (/heic$/i.test(file.type) && !Safari) {
       // chrome doesn't natively display .HEIC image format
-      img.appendChild(document.createTextNode('HEIC images are too tough for poor wittle Chrome to display.'))
+      img.appendChild(document.createTextNode('There was a problem trying to display HEIC format image.'))
     } else if (/(3gp)|(mp4)|(webm)$/i.test(file.type)) {
       console.log('video embed')
       const preview = document.createElement('video')
@@ -770,9 +779,9 @@ async function setFileInfo(file = null, review = null) {
     name.innerText = review.href
     info.appendChild(name)
     const img = document.createElement('dd')
-    if (/heic$/i.test(review.href)) {
+    if (/heic$/i.test(review.href) && !Safari) {
       // chrome doesn't natively display .HEIC image format
-      img.appendChild(document.createTextNode('HEIC images are too tough for poor wittle Chrome to display.'))
+      img.appendChild(document.createTextNode('There was a problem trying to display HEIC format image.'))
     } else if (/(3gp)|(mp4)|(webm)$/i.test(review.href)) {
       console.log('video embed')
       const preview = document.createElement('video')
