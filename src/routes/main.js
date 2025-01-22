@@ -643,7 +643,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
     // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
-    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${fileString}`
+    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileSize -File:FileModifyDate -AllThumbs -f ${fileString}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
     log('images: ', images)
