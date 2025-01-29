@@ -703,6 +703,14 @@ router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormD
     let isDeleted
     try {
       isDeleted = await rm(imageToDelete, { force: true })
+      log(`marking image as deleted in db: ${imageToDelete}`)
+      const db = ctx.state.mongodb.client.db()
+      const collection = db.collection('images')
+      const filter = { inspectedFile: imageToDelete }
+      const update = { $set: { deleted: true } }
+      log(filter, update)
+      const _deleted = await collection.updateOne(filter, update)
+      log('result: ', _deleted)
       ctx.status = 200
       ctx.type = 'application/json; charset=utf-8'
       ctx.body = { status: 'ok', isDeleted }
