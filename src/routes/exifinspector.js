@@ -2,7 +2,7 @@
  * @summary Koa router for the main top-level pages.
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/main.js The router for the top level app URLs.
+ * @file src/routes/exifinspector.js The router for the top level app URLs.
  */
 
 import {
@@ -27,8 +27,8 @@ import {
   _error,
 } from '../utils/logging.js'
 
-const mainLog = _log.extend('main')
-const mainError = _error.extend('main')
+const exifLog = _log.extend('main')
+const exifError = _error.extend('main')
 /* eslint-disable-next-line no-unused-vars */
 function sanitize(param) {
   // fill in with some effective input scrubbing logic
@@ -62,8 +62,8 @@ function removeServerDetails(data) {
 
 const router = new Router()
 async function hasFlash(ctx, next) {
-  const log = mainLog.extend('hasFlash')
-  const error = mainError.extend('hasFlash')
+  const log = exifLog.extend('hasFlash')
+  const error = exifError.extend('hasFlash')
   if (ctx.flash) {
     log('ctx.flash is present: %o', ctx.flash)
   } else {
@@ -73,8 +73,8 @@ async function hasFlash(ctx, next) {
 }
 
 router.get('index', '/', addIpToSession, hasFlash, async (ctx) => {
-  const log = mainLog.extend('index')
-  // const error = mainError.extend('index')
+  const log = exifLog.extend('index')
+  // const error = exifError.extend('index')
   log('inside main router: /')
   ctx.status = 200
   const locals = {}
@@ -96,8 +96,8 @@ router.get('index', '/', addIpToSession, hasFlash, async (ctx) => {
 })
 
 router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx) => {
-  const log = mainLog.extend('POST-upload')
-  const error = mainError.extend('POST-upload')
+  const log = exifLog.extend('POST-upload')
+  const error = exifError.extend('POST-upload')
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
@@ -255,8 +255,8 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
 })
 
 router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) => {
-  const log = mainLog.extend('POST-editCAR')
-  const error = mainError.extend('POST-editCAR')
+  const log = exifLog.extend('POST-editCAR')
+  const error = exifError.extend('POST-editCAR')
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
@@ -337,8 +337,8 @@ router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) 
 })
 
 router.post('editLocation', '/editLocation', addIpToSession, processFormData, async (ctx) => {
-  const log = mainLog.extend('POST-editLocation')
-  const error = mainError.extend('POST-editLocation')
+  const log = exifLog.extend('POST-editLocation')
+  const error = exifError.extend('POST-editLocation')
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
@@ -430,8 +430,8 @@ router.post('editLocation', '/editLocation', addIpToSession, processFormData, as
 })
 
 router.get('getReviewFile', '/review/:f', async (ctx) => {
-  const log = mainLog.extend('GET-reviewFile')
-  const error = mainError.extend('GET-reviewFile')
+  const log = exifLog.extend('GET-reviewFile')
+  const error = exifError.extend('GET-reviewFile')
   const file = sanitize(ctx.params.f)
   const response = {}
   let reviewFile
@@ -515,8 +515,8 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
 })
 
 router.get('getEditedFile', '/inspected/:f', async (ctx) => {
-  const log = mainLog.extend('GET-editedFile')
-  const error = mainError.extend('GET-editedFile')
+  const log = exifLog.extend('GET-editedFile')
+  const error = exifError.extend('GET-editedFile')
   const file = sanitize(ctx.params.f)
   if (!file || file === '') {
     error('Missing required file name url parameter.')
@@ -548,8 +548,8 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
 })
 
 router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
-  const log = mainLog.extend('GET-xmpData')
-  const error = mainError.extend('GET-xmpData')
+  const log = exifLog.extend('GET-xmpData')
+  const error = exifError.extend('GET-xmpData')
   const file = sanitize(ctx.params.f)
   if (!file || file === '') {
     error('Missing requried file name url parameter.')
@@ -598,8 +598,8 @@ router.get('redirectToPaginatedList', '/x', async (ctx) => {
 })
 
 router.get('listUploadedImages', '/x/:page', async (ctx) => {
-  const log = mainLog.extend('listuploadedimages')
-  const error = mainLog.extend('listuploadedimages')
+  const log = exifLog.extend('listuploadedimages')
+  const error = exifLog.extend('listuploadedimages')
   ctx.state.sessionUser = ctx.state.sessionUser ?? {}
   if (!ctx.state.isAuthenticated) {
     ctx.redirect('/')
@@ -681,8 +681,8 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
 })
 
 router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormData, async (ctx) => {
-  const log = mainLog.extend('DELETE-deleteimage')
-  const error = mainError.extend('DELETE-deleteimage')
+  const log = exifLog.extend('DELETE-deleteimage')
+  const error = exifError.extend('DELETE-deleteimage')
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
   const csrfTokenSession = ctx.session.csrfToken
   const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
@@ -725,8 +725,8 @@ router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormD
 })
 
 router.get('about', '/about', hasFlash, async (ctx) => {
-  const log = mainLog.extend('about')
-  // const error = mainError.extend('about')
+  const log = exifLog.extend('about')
+  // const error = exifError.extend('about')
   log('inside index router: /about')
   ctx.status = 200
   const locals = {}
@@ -742,8 +742,8 @@ router.get('about', '/about', hasFlash, async (ctx) => {
 })
 
 // router.get('contact', '/contact', hasFlash, async (ctx) => {
-//   const log = mainLog.extend('contact')
-//   // const error = mainError.extend('contact')
+//   const log = exifLog.extend('contact')
+//   // const error = exifError.extend('contact')
 //   log('inside index router: /contact')
 //   ctx.status = 200
 //   await ctx.render('contact', {
@@ -752,4 +752,4 @@ router.get('about', '/about', hasFlash, async (ctx) => {
 //     isAuthenticated: ctx.state.isAuthenticated,
 //   })
 // })
-export { router as main }
+export { router as exifinspector }
