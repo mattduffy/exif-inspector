@@ -481,10 +481,15 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
       exiftool.enableBinaryTagOutput(true)
       exiftool.setOverwriteOriginal(false)
       const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
-      // log(`exiftool config path set: ${result.toString()}`)
       log('exiftool config path set: %o', newConfigPath)
       const result = await exiftool.getMetadata('', null, 'All', '-Photoshop:PhotoshopThumbnail', '--ICC_Profile:all')
-      response.metadata = result
+      log('result', result)
+      if (result.stdout && typeof result.stdout === 'string') {
+        log('result', JSON.parse(result.stdout)[0]);
+        [response.metadata] = JSON.parse(result.stdout)
+      } else {
+        response.metadata = result
+      }
       response.href = `${ctx.state.origin}/inspected/${file}`
       response.inspectedFile = file
     } catch (e) {
