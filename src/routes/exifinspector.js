@@ -142,9 +142,18 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         [uploadDoc.remoteUrl] = ctx.request.body.url
         const remoteFile = { url: urlToInspect }
         const remoteResponse = await get(urlToInspect)
+        log('remoteResponse', remoteResponse)
         log(remoteResponse.statusCode)
         log(remoteResponse.statusMessage)
         log(remoteResponse.contentType)
+        if (remoteResponse.statusCode > 200 || /^(?!image)/.test(remoteResponse.contentType)) {
+          // short circuit the rest of the route handler because remote server blocked request
+          // handle the block in the client-side js
+          ctx.type = 'application/json; charset=utf-8'
+          ctx.staus = 200
+          ctx.body = remoteResponse
+          return
+        }
         const filePath = path.parse(urlToInspect.pathname)
         const fileName = `${ulid()}_${filePath.base}`
         inspectedName = path.resolve(`${ctx.app.root}/inspected/${fileName}`)
@@ -209,7 +218,9 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
       exiftool.setGPSCoordinatesOutputFormat('+gps')
       exiftool.enableBinaryTagOutput(true)
       exiftool.setOverwriteOriginal(false)
-      const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+      const newConfigPath = await exiftool.setConfigPath(
+        `${ctx.app.root}/config/exiftool.config`,
+      )
       // log(`exiftool config path set: ${result.toString()}`)
       log('exiftool config path set: %o', newConfigPath)
       let result
@@ -234,8 +245,13 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         response.modifiedFile = (await exiftool.getPath()).file
         log(result)
       } else {
-        // result = await exiftool.getMetadata('', exifShortcut, '-AllThunbs --ICC_Profile:all')
-        result = await exiftool.getMetadata('', exifShortcut, 'All', '-Photoshop:PhotoshopThumbnail', '--ICC_Profile:all')
+        result = await exiftool.getMetadata(
+          '',
+          exifShortcut,
+          'All',
+          '-Photoshop:PhotoshopThumbnail',
+          '--ICC_Profile:all',
+        )
       }
       response.metadata = result
     } catch (e) {
