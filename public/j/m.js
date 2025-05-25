@@ -139,6 +139,10 @@ function isLocationTag(tag) {
   return found
 }
 function hasLocationTags(meta) {
+  if (!meta) {
+    return false
+  }
+  console.log('what is meta', meta)
   let hasCoords = false
   if (meta['EXIF:GPSLongitude'] && meta['EXIF:GPSLatitude']) {
     hasCoords = 'EXIF'
@@ -678,10 +682,14 @@ function insertLink(link, code) {
     div.classList.add('save')
     div.appendChild(a)
   } else if ((code > 400) && (code < 500)) {
-    const error4xx = document.createTextNode(`Metadata edit was unsuccesful for image ${link}.`)
+    const error4xx = document.createTextNode(
+      `Metadata edit was unsuccesful for image ${link}.`,
+    )
     div.appendChild(error4xx)
   } else {
-    const error5xx = document.createTextNode('The server was unable to do it\'s job for some reason...')
+    const error5xx = document.createTextNode(
+      'The server was unable to do it\'s job for some reason...',
+    )
     div.appendChild(error5xx)
   }
   linkSection.appendChild(div)
@@ -726,7 +734,9 @@ async function setFileInfo(file = null, review = null) {
     const img = document.createElement('dd')
     if (/heic$/i.test(file.type) && !Safari) {
       // chrome doesn't natively display .HEIC image format
-      img.appendChild(document.createTextNode('There was a problem trying to display HEIC format image.'))
+      img.appendChild(document.createTextNode(
+        'There was a problem trying to display HEIC format image.',
+      ))
     } else if (/(3gp)|(mp4)|(webm)$/i.test(file.type)) {
       console.log('video embed')
       const preview = document.createElement('video')
@@ -771,6 +781,7 @@ async function setFileInfo(file = null, review = null) {
     info.appendChild(img)
     infozone.appendChild(info)
   }
+  console.log('what is review', review)
   if (review !== null) {
     const info = document.createElement('dl')
     info.id = 'fileInfo'
@@ -781,7 +792,9 @@ async function setFileInfo(file = null, review = null) {
     const img = document.createElement('dd')
     if (/heic$/i.test(review.href) && !Safari) {
       // chrome doesn't natively display .HEIC image format
-      img.appendChild(document.createTextNode('There was a problem trying to display HEIC format image.'))
+      img.appendChild(document.createTextNode(
+        'There was a problem trying to display HEIC format image.',
+      ))
     } else if (/(3gp)|(mp4)|(webm)$/i.test(review.href)) {
       console.log('video embed')
       const preview = document.createElement('video')
@@ -806,16 +819,21 @@ async function setFileInfo(file = null, review = null) {
     console.log(`image_0: ${formData.get('image_0')}`)
     console.log(`url: ${formData.get('url')}`)
   }
-  try {
-    if (!review) {
-      await send(formData)
-    } else {
-      await send(null, review)
+  if (review?.error) {
+    // TODO: fill in for when file is empty
+    console.info(review.error)
+  } else {
+    try {
+      if (!review) {
+        await send(formData)
+      } else {
+        await send(null, review)
+      }
+      // insertClearButton()
+    } catch (e) {
+      console.warn('something caused the send method to fail')
+      console.error(e)
     }
-    // insertClearButton()
-  } catch (e) {
-    console.warn('something caused the send method to fail')
-    console.error(e)
   }
 }
 window.setFileInfo = setFileInfo
@@ -857,7 +875,11 @@ async function send(data = null, review = null) {
       return
     }
     results = await response.json()
-    const reviewLinkText = 'Copy this link to review your metadata results again.'
+    if (results.statusCode === 403) {
+      // todo: catch response when error or 0 byte file
+      console.info(results.statusCode)
+    }
+    const reviewLinkText = 'Copy this temporary link to review your metadata results again.'
     reviewLink = document.createElement('a')
     reviewLink.href = `${origin}/review/${results.inspectedFile}`
     reviewLink.target = '_blank'

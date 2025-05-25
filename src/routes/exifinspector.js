@@ -470,7 +470,11 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
       error(`Missing file to review: ${reviewFilePath}`)
       const csrfToken = ulid()
       const locals = {}
-      locals.metadata = JSON.stringify({ status: 404, file, href: `${ctx.state.origin}/inspected/${file}` }, null, '\t')
+      locals.metadata = JSON.stringify({
+        status: 404,
+        file,
+        href: `${ctx.state.origin}/inspected/${file}`,
+      }, null, '\t')
       locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
       ctx.session.csrfToken = csrfToken
       ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
@@ -496,13 +500,27 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
       exiftool.setGPSCoordinatesOutputFormat('+gps')
       exiftool.enableBinaryTagOutput(true)
       exiftool.setOverwriteOriginal(false)
-      const newConfigPath = await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+      const newConfigPath = await exiftool.setConfigPath(
+        `${ctx.app.root}/config/exiftool.config`,
+      )
       log('exiftool config path set: %o', newConfigPath)
-      const result = await exiftool.getMetadata('', null, 'All', '-Photoshop:PhotoshopThumbnail', '--ICC_Profile:all')
+      const result = await exiftool.getMetadata(
+        '',
+        null,
+        'All',
+        '-Photoshop:PhotoshopThumbnail',
+        '--ICC_Profile:all',
+      )
       log('result', result)
       if (result.stdout && typeof result.stdout === 'string') {
-        log('result', JSON.parse(result.stdout)[0]);
         [response.metadata] = JSON.parse(result.stdout)
+        delete response.metadata['File:Directory']
+        response.metadata.SourceFile = `../${response.metadata.SourceFile
+          .split('/')
+          .slice(4)
+          .join('/')}`
+        response.error = response.metadata['ExifTool:Error']
+        log(response)
       } else {
         response.metadata = result
       }

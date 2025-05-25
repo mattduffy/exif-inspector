@@ -96,13 +96,13 @@
         </div>
     </section>
     <script
-          src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.core.js"
-          crossorigin async
-          data-callback="initMapKit"
-          data-libraries="full-map,services"
-          data-initial-token=""
-          nonce="<%= nonce %>"
-        ></script>
+        src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.core.js"
+        crossorigin async
+        data-callback="initMapKit"
+        data-libraries="full-map,services"
+        data-initial-token=""
+        nonce="<%= nonce %>"
+    ></script>
     <script nonce="<%= nonce %>" type="module">
         let origin = '<%= origin %>'
         let access = '<%= accessToken %>'
@@ -114,7 +114,7 @@
             expiredLinkP.textContent = expiredLinkText
             const h3s = document.querySelectorAll('h3')
             h3s[2].parentElement.insertBefore(expiredLinkP, h3s[2].nextSibling)
-         } else {
+        } else {
             document.addEventListener('DOMContentLoaded', (e) => {
                 setFileInfo(null, window.metadata)
             })
