@@ -822,6 +822,15 @@ async function setFileInfo(file = null, review = null) {
   if (review?.error) {
     // TODO: fill in for when file is empty
     console.info(review.error)
+    const dt = document.createElement('dt')
+    dt.textContent = 'File Upload Error:'
+    const dd = document.createElement('dd')
+    dd.textContent = review.error
+    window.fileInfo.appendChild(dt)
+    window.fileInfo.appendChild(dd)
+    const p = document.createElement('p')
+    p.innerHTML = '<a href="/">Try again</a>'
+    window.infozone.appendChild(p)
   } else {
     try {
       if (!review) {
