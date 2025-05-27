@@ -177,96 +177,108 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     }
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet?.[0]}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
-    try {
-      if (image !== null) {
-        log(`image size: ${image?.size}`)
-        imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
-        const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
-        imageSaved = path.resolve(`${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`)
-        const isMoved = await rename(image.filepath, imageSaved)
-        log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
-        response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
-        uploadDoc.uploadedFile = image.originalFilename
-        uploadDoc.sanitizedFile = imageOriginalFilenameCleaned
-        uploadDoc.inspectedFile = imageSaved
-        images.push(imageSaved)
+    log(`image size: ${image?.size}`)
+    if (image.size === 0) {
+      // TODO: remove 0 byte file from uploads directory
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 200
+      ctx.body = {
+        error: 'Empty File',
+        written: false,
+        file: image,
       }
-    } catch (e) {
-      error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
-      response.msg = `Failed to move ${image.filepath} to the inspected/ dir.`
-    }
-    try {
-      log('saving file upload details to db.')
-      log(uploadDoc)
-      const db = ctx.state.mongodb.client.db()
-      const collection = db.collection('images')
-      const dbSaved = await collection.insertOne(uploadDoc)
-      log(dbSaved)
-    } catch (e) {
-      error('failed to save image upload details to db.')
-      error(`upload image name:     ${image.originalFilename}`)
-      error(`sanitized image namee: ${imageOriginalFilenameCleaned}`)
-      error(e)
-    }
-    let exiftool = new Exiftool()
-    try {
-      // run exif command here
-      log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
-      exiftool = await exiftool.init(images)
-      const expandStructs = true
-      exiftool.enableXMPStructTagOutput(expandStructs)
-      exiftool.setGPSCoordinatesOutputFormat('+gps')
-      exiftool.enableBinaryTagOutput(true)
-      exiftool.setOverwriteOriginal(false)
-      const newConfigPath = await exiftool.setConfigPath(
-        `${ctx.app.root}/config/exiftool.config`,
-      )
-      // log(`exiftool config path set: ${result.toString()}`)
-      log('exiftool config path set: %o', newConfigPath)
-      let result
-      let stripResult
-      if (exifShortcut === 'StripAllTags') {
-        stripResult = await exiftool.stripMetadata()
-        log(stripResult)
-        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
-        if (stripResult?.original) {
-          const original = path.parse(stripResult.original)
-          response.originalFile = original.base
+    } else {
+      try {
+        if (image !== null) {
+          imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
+          const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
+          imageSaved = path.resolve(
+            `${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`,
+          )
+          const isMoved = await rename(image.filepath, imageSaved)
+          log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
+          response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
+          uploadDoc.uploadedFile = image.originalFilename
+          uploadDoc.sanitizedFile = imageOriginalFilenameCleaned
+          uploadDoc.inspectedFile = imageSaved
+          images.push(imageSaved)
         }
-        response.modifiedFile = (await exiftool.getPath()).file
-      } else if (exifShortcut === 'StripGPS') {
-        await exiftool.stripLocation()
-        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
-        if (result?.original) {
-          const original = path.parse(result.original)
-          response.originalFile = original.base
-        }
-        // response.modifiedFile = result[0]['File:FileorName']
-        response.modifiedFile = (await exiftool.getPath()).file
-        log(result)
-      } else {
-        result = await exiftool.getMetadata(
-          '',
-          exifShortcut,
-          'All',
-          '-Photoshop:PhotoshopThumbnail',
-          '--ICC_Profile:all',
+      } catch (e) {
+        error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
+        response.msg = `Failed to move ${image.filepath} to the inspected/ dir.`
+      }
+      try {
+        log('saving file upload details to db.')
+        log(uploadDoc)
+        const db = ctx.state.mongodb.client.db()
+        const collection = db.collection('images')
+        const dbSaved = await collection.insertOne(uploadDoc)
+        log(dbSaved)
+      } catch (e) {
+        error('failed to save image upload details to db.')
+        error(`upload image name:     ${image.originalFilename}`)
+        error(`sanitized image namee: ${imageOriginalFilenameCleaned}`)
+        error(e)
+      }
+      let exiftool = new Exiftool()
+      try {
+        // run exif command here
+        log(`image${(images.length > 1) ? 's' : ''} to inspect: `, images)
+        exiftool = await exiftool.init(images)
+        const expandStructs = true
+        exiftool.enableXMPStructTagOutput(expandStructs)
+        exiftool.setGPSCoordinatesOutputFormat('+gps')
+        exiftool.enableBinaryTagOutput(true)
+        exiftool.setOverwriteOriginal(false)
+        const newConfigPath = await exiftool.setConfigPath(
+          `${ctx.app.root}/config/exiftool.config`,
         )
+        // log(`exiftool config path set: ${result.toString()}`)
+        log('exiftool config path set: %o', newConfigPath)
+        let result
+        let stripResult
+        if (exifShortcut === 'StripAllTags') {
+          stripResult = await exiftool.stripMetadata()
+          log(stripResult)
+          result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+          if (stripResult?.original) {
+            const original = path.parse(stripResult.original)
+            response.originalFile = original.base
+          }
+          response.modifiedFile = (await exiftool.getPath()).file
+        } else if (exifShortcut === 'StripGPS') {
+          await exiftool.stripLocation()
+          result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+          if (result?.original) {
+            const original = path.parse(result.original)
+            response.originalFile = original.base
+          }
+          // response.modifiedFile = result[0]['File:FileorName']
+          response.modifiedFile = (await exiftool.getPath()).file
+          log(result)
+        } else {
+          result = await exiftool.getMetadata(
+            '',
+            exifShortcut,
+            'All',
+            '-Photoshop:PhotoshopThumbnail',
+            '--ICC_Profile:all',
+          )
+        }
+        response.metadata = result
+      } catch (e) {
+        error(e)
+        error(`Failed to run exif command on ${imageSaved}`)
+        response.msg = `Failed to run exif command on ${imageSaved}`
+        response.e = e
       }
-      response.metadata = result
-    } catch (e) {
-      error(e)
-      error(`Failed to run exif command on ${imageSaved}`)
-      response.msg = `Failed to run exif command on ${imageSaved}`
-      response.e = e
+      // don't leak system info to the web page
+      const cleanResponse = removeServerDetails(response)
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 200
+      // ctx.body = response
+      ctx.body = cleanResponse
     }
-    // don't leak system info to the web page
-    const cleanResponse = removeServerDetails(response)
-
-    ctx.type = 'application/json; charset=utf-8'
-    ctx.status = 200
-    // ctx.body = response
-    ctx.body = cleanResponse
   }
 })
 
