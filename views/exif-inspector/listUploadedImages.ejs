@@ -1,5 +1,5 @@
     <section id="headerSection">
-        <h1><%= siteName %></h1>
+        <h1><a href="<%= domain %>"><%= siteName %></a></h1>
         <h2><span></span> Total Uploaded Images.</h2>
         <% if (flash?.info) { %>
         <div id="info" class="info">
@@ -29,7 +29,7 @@
                 let pages = (n > Math.trunc(n)) ? n += 1 : n
                 for (let i = 1; i <= pages; i++) { %>
                 <% if (pageInfo.page === i) { %>
-                <li style="background-color: lightgoldenrodyellow;"><b><a href="<%= domain%>/x/<%= i %>">page <%= i %></a></b></li>
+                <li style="background-color: lightgoldenrodyellow;"><b><a href="<%= domain %>/x/<%= i %>">page <%= i %></a></b></li>
                     <% } else { %>
                 <li><a href="<%= domain%>/x/<%= i %>">page <%= i %></a></li>
                     <% } %>
