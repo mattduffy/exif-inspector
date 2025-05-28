@@ -180,6 +180,13 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     log(`image size: ${image?.size}`)
     if (image.size === 0) {
       // TODO: remove 0 byte file from uploads directory
+      try {
+        log(image.filepath)
+        const delete0ByteFile = await rm(image.filepath, { force: true })
+        log('0 byte file deleted - should be undefined', delete0ByteFile)
+      } catch (e) {
+        error(e)
+      }
       ctx.type = 'application/json; charset=utf-8'
       ctx.status = 200
       ctx.body = {
