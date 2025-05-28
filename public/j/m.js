@@ -888,6 +888,23 @@ async function send(data = null, review = null) {
       // todo: catch response when error or 0 byte file
       console.info(results.statusCode)
     }
+    const reviewLinkP = document.createElement('p')
+    reviewLinkP.style.margin = '.5em'
+    if (results?.error === 'Empty File') {
+      const reviewLinkText = 'The file you uploaded appears to be empty.'
+      reviewLinkP.textContent = reviewLinkText
+      console.log('reviewLinkP: %o', reviewLinkP)
+      const dt = document.createElement('dt')
+      dt.textContent = 'File Upload Error:'
+      const dd = document.createElement('dd')
+      dd.textContent = results.error
+      window.fileInfo.appendChild(dt)
+      window.fileInfo.appendChild(dd)
+      const p = document.createElement('p')
+      p.innerHTML = '<a href="/">Try again</a>'
+      window.infozone.appendChild(p)
+      return
+    }
     const reviewLinkText = 'Copy this temporary link to review your metadata results again.'
     reviewLink = document.createElement('a')
     reviewLink.href = `${origin}/review/${results.inspectedFile}`
@@ -895,10 +912,8 @@ async function send(data = null, review = null) {
     reviewLink.title = reviewLinkText
     reviewLink.textContent = reviewLinkText
     reviewLink.classList.add('reviewLink')
-    const reviewLinkP = document.createElement('p')
-    reviewLinkP.style.margin = '.5em'
     reviewLinkP.appendChild(reviewLink)
-    console.log('reviewLink: %o', reviewLinkP)
+    console.log('reviewLinkP: %o', reviewLinkP)
     infozone.insertBefore(reviewLinkP, infozone.children[1])
   } else {
     results = review
@@ -924,7 +939,10 @@ async function send(data = null, review = null) {
   let tagLocation
   const locationTagType = hasLocationTags(results.metadata[0])
   if (locationTagType) {
-    [lat, lon, NS, EW, tagLocation] = getLocationCoordinates(locationTagType, results.metadata[0])
+    [lat, lon, NS, EW, tagLocation] = getLocationCoordinates(
+      locationTagType,
+      results.metadata[0],
+    )
     if (NS === undefined) {
       NS = (parseFloat(lat) > 0) ? 'North' : 'South'
     }
