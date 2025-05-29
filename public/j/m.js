@@ -697,9 +697,13 @@ function insertLink(link, code) {
   parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
 }
 async function setFileInfo(file = null, review = null) {
+  if (file.size === 0) {
+    console.info('0 byte file selected')
+    console.info(file)
+    return
+  }
   const ua = window.navigator.userAgent
   console.log(ua)
-  // const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i)
   const iOS = !!ua.match(/iP[ad|hone]/i)
   const webkit = !!ua.match(/WebKit/i)
   const Safari = (iOS || webkit) && !ua.match(/Chrome/i)
