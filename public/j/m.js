@@ -697,9 +697,9 @@ function insertLink(link, code) {
   parent.insertBefore(linkSection, document.querySelector('section#metadataSection'))
 }
 async function setFileInfo(file = null, review = null) {
-  if (file.size === 0) {
+  console.info(file)
+  if (file?.size === 0) {
     console.info('0 byte file selected')
-    console.info(file)
     return
   }
   const ua = window.navigator.userAgent
@@ -888,12 +888,18 @@ async function send(data = null, review = null) {
       return
     }
     results = await response.json()
+    const reviewLinkP = document.createElement('p')
+    reviewLinkP.style.margin = '.5em'
     if (results.statusCode === 403) {
       // todo: catch response when error or 0 byte file
       console.info(results.statusCode)
+      const reviewLinkText = 'The remote server blocked the request for that image.  \n'
+        + 'Try saving the image file to your local device and uploading it from there.'
+      reviewLinkP.textContent = reviewLinkText
+      console.log('reviewLinkP: %o', reviewLinkP)
+      infozone.insertBefore(reviewLinkP, infozone.children[1])
+      return
     }
-    const reviewLinkP = document.createElement('p')
-    reviewLinkP.style.margin = '.5em'
     if (results?.error === 'Empty File') {
       const reviewLinkText = 'The file you uploaded appears to be empty.'
       reviewLinkP.textContent = reviewLinkText
@@ -907,6 +913,7 @@ async function send(data = null, review = null) {
       const p = document.createElement('p')
       p.innerHTML = '<a href="/">Try again</a>'
       window.infozone.appendChild(p)
+      infozone.insertBefore(reviewLinkP, infozone.children[1])
       return
     }
     const reviewLinkText = 'Copy this temporary link to review your metadata results again.'
