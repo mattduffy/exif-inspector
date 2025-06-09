@@ -114,7 +114,15 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
   } else {
     log('csrf token check passed')
     const response = {}
-    const image = ctx.request.files?.image_0?.[0] ?? null
+    const image = ctx.request.files?.image_0?.[0] ?? {
+      filepath: null,
+      newFilename: null,
+      originalFilename: null,
+      mimetype: null,
+      size: null,
+      lastModifiedDate: null,
+    }
+    log('IMAGE obj', image)
     let imageOriginalFilenameCleaned
     let imageSaved
     const shortcuts = {
@@ -130,6 +138,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     const images = []
     // check if the url field was submitted
     let inspectedName
+    let uploadedName
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
     const uploadDoc = {
       date: new Date(),
@@ -141,7 +150,13 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         log(urlToInspect);
         [uploadDoc.remoteUrl] = ctx.request.body.url
         const remoteFile = { url: urlToInspect }
-        const remoteResponse = await get(urlToInspect)
+        const remoteResponse = await get(urlToInspect, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+              + 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+            Referer: `${(new URL(urlToInspect)).origin}`,
+          },
+        })
         log('remoteResponse', remoteResponse)
         log(remoteResponse.statusCode)
         log(remoteResponse.statusMessage)
@@ -154,26 +169,35 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
           ctx.body = remoteResponse
           return
         }
-        const filePath = path.parse(urlToInspect.pathname)
-        const fileName = `${ulid()}_${filePath.base}`
-        inspectedName = path.resolve(`${ctx.app.root}/inspected/${fileName}`)
-        uploadDoc.inspectedFile = inspectedName
-        log(`remote file will be written to ${inspectedName}`)
-        remoteFile.inspectedFile = fileName
-        const written = await writeFile(inspectedName, new Uint8Array(remoteResponse.buffer))
+        const filepath = path.parse(urlToInspect.pathname)
+        const filename = `${filepath.base}`
+        const newFilename = `${ulid()}${filepath.ext}`
+        image.newFilename = newFilename
+        image.originalFilename = filename
+        image.size = Number.parseInt(remoteResponse.headers['content-length'], 10)
+        image.mimetype = remoteResponse.headers['content-type']
+        uploadedName = path.resolve(`${ctx.app.root}/uploads/${newFilename}`)
+        uploadDoc.uploadedFile = uploadedName
+        image.filepath = uploadedName
+        log(`remote file will be uploaded to ${uploadedName}`)
+        remoteFile.uploadedFile = filename
+        remoteFile.size = remoteResponse.headers['content-length']
+        remoteFile.mimetype = remoteResponse.headers['content-type']
+        const written = await writeFile(uploadedName, new Uint8Array(remoteResponse.buffer))
         if (written === undefined) {
           remoteFile.written = true
-          response.inspectedFile = fileName
+          response.uploadedFile = filename
+          response.inspectedFile = filename
         } else {
           remoteFile.written = false
         }
         response.remoteFile = remoteFile
-        images.push(inspectedName)
       } catch (e) {
         error(e)
         error('not a valid URL')
         response.remoteFile = { error: e.message, written: false, url: urlToInspect }
       }
+      log('REMOTE IMAGE', image)
     }
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet?.[0]}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
@@ -208,6 +232,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
           uploadDoc.uploadedFile = image.originalFilename
           uploadDoc.sanitizedFile = imageOriginalFilenameCleaned
           uploadDoc.inspectedFile = imageSaved
+          uploadDoc.size = image.size
           images.push(imageSaved)
         }
       } catch (e) {
