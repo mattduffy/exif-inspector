@@ -19,11 +19,11 @@
         <% if (isAuthenticated) { %>
 
         <% } %>
-        <nav id="pages">
+        <nav class="pages">
             <span>page: <%= pageInfo.page %></span><br>
             <span>pageOffset: <%= pageInfo.pageOffset %></span><br>
             <span>limit: <%= pageInfo.limit %></span><br>
-            <ul>
+            <ul id="top-nav">
                 <%
                 let n = fileCount / perPage
                 let pages = (n > Math.trunc(n)) ? n += 1 : n
@@ -36,10 +36,17 @@
                 <% } %>
             </ul>
         </nav>
-        <ol id="links"  start=<%= pageInfo.pageOffset + 1 %>>
+        <ol id="links" start=<%= pageInfo.pageOffset + 1 %> style="margin-bottom: 1.5em; border: 3px aliceblue solid; border-radius: 10px;">
         </ol>
         <p id="noImages" class="hidden">All images have been deleted.</p>
         <script nonce="<%= nonce %>" type="module">
+            const topUlNav = document.querySelector('ul#top-nav')
+            const bottomUlNav = topUlNav.cloneNode(true)
+            const bottomNav = document.createElement('nav')
+            bottomNav.id = 'bottom-nav'
+            bottomNav.classList.add('pages')
+            bottomNav.appendChild(bottomUlNav)
+            topUlNav.parentElement.parentElement.insertBefore(bottomNav, document.querySelector('p#noImages'))
             let origin = '<%= domain %>'
             let access = '<%= accessToken %>'
             let images = <%- JSON.stringify(images) %>
