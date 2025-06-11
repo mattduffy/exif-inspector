@@ -1005,7 +1005,11 @@ async function send(data = null, review = null) {
         console.log('Reverse Geocoder Lookup results', geoLookup)
         const l = geoLookup.results[0]
         const locality = document.createElement('dt');
-        [locality.textContent] = l.areasOfInterest
+        /* eslint-disable no-nested-ternary */
+        [locality.textContent] = (l?.areasOfInterest)
+          ? l.areasOfInterest : (l?.dependentLocalities)
+            ? l.dependentLocalities : 'Location of photo'
+        /* eslint-enable no-nested-ternary */
         const address = document.createElement('dd')
         address.innerHTML = `${l.fullThoroughfare}<br>`
           + `${l.subLocality}, ${l.locality}<br>`
