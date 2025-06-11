@@ -280,6 +280,27 @@ function tagListDiv(tag) {
   }
   return div
 }
+async function myGeocoder(coords) {
+  return new Promise((resolve, reject) => {
+    console.log('geocoder with: ', coords)
+    const opts = {
+      getsUserLocation: false,
+      language: 'en-US',
+    }
+    const geocoder = new window.mapkit.Geocoder(opts)
+    console.log(geocoder)
+    // const reverseLookup = geocoder.reverseLookup(coords, (err, data) => {
+    geocoder.reverseLookup(coords, (err, data) => {
+      console.log('geocoder.reverseLookup callback')
+      if (err) {
+        reject(err)
+      }
+      if (data) {
+        resolve(data)
+      }
+    })
+  })
+}
 function addPointsToMap(points) {
   const annotations = []
   if (Array.isArray(points)) {
@@ -978,6 +999,21 @@ async function send(data = null, review = null) {
       const locationListDiv = tagListDiv('locationzone')
       const dl = locationListDiv.querySelector(':scope > dl')
       dl.appendChild(dt)
+      // add results of geocoder reverse lookup
+      const geoLookup = await myGeocoder(new window.mapkit.Coordinate(lat, lon))
+      if (geoLookup?.results && geoLookup.results.length > 0) {
+        console.log('Reverse Geocoder Lookup results', geoLookup)
+        const l = geoLookup.results[0]
+        const locality = document.createElement('dt');
+        [locality.textContent] = l.areasOfInterest
+        const address = document.createElement('dd')
+        address.innerHTML = `${l.fullThoroughfare}<br>`
+          + `${l.subLocality}, ${l.locality}<br>`
+          + `${l.postCode}, ${l.administrativeArea}<br>`
+          + `TZ: ${l.timezone}`
+        dl.appendChild(locality)
+        dl.appendChild(address)
+      }
       // add input fields for selecting new map location
       const dtNewLatitude = document.createElement('dt')
       const newLatitudeLabel = document.createElement('label')
