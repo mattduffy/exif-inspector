@@ -148,13 +148,17 @@ function hasLocationTags(meta) {
     hasCoords = 'EXIF'
   } else if (meta['Composite:GPSPosition']) {
     hasCoords = 'Composite'
-  } else if (meta['XMP:LocationShownGPSLatitude'] && meta['XMP:LocationShownGPSLongitude']) {
+  } else if (meta['XMP:LocationShownGPSLatitude'] &&
+    meta['XMP:LocationShownGPSLongitude']) {
     hasCoords = 'XMP'
-  } else if (meta['XMP:LocationCreatedGPSLatitude'] && meta['XMP:LocationCreatedGPSLongitude']) {
+  } else if (meta['XMP:LocationCreatedGPSLatitude'] &&
+    meta['XMP:LocationCreatedGPSLongitude']) {
     hasCoords = 'XMP'
-  } else if (meta['XMP:LocationShown']?.[0]?.GPSLatitude && meta['XMP:LocationShown']?.[0]?.GPSLongitude) {
+  } else if (meta['XMP:LocationShown']?.[0]?.GPSLatitude &&
+    meta['XMP:LocationShown']?.[0]?.GPSLongitude) {
     hasCoords = 'XMP-struct'
-  } else if (meta['XMP:LocationCreated']?.[0]?.GPSLatitude && meta['XMP:LocationCreated']?.[0]?.GPSLongitude) {
+  } else if (meta['XMP:LocationCreated']?.[0]?.GPSLatitude &&
+    meta['XMP:LocationCreated']?.[0]?.GPSLongitude) {
     hasCoords = 'XMP-struct'
   } else {
     hasCoords = false
@@ -218,8 +222,12 @@ function normalizeCoordinateTags() {
   const xmpLocation = dl.querySelector(':scope input[name="XMP:Location"]')
   const xmpLocationShown = dl.querySelector(':scope input[name="XMP:LocationShown"]')
   const xmpLocationCreated = dl.querySelector(':scope input[name="XMP:LocationCreated"]')
-  const xmpLocationShownLatLon = dl.querySelectorAll(':scope input[name^="XMP:LocationShown:LatLon"]')
-  const xmpLocationCreatedLatLon = dl.querySelectorAll(':scope input[name^="XMP:LocationCreated:LatLon"]')
+  const xmpLocationShownLatLon = dl.querySelectorAll(
+    ':scope input[name^="XMP:LocationShown:LatLon"]'
+  )
+  const xmpLocationCreatedLatLon = dl.querySelectorAll(
+    ':scope input[name^="XMP:LocationCreated:LatLon"]'
+  )
   const xmpShownLat = dl.querySelector(':scope input[name^="XMP:LocationShown:GPSLat"]')
   const xmpShownLon = dl.querySelector(':scope input[name^="XMP:LocationShown:GPSLon"]')
   const xmpCreatedLat = dl.querySelector(':scope input[name^="XMP:LocationCreated:GPSLat"]')
@@ -762,7 +770,7 @@ async function setFileInfo(file = null, review = null) {
       img.appendChild(document.createTextNode(
         'There was a problem trying to display HEIC format image.',
       ))
-    } else if (/(3gp)|(mp4)|(webm)$/i.test(file.type)) {
+    } else if (/(3gp)|(mp4)|(webm)|(mov)$/i.test(file.type)) {
       console.log('video embed')
       const preview = document.createElement('video')
       preview.classList.add('smallImgPreview')
@@ -820,7 +828,7 @@ async function setFileInfo(file = null, review = null) {
       img.appendChild(document.createTextNode(
         'There was a problem trying to display HEIC format image.',
       ))
-    } else if (/(3gp)|(mp4)|(webm)$/i.test(review.href)) {
+    } else if (/(3gp)|(mp4)|(webm)|(mov)$/i.test(review.href)) {
       console.log('video embed')
       const preview = document.createElement('video')
       preview.classList.add('smallImgPreview')
@@ -1087,7 +1095,16 @@ async function send(data = null, review = null) {
     dtTag.id = `tag_${x}`
     dtTag.innerHTML = `${tag}`
     ddTag.id = `val_${x}`
-    if (/ThumbnailTIFF|ThumbnailImage|PreviewImage|MPImage2|C2PAThumbnailClaimJpegData|PhotoshopThumbnail/i.test(t)) {
+    const thumbnailTags = [
+      'ThumbnailTIFF',
+      'ThumbnailImage',
+      'PreviewImage',
+      'MPImage2',
+      'C2PAThumbnailClaimJpegData',
+      'PhotoshopThumbnail',
+    ].join('|')
+    const thumbnailsRegex = new RegExp(thumbnailTags, 'i')
+    if (thumbnailsRegex.test(t)) {
       console.log('thumbnail tag found: ', t)
       const img = document.createElement('img')
       img.classList.add('smallImgPreview')
@@ -1144,7 +1161,8 @@ async function send(data = null, review = null) {
       }
       if (t.value !== '') {
         // console.log('t.value', t.tag, t.value)
-        if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated') && Array.isArray(t.value)) {
+        if ((t.tag === 'XMP:LocationShown' || t.tag === 'XMP:LocationCreated')
+          && Array.isArray(t.value)) {
           t.value.forEach((s, n) => {
             console.log('s', typeof s, s)
             if (typeof s === 'object') {
@@ -1192,7 +1210,11 @@ async function send(data = null, review = null) {
             }
             ddTag.appendChild(textfield)
             dl.appendChild(ddTag)
-            mapPoints.push({ lat: convertFromPolarToScalar(Slat), lon: convertFromPolarToScalar(Slon), tag: `${t.tag} #${m}` })
+            mapPoints.push({
+              lat: convertFromPolarToScalar(Slat),
+              lon: convertFromPolarToScalar(Slon),
+              tag: `${t.tag} #${m}` }
+            )
           })
         } else {
           const label = document.createElement('label')
@@ -1327,12 +1349,16 @@ async function send(data = null, review = null) {
     })
     div.appendChild(dl)
     document.querySelector('div#xmpzone').classList.remove('hidden')
-    if (results.metadata[0]['XMP:Look'] !== undefined || results.metadata[0]['XMP:ToneCurvePV2012'] !== undefined) {
+    if (results.metadata[0]['XMP:Look'] !== undefined ||
+      results.metadata[0]['XMP:ToneCurvePV2012'] !== undefined) {
       const a = document.createElement('a')
       a.setAttribute('download', 'presets.xmp')
       a.textContent = 'Download Adobe preset xmp file.'
       a.classList.add('presets')
-      const u = new URL(`/getxmpdata/${(document.querySelector('input[id="inspectedFilename_Id"]')).value}`, `${origin}`)
+      const u = new URL(
+        `/getxmpdata/${(document.querySelector('input[id="inspectedFilename_Id"]')).value}`,
+        `${origin}`
+      )
       a.href = u.href
       console.log('create link for downloading presets.xmp file.')
       console.log(u.href)
