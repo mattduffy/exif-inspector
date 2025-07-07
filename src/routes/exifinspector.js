@@ -85,7 +85,7 @@ router.get('index', '/', addIpToSession, hasFlash, async (ctx) => {
   locals.csrfToken = csrfToken
   locals.body = ctx.body
   locals.domain = ctx.state.origin
-  locals.origin = ctx.request.href
+  // locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
   locals.sessionUser = ctx.state.sessionUser
@@ -122,7 +122,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
       size: null,
       lastModifiedDate: null,
     }
-    log('IMAGE obj', image)
+    // log('IMAGE obj', image)
     let imageOriginalFilenameCleaned
     let imageSaved
     const shortcuts = {
@@ -525,7 +525,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
       locals.csrfToken = csrfToken
       locals.body = ctx.body
       locals.domain = ctx.state.origin
-      locals.origin = `${ctx.request.origin}/`
+      locals.origin = `${ctx.state.origin}/`
       locals.flash = ctx.flash?.index ?? {}
       locals.title = `${ctx.app.site}: Review`
       locals.sessionUser = ctx.state.sessionUser
@@ -587,7 +587,8 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   locals.csrfToken = csrfToken
   locals.body = ctx.body
   locals.domain = ctx.state.origin
-  locals.origin = `${ctx.request.origin}/`
+  // locals.origin = `${ctx.request.origin}/`
+  locals.origin = `${ctx.state.origin}/`
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Review`
   locals.sessionUser = ctx.state.sessionUser
@@ -754,7 +755,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
   locals.csrfToken = csrfToken
   locals.domain = ctx.state.origin
-  locals.origin = ctx.request.href
+  // locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: List Uploaded Images`
   locals.sessionUser = ctx.state.sessionUser
@@ -815,7 +816,7 @@ router.get('about', '/about', hasFlash, async (ctx) => {
   const locals = {}
   locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
   locals.domain = ctx.state.origin
-  locals.origin = ctx.request.href
+  // locals.origin = ctx.request.href
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Home`
   locals.sessionUser = ctx.state.sessionUser
