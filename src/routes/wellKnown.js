@@ -137,7 +137,8 @@ router.get('host-meta', '/.well-known/host-meta', async (ctx, next) => {
   let info
   try {
     // const host = `${ctx.request.protocol}://${ctx.request.host}`
-    const host = ctx.request.origin
+    // const host = ctx.request.origin
+    const host = ctx.state.origin
     const o = { path: ctx.request.path, host }
     const meta = new Hostmeta(o)
     info = meta.info()
@@ -155,7 +156,9 @@ router.get('host-meta', '/.well-known/host-meta', async (ctx, next) => {
     error(e)
     ctx.status = 500
     // throw new Error(e)
-    ctx.throw(500, 'Hostmeta failure - 100', e)
+    // ctx.throw(500, 'Hostmeta failure - 100', e)
+    const err = new Error('Hostmeta failure - 100', { cause: e })
+    ctx.throw(500, err)
   }
 })
 
@@ -166,7 +169,9 @@ router.get('webfinger', '/.well-known/webfinger', async (ctx, next) => {
     error('Missing db connection')
     ctx.status = 500
     ctx.type = 'text/plain; charset=utf-8'
-    ctx.throw(500, 'Missing database connection.')
+    // ctx.throw(500, 'Missing database connection.')
+    const err = new Error('Missing database connection.')
+    ctx.throw(500, err)
   }
   try {
     log('awaiting next return')
@@ -174,7 +179,9 @@ router.get('webfinger', '/.well-known/webfinger', async (ctx, next) => {
   } catch (e) {
     error('Webfinger failure - 200')
     error(e)
-    ctx.throw(500, 'Webfinger failure - 200', e)
+    // ctx.throw(500, 'Webfinger failure - 200', e)
+    const err = new Error('Webfinger failure - 200', { cause: e })
+    ctx.throw(500, err)
   }
   try {
     const re = /^acct:([^\\s][A-Za-z0-9_-]{2,30})(?:@)?([^\\s].*)?$/
@@ -218,7 +225,9 @@ router.get('webfinger', '/.well-known/webfinger', async (ctx, next) => {
     error(e)
     ctx.status = 500
     // throw new Error(e)
-    ctx.throw(500, 'Webfinger failure - 100', e)
+    // ctx.throw(500, 'Webfinger failure - 100', e)
+    const err = new Error('Webfinger failure - 100', { cause: e })
+    ctx.throw(500, err)
   }
 })
 
