@@ -26,7 +26,7 @@ router.get('seoSitemap', '/sitemap.xml', async (ctx) => {
 
   const locals = {
     layout: false,
-    origin: ctx.request.origin,
+    // origin: ctx.request.origin,
     pages: ['', 'about'],
   }
   info(locals)

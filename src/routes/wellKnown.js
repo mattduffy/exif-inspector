@@ -19,13 +19,13 @@ const router = new Router()
 
 router.get('security', '/.well-known/security.txt', async (ctx) => {
   const info = wellKnownInfo.extend('GET-security.txt')
-  info('Sombody asked for the security.txt file.')
+  info('Somebody asked for the security.txt file.')
   const securityTxt = []
   securityTxt.push(`Contact: mailto:${ctx.app.securityContact}`)
   securityTxt.push('Expires: 2025-12-31T23:59:00.000Z')
   securityTxt.push(`Encryption: ${ctx.app.securityGpg}`)
   securityTxt.push('Preferred-Languages: en')
-  securityTxt.push(`Canonical: ${ctx.origin}/.well-known/security.txt`)
+  securityTxt.push(`Canonical: ${ctx.state.origin}/.well-known/security.txt`)
   info(securityTxt)
   ctx.status = 200
   ctx.type = 'text/plain; charset=utf-8'
@@ -40,6 +40,7 @@ router.get('jwks-json', '/.well-known/jwks.json', async (ctx) => {
     db: ctx.state.mongodb.client.db(ctx.state.mongodb.client.dbName),
     keyDir: ctx.app.dirs.keys,
     siteName: ctx.app.site,
+    appEnv: ctx.app.appEnv,
   }
   const theApp = new App(o)
   // const theApp = new App({ db: ctx.state.mongodb.client, keyDir: ctx.app.dirs.keys })
@@ -49,7 +50,8 @@ router.get('jwks-json', '/.well-known/jwks.json', async (ctx) => {
     log(keys)
   } catch (e) {
     error(e)
-    ctx.throw(500, e)
+    const err = new Error('', { cause: e })
+    ctx.throw(500, err)
   }
   let jwks
   try {
@@ -57,7 +59,8 @@ router.get('jwks-json', '/.well-known/jwks.json', async (ctx) => {
     log(jwks)
   } catch (e) {
     error(e)
-    ctx.throw(500, e)
+    const err = new Error('', { cause: e })
+    ctx.throw(500, err)
   }
   ctx.status = 200
   ctx.type = 'application/json; charset=utf-8'
@@ -72,11 +75,12 @@ router.get('nodeinfo', '/.well-known/nodeinfo', async (ctx) => {
     error('Missing database connection')
     ctx.status = 500
     ctx.type = 'text/plain; charset=utf-8'
-    ctx.throw(500, 'Missing db connection')
+    const err = new Error('Missing db connection')
+    ctx.throw(500, err)
   }
   let info
   try {
-    const host = ctx.origin
+    const host = ctx.request.host
     const o = { db: ctx.state.mongodb.client, host, path: ctx.request.path }
     const node = new NodeInfo(o)
     info = await node.info()
@@ -92,7 +96,8 @@ router.get('nodeinfo', '/.well-known/nodeinfo', async (ctx) => {
   } catch (e) {
     error(e)
     ctx.status = 500
-    ctx.throw(500, 'Nodeinfo failure - 100', e)
+    const err = new Error('Nodeinfo failure - 100', { cause: e })
+    ctx.throw(500, err)
   }
 })
 
@@ -108,7 +113,8 @@ router.get('nodeinfo2.1', '/nodeinfo/2.1', async (ctx) => {
     log(info)
   } catch (e) {
     error(e)
-    ctx.throw(500, e)
+    const err = new Error('', { cause: e })
+    ctx.throw(500, err)
   }
   if (!info) {
     error('Nodeinfo not found')
@@ -132,13 +138,14 @@ router.get('host-meta', '/.well-known/host-meta', async (ctx, next) => {
     await next()
   } catch (e) {
     error('Hostmeta failure - 200')
-    ctx.throw(500, 'Hostmeta failure - 200', e)
+    const err = new Error('Hostmeta failure - 200', { cause: e })
+    ctx.throw(500, err)
   }
   let info
   try {
     // const host = `${ctx.request.protocol}://${ctx.request.host}`
     // const host = ctx.request.origin
-    const host = ctx.state.origin
+    const host = ctx.state.host
     const o = { path: ctx.request.path, host }
     const meta = new Hostmeta(o)
     info = meta.info()
@@ -155,8 +162,6 @@ router.get('host-meta', '/.well-known/host-meta', async (ctx, next) => {
   } catch (e) {
     error(e)
     ctx.status = 500
-    // throw new Error(e)
-    // ctx.throw(500, 'Hostmeta failure - 100', e)
     const err = new Error('Hostmeta failure - 100', { cause: e })
     ctx.throw(500, err)
   }
@@ -192,7 +197,8 @@ router.get('webfinger', '/.well-known/webfinger', async (ctx, next) => {
       ctx.type = 'text/plain; charset=utf-8'
       ctx.body = 'Bad request'
     } else {
-      const { origin, host, protocol } = ctx.request
+      const { host, protocol } = ctx.request
+      const { origin } = ctx.state
       const localAcct = new RegExp(`(${host})`)
       let isLocal = false
       if (username[2] === undefined || localAcct.test(username[2])) {
@@ -224,8 +230,6 @@ router.get('webfinger', '/.well-known/webfinger', async (ctx, next) => {
   } catch (e) {
     error(e)
     ctx.status = 500
-    // throw new Error(e)
-    // ctx.throw(500, 'Webfinger failure - 100', e)
     const err = new Error('Webfinger failure - 100', { cause: e })
     ctx.throw(500, err)
   }

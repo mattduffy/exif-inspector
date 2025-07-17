@@ -10,10 +10,15 @@ import { rename } from 'node:fs/promises'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
 // import { ObjectId } from 'mongodb'
-import formidable from 'formidable'
+// import formidable from 'formidable'
 import { _log, _error } from '../utils/logging.js'
 /* eslint-disable-next-line no-unused-vars */
 import { Users, AdminUser } from '../models/users.js'
+import {
+  doTokensMatch,
+  processFormData,
+  hasFlash,
+} from './middlewares.js'
 
 const USERS = 'users'
 const accountLog = _log.extend('account')
@@ -44,16 +49,12 @@ function sanitizeFilename(filename) {
   return cleanName
 }
 
-async function hasFlash(ctx, next) {
-  const log = accountLog.extend('hasFlash')
-  const error = accountError.extend('hasFlash')
-  if (ctx.flash) {
-    log('ctx.flash is present: %o', ctx.flash)
-  } else {
-    error('ctx.flash is missing.')
-  }
-  await next()
-}
+//
+// Middleware functions located in ./middlewares.js file:
+// - doTokensMatch()
+// - processFormData()
+// - hasFlash()
+//
 
 router.get('accountPasswordGET', '/account/change/password', hasFlash, async (ctx) => {
   const log = accountLog.extend('GET-account-change-password')
@@ -89,27 +90,14 @@ router.get('accountPasswordGET', '/account/change/password', hasFlash, async (ct
   }
 })
 
-router.post('accountPasswordPOST', '/account/change/password', hasFlash, async (ctx) => {
+router.post(
+  'accountPasswordPOST',
+  '/account/change/password',
+  hasFlash,
+  processFormData,
+  async (ctx) => {
   const log = accountLog.extend('POST-account-change-password')
   const error = accountError.extend('POST-account-change-password')
-  const form = formidable({
-    encoding: 'utf-8',
-    uploadDir: ctx.app.uploadsDir,
-    keepExtensions: true,
-    multipart: true,
-  })
-  await new Promise((resolve, reject) => {
-    form.parse(ctx.req, (err, fields, files) => {
-      if (err) {
-        reject(err)
-        return
-      }
-      ctx.request.body = fields
-      ctx.request.files = files
-      // log(files)
-      resolve()
-    })
-  })
   if (!ctx.state?.isAuthenticated) {
     error('User is not authenticated.  Redirect to /')
     ctx.status = 401
@@ -200,7 +188,9 @@ router.get('accountCreateKeys', '/account/:username/createKeys/:type?', hasFlash
     ctx.status = 401
     ctx.redirect('/')
   } else if (ctx.request.header.csrftoken !== ctx.session.csrfToken) {
-    error(`CSR-Token mismatch: header:${ctx.request.header.csrftoken} - session:${ctx.session.csrfToken}`)
+    error(
+      `CSR-Token mismatch: header:${ctx.request.header.csrftoken} - `
+      + `session:${ctx.session.csrfToken}`)
     status = 401
     ctx.body = { error: 'csrf token mismatch' }
   } else {
@@ -357,32 +347,14 @@ router.get('accountEdit', '/account/edit', hasFlash, async (ctx) => {
   }
 })
 
-router.post('accountEditPost', '/account/edit', hasFlash, async (ctx) => {
+router.post('accountEditPost', '/account/edit', hasFlash, processFormData, async (ctx) => {
   const log = accountLog.extend('POST-account-edit')
   const error = accountError.extend('POST-account-edit')
-  const form = formidable({
-    encoding: 'utf-8',
-    uploadDir: ctx.app.uploadsDir,
-    keepExtensions: true,
-    multipart: true,
-  })
-  await new Promise((resolve, reject) => {
-    form.parse(ctx.req, (err, fields, files) => {
-      if (err) {
-        error('There was a problem parsing the multipart form data.')
-        error(err)
-        reject(err)
-        return
-      }
-      log('Multipart form data was successfully parsed.')
-      ctx.request.body = fields
-      ctx.request.files = files
-      // log(fields)
-      // log(files)
-      resolve()
-    })
-  })
   // log(ctx.request.body)
+  if (!isAsyncRequest(ctx)) {
+    ctx.status = 400
+    ctx.redirect('/')
+  }
   if (!ctx.state?.isAuthenticated) {
     ctx.flash = {
       index: {
@@ -689,7 +661,12 @@ router.get('adminEditUserGet', '/admin/account/edit/:username', hasFlash, async 
   }
 })
 
-router.post('adminEditUserPost', '/admin/account/edit', hasFlash, async (ctx) => {
+router.post(
+  'adminEditUserPost',
+  '/admin/account/edit',
+  hasFlash,
+  processFormData,
+  async (ctx) => {
   const log = accountLog.extend('POST-admin-editusers')
   const error = accountError.extend('POST-admin-editusers')
   if (!ctx.state?.isAuthenticated) {
@@ -705,28 +682,6 @@ router.post('adminEditUserPost', '/admin/account/edit', hasFlash, async (ctx) =>
     ctx.redirect('/')
   } else {
     try {
-      const form = formidable({
-        encoding: 'utf-8',
-        uploadDir: ctx.app.uploadsDir,
-        keepExtensions: true,
-        multipart: true,
-      })
-      await new Promise((resolve, reject) => {
-        form.parse(ctx.req, (err, fields, files) => {
-          if (err) {
-            error('There was a problem parsing the multipart form data.')
-            error(err)
-            reject(err)
-            return
-          }
-          log('Multipart form data was successfully parsed.')
-          ctx.request.body = fields
-          ctx.request.files = files
-          // log(fields)
-          // log(files)
-          resolve()
-        })
-      })
       // const sessionId = ctx.cookies.get('session')
       const csrfTokenCookie = ctx.cookies.get('csrfToken')
       const csrfTokenSession = ctx.session.csrfToken
@@ -863,7 +818,12 @@ router.post('adminEditUserPost', '/admin/account/edit', hasFlash, async (ctx) =>
   }
 })
 
-router.delete('deleteUserAccount', '/admin/account/delete/:id', hasFlash, async (ctx) => {
+router.delete(
+  'deleteUserAccount',
+  '/admin/account/delete/:id',
+  hasFlash,
+  processFormData,
+  async (ctx) => {
   const log = accountLog.extend('POST-account-delete')
   const error = accountError.extend('POST-account-delete')
   if (!ctx.state?.isAuthenticated) {
@@ -871,24 +831,6 @@ router.delete('deleteUserAccount', '/admin/account/delete/:id', hasFlash, async 
     ctx.status = 401
     ctx.redirect('/')
   } else {
-    const form = formidable({
-      encoding: 'utf-8',
-      multipart: true,
-    })
-    await new Promise((resolve, reject) => {
-      form.parse(ctx.req, (err, fields) => {
-        if (err) {
-          error('There was a problem parsing the multipart form data.')
-          error(err)
-          reject(err)
-          return
-        }
-        log('Multipart form data was successfully parsed.')
-        ctx.request.body = fields
-        log(fields)
-        resolve()
-      })
-    })
     //
     // Check that route param :id and form field id values match
     //
