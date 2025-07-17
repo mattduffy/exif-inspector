@@ -110,6 +110,7 @@ const o = {
   db_name: mongoClient.dbname ?? appEnv.MONGODB_DBNAME ?? 'test',
 }
 
+app.use(banner.use())
 let isHTTPS
 log(`isHTTPS: ${isHTTPS}`)
 app.use(async (ctx, next) => {
@@ -168,8 +169,8 @@ async function openGraph(ctx, next) {
   ogArray.push('<meta property="og:type" content="website">')
   ogArray.push('<meta property="og:site_name" content="EXIF Inspector">')
   ogArray.push('<meta property="og:title" content="Image metadata inspector">')
-  ogArray.push(`<meta property="og:url" content="${ctx.request.protocol}://${ctx.app.domain}${ctx.request.path}">`)
-  ogArray.push(`<meta property="og:image" content="${ctx.request.protocol}://${ctx.app.domain}/i/ei-ogEmbed-450x295.png">`)
+  ogArray.push(`<meta property="og:url" content="${ctx.request.href}${ctx.request.search}">`)
+  ogArray.push(`<meta property="og:image" content="${ctx.state.origin}/i/ei-ogEmbed-450x295.png">`)
   ogArray.push('<meta property="og:image:type" content="image/jpeg">')
   ogArray.push('<meta property="og:image:width" content="450">')
   ogArray.push('<meta property="og:image:height" content="295">')
@@ -184,13 +185,13 @@ async function permissions(ctx, next) {
   const logg = log.extend('Permissions')
   const err = error.extend('Permissions')
   let perms
-  logg(ctx.request.origin)
+  logg(ctx.state.origin)
   logg(ctx.request.hostname)
   if (/^192(\.\d{1,3})+/.test(ctx.request.hostname)) {
     perms = 'geolocation=(*)'
     logg(`Permissions-Policy: ${perms}`)
   } else {
-    perms = `geolocation=("${ctx.request.origin}")`
+    perms = `geolocation=("${ctx.state.origin}")`
   }
   ctx.set('Permissions-Policy', perms)
   try {
@@ -241,9 +242,15 @@ async function cors(ctx, next) {
   const err = error.extend('CORS')
   logg('Cors middleware checking headers.')
   ctx.set('Vary', 'Origin')
-  ctx.set('Access-Control-Allow-Origin', `${ctx.request.protocol}://${ctx.app.domain}`)
+  if (/webfinger/.test(ctx.request.url)) {
+    ctx.set('Access-Control-Allow-Origin', '*')
+    ctx.set('Access-Control-Allow-Methods', 'GET')
+  } else {
+    // ctx.set('Access-Control-Allow-Origin', ctx.request.origin)
+    ctx.set('Access-Control-Allow-Origin', ctx.state.origin)
+    ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS')
+  }
   ctx.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-  ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS')
   try {
     await next()
   } catch (e) {
@@ -254,7 +261,19 @@ async function cors(ctx, next) {
 
 async function acceptCH(ctx, next) {
   const err = error.extend('Accept-CH')
-  ctx.set('Accept-CH', 'Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Bitness, Sec-CH-UA-Wow64, Device-Memory, Width, Viewport-Width')
+  ctx.set('Accept-CH',
+    'Sec-CH-UA,'
+    + 'Sec-CH-UA-Mobile,'
+    + 'Sec-CH-UA-Arch,'
+    + 'Sec-CH-UA-Model,'
+    + 'Sec-CH-UA-Platform-Version,'
+    + 'Sec-CH-UA-Full-Version-List,'
+    + 'Sec-CH-UA-Bitness,'
+    + 'Sec-CH-UA-Wow64,'
+    + 'Device-Memory,'
+    + 'Width,'
+    + 'Viewport-Width'
+  )
   try {
     await next()
   } catch (e) {
@@ -287,23 +306,24 @@ async function viewGlobals(ctx, next) {
     ctx.state.origin = `${ctx.request.protocol}://${ctx.host}`
     ctx.state.domain = `${ctx.request.protocol}://${ctx.host}`
   } else {
-    ctx.state.origin = `${ctx.request.protocol}://${ctx.app.domain}`
+    // ctx.state.origin = `${ctx.request.protocol}://${ctx.app.domain}`
+    ctx.state.origin = `${ctx.request.protocol}://${ctx.request.host}`
     ctx.state.domain = `${ctx.request.protocol}://${ctx.app.domain}`
   }
-  logg(ctx.state.origin)
-  logg(ctx.state.domain)
+  logg('ctx.state.origin', ctx.state.origin)
+  logg('ctx.state.domain', ctx.state.domain)
   ctx.state.nonce = crypto.randomBytes(16).toString('base64')
   ctx.state.siteName = ctx.app.site
   ctx.state.appName = ctx.app.site.toProperCase()
   ctx.state.pageDescription = 'Inspect and edit the EXIF metadata in your photos.'
   ctx.state.stylesheets = []
   ctx.state.caching = false
-  ctx.state.structuredData = {
+  ctx.state.structuredData = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'website',
     name: 'Exif Inspector: view and edit image metadata.',
     url: ctx.state.origin,
-  }
+  }, null, 2)
   ctx.state.searchJwtAccess = appEnv.SEARCHJWTACCESS
   ctx.state.searchAccessToken = appEnv.SEARCHACCESSTOKEN
   await next()
@@ -341,7 +361,7 @@ async function logRequest(ctx, next) {
               geo.coords = [city?.location?.latitude, city?.location?.longitude]
               logEntry[`geo_${i}`] = geo
               geos.push(geo)
-              logg('Request ip geo:     %o', geo)
+              logg('Request ip geo:     %O', geo)
             })
           } else {
             logEntry.remoteIps = ctx.request.ips
@@ -406,9 +426,9 @@ app.use(theApp.routes())
 app.use(Auth.routes())
 app.use(Mapkit.routes())
 app.use(Account.routes())
+app.use(Users.routes())
 app.use(Exifinspector.routes())
 app.use(Edit.routes())
-app.use(Users.routes())
 app.use(wellKnown.routes())
 app.use(Seo.routes())
 // app.use(activityV1.routes())
