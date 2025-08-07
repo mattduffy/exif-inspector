@@ -686,7 +686,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   const error = exifLog.extend('listuploadedimages')
   ctx.state.sessionUser = ctx.state.sessionUser ?? {}
   if (!ctx.state.isAuthenticated) {
-    ctx.redirect('/')
+    ctx.redirect('/login')
   }
   log('Displaying list of images on the server.')
   log('URL parameters: ', ctx.params)
