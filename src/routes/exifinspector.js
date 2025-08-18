@@ -13,9 +13,8 @@ import { promisify } from 'node:util'
 import path from 'node:path'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
-/* eslint-disable-next-line */
+import { fileTypeFromFile } from 'file-type' 
 import { Exiftool } from '@mattduffy/exiftool'
-/* eslint-disable-next-line */
 import get from '@mattduffy/webfinger/get.js'
 import {
   addIpToSession,
@@ -37,12 +36,25 @@ function sanitize(param) {
 function sanitizeFilename(filename) {
   // Remove whitespace characters from filename.
   // Remove non-word characters from filename.
-  /* eslint-disable-next-line */
-  // const cleanName = filename.replace(/[\s!@#\$%&*\(\)|(%\d\d)](?!(\.\w{1,4}$))/g, '_')
-  // const cleanName = filename.replaceAll(/[(\s?)!@#\$%&*\(\)]|(?<=%)\d{2}(?!(\.\D{1,4}$))/g, '_') // eslint-disable-line
-  const cleanName = filename.replaceAll(/[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g, '_') // eslint-disable-line
+  const cleanName = filename.replaceAll(/[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g, '_')
   console.log(`Sanitizing filename ${filename} to ${cleanName}`)
   return cleanName
+}
+async function ensureFileExtension(file, og) {
+  const log = exifLog.extend('ensureFileExtension')
+  log('checking for missing file extension', og)
+  let ext
+  const parts = path.parse(og)
+  if (parts.ext === '') {
+    log('file path:', file)
+    const mimeType = await fileTypeFromFile(file)
+    log('mime type?', mimeType)
+    ext = `.${mimeType.ext}`
+    log(`${og}.${ext}`)
+  } else {
+    ext = ''
+  }
+  return ext 
 }
 
 function removeServerDetails(data) {
@@ -201,7 +213,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     }
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet?.[0]}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
-    log(`image size: ${image?.size}`)
+    log(`image size: ${image?.size} bytes`)
     if (image.size === 0) {
       // TODO: remove 0 byte file from uploads directory
       try {
@@ -221,11 +233,14 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     } else {
       try {
         if (image !== null) {
-          imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
+          // imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
+          imageOriginalFilenameCleaned = `${sanitizeFilename(image.originalFilename)}`
+            + `${await ensureFileExtension(image.filepath, image.originalFilename)}`
           const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
           imageSaved = path.resolve(
             `${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`,
           )
+          log('image file path:', path.parse(imageSaved))
           const isMoved = await rename(image.filepath, imageSaved)
           log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
           response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
