@@ -19,14 +19,14 @@ import { geoIPCity } from './utils/geoip.js'
 import * as mongoClient from './daos/impl/mongodb/mongo-client.js'
 import { session, config } from './session-handler.js'
 import {
-  errors,
-  // townSetNames,
-  flashMessage,
   getSessionUser,
+  flashMessage,
   prepareRequest,
-  checkServerJWKs,
-  httpMethodOverride,
   tokenAuthMiddleware,
+  // errorHandlers,
+  errors,
+  httpMethodOverride,
+  checkServerJWKs,
 } from './middlewares.js'
 import { apiV1 } from './routes/api_v1.js'
 // import { activityV1 } from './routes/activity_stream.js'
