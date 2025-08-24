@@ -1,7 +1,8 @@
 /**
  * @module @mattduffy/exif-inspector
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/session-handler.js The setup and configuration of the koa app session handler.
+ * @summary The setup and configuration of the koa app session handler.
+ * @file src/session-handler.js
  */
 
 // import fs from 'node:fs/promises'
@@ -33,7 +34,8 @@ const sentinelPort = redisEnv.REDIS_SENTINEL_PORT || 26379
 const ioredisConnOpts = {
   sentinels: [
     { host: redisEnv.REDIS_SENTINEL_01, port: sentinelPort },
-    { host: redisEnv.REDIS_SENTINEL_02, port: sentinelPort }, { host: redisEnv.REDIS_SENTINEL_03, port: sentinelPort },
+    { host: redisEnv.REDIS_SENTINEL_02, port: sentinelPort },
+    { host: redisEnv.REDIS_SENTINEL_03, port: sentinelPort },
   ],
   name: 'myprimary',
   db: redisEnv.REDIS_DB,
@@ -74,6 +76,7 @@ const ioredisConnOpts = {
     // return false
   },
 }
+// const ioredis = redisStore(ioredisConnOpts)
 const redisConnOpts = {
   keyPrefix: `${redisEnv.REDIS_KEY_PREFIX}:sessions:` ?? 'koa:sessions:',
   sentinelRootNodes: [
@@ -106,13 +109,14 @@ const redisConnOpts = {
   lazyConnect: true,
   role: 'master',
 }
-// const redis = redisStore(redisConnOpts)
+// const redis = redisStore(ioredisConnOpts)
 const redis = await redisStore.init(redisConnOpts)
 console.log(
   'did redisStore init work?', await redis.ping()
 )
 
 const config = {
+  // store: ioredis,
   store: redis,
   key: redisEnv.SESSION_KEY ?? 'session',
   maxAge: redisEnv.SESSION_1_DAY * 3 ?? (86400000 * 3),
