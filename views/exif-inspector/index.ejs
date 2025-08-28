@@ -96,7 +96,7 @@
                 <div id="dragzone">
                     <h2>Drop a photo here to inspect its metadata.</h2>
                     <br>
-                    <input id="image_0Id" name="image_0" type="file" accept=".png,apng,.jpg,.jpeg,.jxl,.heic,.webp,.gif,.bmp">
+                    <input id="image_0Id" name="image_0" type="file" accept=".png,apng,.jpg,.jpeg,.jxl,.heic,.webp,.gif,.avif,.bmp">
                 </div>
             </fieldset>
             <span class="or">or</span>
@@ -141,7 +141,8 @@
         <% if (locals?.metadata !== undefined) { %>
         window.metadata = <%- metadata %>
         if (window.metadata.status === 404) {
-            const expiredLinkText = `Sorry, but the link to review ${window.metadata.file}'s metadata has expired.`
+            const expiredLinkText = `Sorry, but the link to review ${window.metadata.file}'s `
+                + `metadata has expired.`
             const expiredLinkP = document.createElement('p')
             expiredLinkP.textContent = expiredLinkText
             const h3s = document.querySelectorAll('h3')
