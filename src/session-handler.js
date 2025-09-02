@@ -130,7 +130,6 @@ const config = {
   signed: (redisEnv.SESSION_SIGNED.toLowerCase() === 'true') ?? true,
   // sameSite: null,
 }
-
 // console.log('koa-session config opts', config)
 export {
   session,

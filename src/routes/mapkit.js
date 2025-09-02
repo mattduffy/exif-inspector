@@ -1,16 +1,18 @@
 /**
- * @summary Koa router for the Apple MapKit api endpoints.
  * @module @mattduffy/exif-inspector
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/mapkit.js The router for the Apple MapKit api endpoints.
+ * @summary Koa router for the Apple MapKit api endpoints.
+ * @file src/routes/mapkit.js
  */
 
 import path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import Router from '@koa/router'
-// import { ulid } from 'ulid'
-// import { AggregateGroupByReducers, AggregateSteps } from 'redis'
-// import { redis } from '../daos/impl/redis/redis-om.js'
+// import {
+//   FT_AGGREGATE_GROUP_BY_REDUCERS as AggregateGroupByReducers,
+//   FT_AGGREGATE_STEPS as AggregateSteps,
+// } from 'redis'
+// import { redis } from '../daos/impl/redis/redis-client.js'
 import {
   _log,
   _info,
