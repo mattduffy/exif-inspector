@@ -13,8 +13,7 @@ import { fileURLToPath } from 'node:url'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
 import formidable from 'formidable'
-// import { Albums } from '@mattduffy/albums/Albums' // eslint-disable-line import/no-unresolved
-// import { AggregateGroupByReducers, AggregateSteps } from 'redis'
+import { processFormData, doTokensMatch } from './middlewares.js'
 import {
   _log,
   _info,
@@ -23,7 +22,6 @@ import {
   getTownDirName,
 } from '../utils/logging.js'
 import { redis } from '../daos/impl/redis/redis-om.js'
-// import { redis as ioredis } from '../daos/impl/redis/redis-client.js'
 
 const editLog = _log.extend('edit')
 const editInfo = _info.extend('edit')
@@ -34,7 +32,10 @@ const __dirname = path.dirname(__filename)
 const appRoot = path.resolve(`${__dirname}/../..`)
 const appEnv = {}
 editLog(`appRoot: ${appRoot}`)
-dotenv.config({ path: path.resolve(appRoot, 'config/app.env'), processEnv: appEnv })
+dotenv.config({
+  path: path.resolve(appRoot, 'config/app.env'),
+  processEnv: appEnv,
+})
 
 function sanitize(param) {
   // fill in with some effective input scrubbing logic
@@ -44,7 +45,10 @@ function sanitize(param) {
 // Null Island check
 async function isPierNullIsland(pierNumber) {
   let isNullIsland = false
-  const nullIslandIterator = await redis.zScanIterator('glp:null_island', { MATCH: pierNumber, COUNT: 1 })
+  const nullIslandIterator = await redis.zScanIterator(
+    'glp:null_island',
+    { MATCH: pierNumber, COUNT: 1 },
+  )
   /* eslint-disable-next-line */
   for await(const { score, value } of nullIslandIterator) {
     if (value === pierNumber) {
@@ -67,7 +71,10 @@ async function townForPier(pierNumber, townsArray) {
       const setkey = `glp:piers_by_town:${set}`
       log(setkey, pierNumber)
       /* eslint-disable-next-line */
-      for await (const { value } of redis.zScanIterator(setkey, { MATCH: pierNumber, COUNT: 1000 })) {
+      for await (const { value } of redis.zScanIterator(
+        setkey,
+        { MATCH: pierNumber, COUNT: 1000 },
+      )) {
         if (value !== null) {
           town = set.split('_').map((e) => e.toProperCase()).join(' ')
           setTown = set
@@ -79,7 +86,10 @@ async function townForPier(pierNumber, townsArray) {
     }
   } catch (e) {
     error(e)
-    throw new Error(`Could not match pier ${pierNumber} to any town set in redis.`, { cause: e })
+    throw new Error(
+      `Could not match pier ${pierNumber} to any town set in redis.`,
+      { cause: e },
+    )
   }
   return { setTown, town }
 }
@@ -234,7 +244,10 @@ router.get('editPier-GET', '/edit/pier/:pier', hasFlash, async (ctx) => {
     key = 'glp:all_piers_in_order'
     try {
       // const args = [key, '[643', '+', 'bylex', 'limit', '1', '1']
-      nextPier = await redis.zRange(key, `[${pierNumber}`, '+', { BY: 'LEX', LIMIT: { offset: 1, count: 1 } })
+      nextPier = await redis.zRange(
+        key,
+        `[${pierNumber}`, '+', { BY: 'LEX', LIMIT: { offset: 1, count: 1 } },
+      )
       if (Number.isNaN(parseInt(nextPier, 10))) {
         nextPier = '001'
       }
@@ -244,9 +257,17 @@ router.get('editPier-GET', '/edit/pier/:pier', hasFlash, async (ctx) => {
       throw new Error(`Failed creating next pier link for pier ${pierNumber}`, { cause: e })
     }
     try {
-      previousPier = await redis.zRange(key, `[${pierNumber}`, '-', { BY: 'LEX', REV: true, LIMIT: { offset: '1', count: '1' } })
+      previousPier = await redis.zRange(
+        key,
+        `[${pierNumber}`, '-', { BY: 'LEX', REV: true, LIMIT: { offset: '1', count: '1' } },
+      )
       if (Number.isNaN(parseInt(previousPier, 10))) {
-        previousPier = await redis.zRange(key, '0', '-1', { REV: true, BY: 'SCORE', LIMIT: { offset: '0', count: '1' } })
+        previousPier = await redis.zRange(
+          key,
+          '0',
+          '-1',
+          { REV: true, BY: 'SCORE', LIMIT: { offset: '0', count: '1' } },
+        )
       }
       log(`prev pier >> ${previousPier}`)
     } catch (e) {
