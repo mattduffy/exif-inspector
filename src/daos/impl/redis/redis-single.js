@@ -1,14 +1,13 @@
 /**
- * @module @mattduffy/koa-glp
+ * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
  * @summary The low-level connection object of redis - single client, not sentinel.
- * @file src/daos/imple/redis/ioredis-single.js
+ * @file src/daos/imple/redis/redis-single.js
  */
 
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-// import { Redis } from 'ioredis'
 import { createClient } from 'redis'
 import * as Dotenv from 'dotenv'
 

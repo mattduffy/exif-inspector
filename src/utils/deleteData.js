@@ -1,7 +1,8 @@
 /**
  * @module @mattduffy/koa-glp
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/utils/deleteData.js The script to bulk delete keys from redis.
+ * @summary The script to bulk delete keys from redis.
+ * @file src/utils/deleteData.js
  */
 /* eslint-disable import/no-extraneous-dependencies */
 import path from 'node:path'
@@ -20,17 +21,26 @@ const __dirname = path.dirname(__filename)
 const appRoot = path.resolve(`${__dirname}/../..`)
 const appEnv = {}
 log(`appRoot: ${appRoot}`)
-dotenv.config({ path: path.resolve(appRoot, 'config/app.env'), processEnv: appEnv })
+dotenv.config({
+  path: path.resolve(appRoot,'config/app.env'),
+  processEnv: appEnv,
+})
 const redisEnv = {}
-dotenv.config({ path: path.resolve(appRoot, 'config/redis.env'), processEnv: redisEnv })
+dotenv.config({
+  path: path.resolve(appRoot, 'config/redis.env'),
+  processEnv: redisEnv,
+})
 const DB_PREFIX = redisEnv.REDIS_KEY_PREFIX
 
 const program = new Command()
 program.name('loadData')
-  .requiredOption('--key-prefix <prefix>', 'The app-specific key prefix for Redis to use.')
-  .requiredOption('--key-name <name>', 'The key name for Redis to append to the app-specific key prefix.')
-  .requiredOption('--key-type <type>', 'The redis data type of the keys to delete.')
   .option('--key-count <count>', 'The number of keys to return per cursor.', 500)
+  .requiredOption('--key-type <type>', 'The redis data type of the keys to delete.')
+  .requiredOption('--key-prefix <prefix>', 'The app-specific key prefix for Redis to use.')
+  .requiredOption(
+    '--key-name <name>',
+    'The key name for Redis to append to the app-specific key prefix.',
+  )
 
 program.parse(process.argv)
 const options = program.opts()
@@ -39,7 +49,9 @@ log(options)
 
 const transparentKeyPrefix = redis?.options?.keyPrefix
 let keyPath
-if (transparentKeyPrefix === null || transparentKeyPrefix === undefined || transparentKeyPrefix === '') {
+if (transparentKeyPrefix === null
+  || transparentKeyPrefix === undefined
+  || transparentKeyPrefix === '') {
   keyPath = `${DB_PREFIX}:${options.keyPrefix}:${options.keyName}:*`
 } else {
   keyPath = `${transparentKeyPrefix}${options.keyName}:*`
@@ -66,7 +78,8 @@ async function del() {
         const pipeline = redis.pipeline()
         keys.forEach(async (key) => {
           log(`current cursor key: ${key}`)
-          // Super sketchy hack to get around ioredis client config with transparent key prefix set.
+          // Super sketchy hack to get around ioredis client config with transparent
+          // key prefix set.
           // May be super fragile...
           const k = key.split(':').slice(-1)[0]
           pipeline.del(`${options.keyName}:${k}`)

@@ -5,10 +5,8 @@
  * @file src/session-handler.js
  */
 
-// import fs from 'node:fs/promises'
 import fs from 'node:fs'
 import session from 'koa-session'
-// import redisStore from 'koa-redis'
 import { redisStore } from '@mattduffy/koa-redis'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -31,52 +29,6 @@ dotenv.config({
 // console.log('cacert: %o', process.env.REDIS_CACERT)
 
 const sentinelPort = redisEnv.REDIS_SENTINEL_PORT || 26379
-const ioredisConnOpts = {
-  sentinels: [
-    { host: redisEnv.REDIS_SENTINEL_01, port: sentinelPort },
-    { host: redisEnv.REDIS_SENTINEL_02, port: sentinelPort },
-    { host: redisEnv.REDIS_SENTINEL_03, port: sentinelPort },
-  ],
-  name: 'myprimary',
-  db: redisEnv.REDIS_DB,
-  keyPrefix: `${redisEnv.REDIS_KEY_PREFIX}:sessions:` ?? 'koa:sessions:',
-  sentinelUsername: redisEnv.REDIS_SENTINEL_USER,
-  sentinelPassword: redisEnv.REDIS_SENTINEL_PASSWORD,
-  username: redisEnv.REDIS_USER,
-  password: redisEnv.REDIS_PASSWORD,
-  connectionName: `${redisEnv.REDIS_CONNECTION_NAME}-sessions`,
-  enableTLSForSentinelMode: true,
-  showFriendlyErrorStack: true,
-  keepAlive: 10000,
-  tls: {
-    ca: fs.readFileSync(redisEnv.REDIS_CACERT),
-    rejectUnauthorized: false,
-    requestCert: true,
-  },
-  sentinelTLS: {
-    ca: fs.readFileSync(redisEnv.REDIS_CACERT),
-    rejectUnauthorized: false,
-    requestCert: true,
-  },
-  retryStrategy(times) {
-    const delay = Math.min(times * 50, 2000)
-    return delay
-  },
-  // sentinelRetryStrategy: 100,
-  sentinelRetryStrategy(times) {
-    const delay = Math.min(times * 50, 2000)
-    return delay
-  },
-  /* eslint-disable consistent-return */
-  reconnectOnError(err) {
-    const targetError = 'closed'
-    if (err.message.includes(targetError)) {
-      return true
-    }
-    // return false
-  },
-}
-// const ioredis = redisStore(ioredisConnOpts)
 const redisConnOpts = {
   isRedisReplset: true,
   keyPrefix: `${redisEnv.REDIS_KEY_PREFIX}:sessions:` ?? 'koa:sessions:',
@@ -110,14 +62,12 @@ const redisConnOpts = {
   lazyConnect: true,
   role: 'master',
 }
-// const redis = redisStore(ioredisConnOpts)
 const redis = await redisStore.init(redisConnOpts)
 console.log(
   'did redisStore init work?', await redis.ping()
 )
 
 const config = {
-  // store: ioredis,
   store: redis,
   key: redisEnv.SESSION_KEY ?? 'session',
   maxAge: redisEnv.SESSION_1_DAY * 3 ?? (86400000 * 3),
@@ -135,5 +85,4 @@ export {
   session,
   config,
   redis,
-  // ioredis,
 }
