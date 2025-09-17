@@ -40,7 +40,7 @@ const redisConnOpts = {
   },
   keyPrefix: `${redisEnv.REDIS_KEY_PREFIX}:` ?? 'koa:',
 }
-console.log('redis_single connection options', redisConnOpts)
+// console.log('redis_single connection options', redisConnOpts)
 let client 
 try {
   client = await createClient(redisConnOpts)
