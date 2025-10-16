@@ -29,6 +29,12 @@ uploads/*
 !uploads/Readme.md
 inspected/*
 !inspected/Readme.md
+images_inspected/*
+!images_inspected/Readme.md
+images_uploaded/*
+!images_uploaded/Readme.md
+images_deleted/*
+!images_deleted/Readme.md
 public/a/*
 public/sitemap.xml
 private/a/*
