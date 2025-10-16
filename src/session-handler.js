@@ -71,7 +71,6 @@ console.log(
 const config = {
   store: redis,
   key: redisEnv.SESSION_KEY ?? 'session',
-  // koa-session is expecting milliseconds
   maxAge: redisEnv.SESSION_1_DAY * 1000 * 3 ?? (86400 * 1000 * 3),
   rolling: (redisEnv.SESSION_ROLLING.toLowerCase() === 'true') ?? true,
   renew: (redisEnv.SESSION_RENEW.toLowerCase() === 'true') ?? true,
