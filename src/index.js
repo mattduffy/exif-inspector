@@ -105,7 +105,8 @@ app.dirs = {
   },
   private: {
     dir: `${appRoot}/private`,
-    uploads: `${appRoot}/uploads`,
+    // uploads: `${appRoot}/uploads`,
+    uploads: `${appRoot}/images_uploaded`,
     accounts: `${appRoot}/private/a`,
   },
 }
