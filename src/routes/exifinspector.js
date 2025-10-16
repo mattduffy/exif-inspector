@@ -13,6 +13,7 @@ import { promisify } from 'node:util'
 import path from 'node:path'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
+import { ObjectId } from 'mongodb'
 import { fileTypeFromFile } from 'file-type' 
 import { Exiftool } from '@mattduffy/exiftool'
 import get from '@mattduffy/webfinger/get.js'
@@ -28,7 +29,9 @@ import {
 
 const exifLog = _log.extend('main')
 const exifError = _error.extend('main')
-/* eslint-disable-next-line no-unused-vars */
+const UPLOADS = 'images_uploaded'
+const INSPECTED = 'images_inspected'
+const DELETED = 'images_deleted'
 function sanitize(param) {
   // fill in with some effective input scrubbing logic
   return param
@@ -36,7 +39,10 @@ function sanitize(param) {
 function sanitizeFilename(filename) {
   // Remove whitespace characters from filename.
   // Remove non-word characters from filename.
-  const cleanName = filename.replaceAll(/[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g, '_')
+  const cleanName = filename.replaceAll(
+    /[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g,
+    '_',
+  )
   console.log(`Sanitizing filename ${filename} to ${cleanName}`)
   return cleanName
 }
@@ -154,7 +160,8 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
     const uploadDoc = {
       date: new Date(),
-      location: ctx.state.logEntry,
+      ip: ctx.state.logEntry.ip[0] ?? null,
+      geo: ctx.state.logEntry.geos[0] ?? null,
     }
     if (urlToInspect !== null) {
       try {
@@ -173,8 +180,10 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         log(remoteResponse.statusCode)
         log(remoteResponse.statusMessage)
         log(remoteResponse.contentType)
-        if (remoteResponse.statusCode > 200 || /^(?!image)/.test(remoteResponse.contentType)) {
-          // short circuit the rest of the route handler because remote server blocked request
+        if (remoteResponse.statusCode > 200
+          || /^(?!image)/.test(remoteResponse.contentType)
+        ) {
+          // short circuit rest of route handler because remote server blocked request
           // handle the block in the client-side js
           ctx.type = 'application/json; charset=utf-8'
           ctx.staus = 200
@@ -183,19 +192,24 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         }
         const filepath = path.parse(urlToInspect.pathname)
         const filename = `${filepath.base}`
-        const newFilename = `${ulid()}${filepath.ext}`
+        // const newFilename = `${ulid()}${filepath.ext}`
+        const newFilename = `${new ObjectId().toString()}${filepath.ext}`
         image.newFilename = newFilename
         image.originalFilename = filename
         image.size = Number.parseInt(remoteResponse.headers['content-length'], 10)
         image.mimetype = remoteResponse.headers['content-type']
-        uploadedName = path.resolve(`${ctx.app.root}/uploads/${newFilename}`)
+        ///uploadedName = path.resolve(`${ctx.app.root}/uploads/${newFilename}`)
+        uploadedName = path.resolve(`${ctx.app.root}/${UPLOADS}/${newFilename}`)
         uploadDoc.uploadedFile = uploadedName
         image.filepath = uploadedName
         log(`remote file will be uploaded to ${uploadedName}`)
         remoteFile.uploadedFile = filename
         remoteFile.size = remoteResponse.headers['content-length']
         remoteFile.mimetype = remoteResponse.headers['content-type']
-        const written = await writeFile(uploadedName, new Uint8Array(remoteResponse.buffer))
+        const written = await writeFile(
+          uploadedName,
+          new Uint8Array(remoteResponse.buffer),
+        )
         if (written === undefined) {
           remoteFile.written = true
           response.uploadedFile = filename
@@ -215,7 +229,6 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     log(`exifShortcut = ${exifShortcut}`)
     log(`image size: ${image?.size} bytes`)
     if (image.size === 0) {
-      // TODO: remove 0 byte file from uploads directory
       try {
         log(image.filepath)
         const delete0ByteFile = await rm(image.filepath, { force: true })
@@ -233,17 +246,17 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     } else {
       try {
         if (image !== null) {
-          // imageOriginalFilenameCleaned = sanitizeFilename(image.originalFilename)
           imageOriginalFilenameCleaned = `${sanitizeFilename(image.originalFilename)}`
             + `${await ensureFileExtension(image.filepath, image.originalFilename)}`
           const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
           imageSaved = path.resolve(
-            `${ctx.app.root}/inspected/${prefix}_${imageOriginalFilenameCleaned}`,
+            `${ctx.app.root}/${INSPECTED}/${prefix}_${imageOriginalFilenameCleaned}`,
           )
           log('image file path:', path.parse(imageSaved))
           const isMoved = await rename(image.filepath, imageSaved)
           log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
           response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
+          uploadDoc.imageTempName = image.newFilename
           uploadDoc.uploadedFile = image.originalFilename
           uploadDoc.sanitizedFile = imageOriginalFilenameCleaned
           uploadDoc.inspectedFile = imageSaved
@@ -252,7 +265,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         }
       } catch (e) {
         error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
-        response.msg = `Failed to move ${image.filepath} to the inspected/ dir.`
+        response.msg = `Failed to move ${image.filepath} to the ${INSPECTED}/ dir.`
       }
       try {
         log('saving file upload details to db.')
@@ -347,7 +360,7 @@ router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) 
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     const [filename] = ctx.request.body.inspectedFilename ?? null
-    const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
+    const imageFile = path.resolve(`${ctx.app.root}/${INSPECTED}/${filename}`)
     const response = {}
     const tagArray = []
     let stats
@@ -359,7 +372,8 @@ router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) 
     delete tags.csrfTokenHidden
     log(tags)
     /* eslint-disable no-nested-ternary */
-    const description = (tags?.['IPTC:Caption-Abstract']) ? tags['IPTC:Caption-Abstract'][0]
+    const description = (tags?.['IPTC:Caption-Abstract'])
+      ? tags['IPTC:Caption-Abstract'][0]
       : ((tags?.['EXIF:ImageDescription']) ? tags['EXIF:ImageDescription'][0]
         : tags?.['XMP:Description']) ? tags['XMP:Description'][0] : null ?? undefined
     log('-MWG:Description', description)
@@ -411,7 +425,12 @@ router.post('editCAR', '/editCAR', addIpToSession, processFormData, async (ctx) 
   }
 })
 
-router.post('editLocation', '/editLocation', addIpToSession, processFormData, async (ctx) => {
+router.post(
+  'editLocation',
+  '/editLocation',
+  addIpToSession,
+  processFormData,
+  async (ctx) => {
   const log = exifLog.extend('POST-editLocation')
   const error = exifError.extend('POST-editLocation')
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
@@ -429,7 +448,7 @@ router.post('editLocation', '/editLocation', addIpToSession, processFormData, as
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     const [filename] = ctx.request.body.inspectedFilename ?? null
-    const imageFile = path.resolve(`${ctx.app.root}/inspected/${filename}`)
+    const imageFile = path.resolve(`${ctx.app.root}/${INSPECTED}/${filename}`)
     const response = {}
     const tags = ctx.request.body
     let stats
@@ -438,30 +457,48 @@ router.post('editLocation', '/editLocation', addIpToSession, processFormData, as
     let result
     /* eslint-disable no-nested-ternary */
     const coordinates = {
-      latitude: (tags?.['EXIF:GPSLatitude']) ? tags['EXIF:GPSLatitude'][0]
-        : ((tags?.['XMP:GPSLatitude']) ? tags['XMP:GPSLatitude'][0]
+      latitude: (tags?.['EXIF:GPSLatitude'])
+        ? tags['EXIF:GPSLatitude'][0]
+        : ((tags?.['XMP:GPSLatitude'])
+          ? tags['XMP:GPSLatitude'][0]
           : null) ?? null,
-      longitude: (tags?.['EXIF:GPSLongitude']) ? tags['EXIF:GPSLongitude'][0]
-        : ((tags?.['XMP:GPSLongitude']) ? tags['XMP:GPSLongitude'][0]
+      longitude: (tags?.['EXIF:GPSLongitude'])
+        ? tags['EXIF:GPSLongitude'][0]
+        : ((tags?.['XMP:GPSLongitude'])
+          ? tags['XMP:GPSLongitude'][0]
           : null) ?? null,
-      city: (tags?.['IPTC:City']) ? tags['IPTC:City'][0]
-        : ((tags?.['XMP:City']) ? tags['XMP:City'][0]
-          : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0]
+      city: (tags?.['IPTC:City'])
+        ? tags['IPTC:City'][0]
+        : ((tags?.['XMP:City'])
+          ? tags['XMP:City'][0]
+          : ((tags?.['XMP:LocationShownCity'])
+            ? tags['XMP:LocationShownCity'][0]
             : null)) ?? undefined,
-      state: (tags?.['IPTC:Province-State']) ? tags['IPTC:Province-State'][0]
-        : ((tags?.['XMP:State']) ? tags['XMP:State'][0]
-          : ((tags?.['XMP:LocationShownCity']) ? tags['XMP:LocationShownCity'][0]
+      state: (tags?.['IPTC:Province-State'])
+        ? tags['IPTC:Province-State'][0]
+        : ((tags?.['XMP:State'])
+          ? tags['XMP:State'][0]
+          : ((tags?.['XMP:LocationShownCity'])
+            ? tags['XMP:LocationShownCity'][0]
             : null)) ?? undefined,
-      country: (tags?.['IPTC:Country-PrimaryLocationName']) ? tags['IPTC:Country-PrimaryLocationName'][0]
-        : ((tags?.['XMP:Country']) ? tags['XMP:Country'][0]
-          : ((tags?.['XMP:LocationShownCountryName']) ? tags['XMP:LocationShownCountryName'][0]
+      country: (tags?.['IPTC:Country-PrimaryLocationName'])
+        ? tags['IPTC:Country-PrimaryLocationName'][0]
+        : ((tags?.['XMP:Country'])
+          ? tags['XMP:Country'][0]
+          : ((tags?.['XMP:LocationShownCountryName'])
+            ? tags['XMP:LocationShownCountryName'][0]
             : null)) ?? undefined,
-      countryCode: (tags?.['IPTC:Country-PrimaryLocationCode']) ? tags['IPTC:Country-PrimaryLocationCode'][0]
-        : ((tags?.['XMP:CountryCode']) ? tags['XMP:CountryCode'][0]
-          : ((tags?.['XMP:LocationShownCountryCode']) ? tags['XMP:LocationShownCountryCode'][0]
+      countryCode: (tags?.['IPTC:Country-PrimaryLocationCode'])
+        ? tags['IPTC:Country-PrimaryLocationCode'][0]
+        : ((tags?.['XMP:CountryCode'])
+          ? tags['XMP:CountryCode'][0]
+          : ((tags?.['XMP:LocationShownCountryCode'])
+            ? tags['XMP:LocationShownCountryCode'][0]
             : null)) ?? undefined,
-      location: (tags?.['IPTC:Sub-location']) ? tags['IPTC:Sub-location'][0]
-        : ((tags?.['XMP:Location']) ? (tags['XMP:Location'][0])
+      location: (tags?.['IPTC:Sub-location'])
+        ? tags['IPTC:Sub-location'][0]
+        : ((tags?.['XMP:Location'])
+          ? (tags['XMP:Location'][0])
           : null) ?? undefined,
     }
     /* eslint-enable no-nested-ternary */
@@ -514,7 +551,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   if (file === 'IPTC-PhotometadataRef-Std2021.1.jpg') {
     reviewFilePath = path.resolve(`${ctx.app.root}/public/i/${file}`)
   } else {
-    reviewFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+    reviewFilePath = path.resolve(`${ctx.app.root}/${INSPECTED}/${file}`)
   }
   log(`reviewFile:     ${reviewFile}`)
   log(`reviewFilePath: ${reviewFilePath}`)
@@ -532,7 +569,7 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
       locals.metadata = JSON.stringify({
         status: 404,
         file,
-        href: `${ctx.state.origin}/inspected/${file}`,
+        href: `${ctx.state.origin}/${INSPECTED}/${file}`,
       }, null, '\t')
       locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
       ctx.session.csrfToken = csrfToken
@@ -602,7 +639,6 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   locals.csrfToken = csrfToken
   locals.body = ctx.body
   locals.domain = ctx.state.origin
-  // locals.origin = `${ctx.request.origin}/`
   locals.origin = `${ctx.state.origin}/`
   locals.flash = ctx.flash?.index ?? {}
   locals.title = `${ctx.app.site}: Review`
@@ -622,12 +658,14 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
     ctx.response.status = 401
   } else {
     let edittedFile
-    const edittedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+    const edittedFilePath = path.resolve(`${ctx.app.root}/${INSPECTED}/${file}`)
     try {
-      log(edittedFilePath)
+      log('get inspected file', edittedFilePath)
       edittedFile = await readFile(edittedFilePath)
       const { ext } = path.parse(edittedFilePath)
-      const _original = file.match(/(?<name>.*)\.{1}(?<type>jpeg|jpg|png|heic|webp|gif)_original$/i)
+      const _original = file.match(
+        /(?<name>.*)\.{1}(?<type>jpeg|jpg|png|heic|webp|gif)_original$/i
+      )
       let type
       if (_original?.groups?.type) {
         type = _original.groups.type
@@ -668,7 +706,7 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
     }
     let xmp
     let xmpPacket
-    const inspectedFilePath = path.resolve(`${ctx.app.root}/inspected/${file}`)
+    const inspectedFilePath = path.resolve(`${ctx.app.root}/${INSPECTED}/${file}`)
     // log(inspectedFilePath)
     try {
       xmp = await new Exiftool().init(inspectedFilePath)
@@ -708,7 +746,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   const page = Number.parseInt((ctx.params?.page) ? ctx.params.page : 1, 10)
   let images
   let tool
-  const dir = path.resolve(`${ctx.app.root}/inspected`)
+  const dir = path.resolve(`${ctx.app.root}/${INSPECTED}`)
   let dirContents
   let dirSlice
   const pageLimit = 20
@@ -724,11 +762,6 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
     dirContents = out.stdout.split('\n')
     pageOffset = (page === 1) ? 0 : (page - 1) * pageLimit
     limit = pageOffset + pageLimit
-    /*
-     * page = 0,                  page = 1,                  page = 2,                  page = 3,                  page = 4
-     * pageOffset = 0 * 50 = 0    pageOffset = 1 * 50 = 50   pageOffset = 2 * 50 = 100  pageOffset = 3 * 50 = 150  pageOffset = 4 * 50 = 200
-     *     limit = 0 + 50 = 50       limit = 50 + 50 = 100      limit = 100 + 50 = 150     limit = 150 + 50 = 200     limit = 200 + 50 = 250
-     */
     log(`pageLimit (${pageLimit}), pageOffset (${pageOffset}), limit (${limit})`)
     dirSlice = dirContents.slice(pageOffset, limit)
     fileString = dirSlice.map((f) => `"${dir}/${f}"`).join(' ')
@@ -740,14 +773,17 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   try {
     tool = new Exiftool()
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
-    // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat %s -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
-    // const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileModifyDate -AllThumbs -f ${dir}`
-    const raw = `/usr/local/bin/exiftool -config ${configPath} -quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" -File:Filename -File:MIMEType -File:FileSize -File:FileModifyDate -AllThumbs -f ${fileString}`
+    const raw = `/usr/local/bin/exiftool -config ${configPath} `
+      + '-quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" '
+      + '-File:Filename -File:MIMEType -File:FileSize -File:FileModifyDate -AllThumbs '
+      + `-f ${fileString}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
     log('images: ', images)
     // if (images.length > 0) {
-    //   images.sort((a, b) => new Date(b['File:FileModifyDate']) - new Date(a['File:FileModifyDate']))
+    //   images.sort((a, b) => {
+    //    return new Date(b['File:FileModifyDate']) - new Date(a['File:FileModifyDate'])
+    //  )
     // }
   } catch (e) {
     error('Failed to exiftool inspected images.')
@@ -779,7 +815,12 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   await ctx.render('listUploadedImages', locals)
 })
 
-router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormData, async (ctx) => {
+router.delete(
+  'deleteImage',
+  '/delete/image/:file',
+  addIpToSession,
+  processFormData,
+  async (ctx) => {
   const log = exifLog.extend('DELETE-deleteimage')
   const error = exifError.extend('DELETE-deleteimage')
   const csrfTokenCookie = ctx.cookies.get('csrfToken')
@@ -797,11 +838,13 @@ router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormD
     ctx.body = { error: 'csrf token mismatch' }
   } else {
     log('csrf token check passed')
-    const imageToDelete = path.resolve('./inspected', ctx.params.file)
+    const imageToDelete = path.resolve(`./${INSPECTED}`, ctx.params.file)
+    const moveToDeleted = path.resolve(`./${DELETED}`, ctx.params.file)
     log(`imageToDelete: ${imageToDelete}`)
     let isDeleted
     try {
-      isDeleted = await rm(imageToDelete, { force: true })
+      // isDeleted = await rm(imageToDelete, { force: true })
+      isDeleted = await rename(imageToDelete, moveToDeleted)
       log(`marking image as deleted in db: ${imageToDelete}`)
       const db = ctx.state.mongodb.client.db()
       const collection = db.collection('images')
@@ -809,7 +852,7 @@ router.delete('deleteImage', '/delete/image/:file', addIpToSession, processFormD
       const update = { $set: { deleted: true } }
       log(filter, update)
       const _deleted = await collection.updateOne(filter, update)
-      log('result: ', _deleted)
+      log('db delete result: ', _deleted)
       ctx.status = 200
       ctx.type = 'application/json; charset=utf-8'
       ctx.body = { status: 'ok', isDeleted }
