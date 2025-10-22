@@ -857,7 +857,12 @@ router.delete(
       const db = ctx.state.mongodb.client.db()
       const collection = db.collection('images')
       const filter = { inspectedFile: imageToDelete }
-      const update = { $set: { deleted: true } }
+      const update = { $set:
+        {
+          deleted: true,
+          deletedFile: moveToDeleted,
+        },
+      }
       log(filter, update)
       const _deleted = await collection.updateOne(filter, update)
       log('db delete result: ', _deleted)
