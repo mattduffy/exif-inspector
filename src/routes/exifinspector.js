@@ -158,10 +158,17 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     let inspectedName
     let uploadedName
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
+    const geo = ctx.state.logEntry?.geos?.[0]
+    delete geo?.coords
     const uploadDoc = {
       date: new Date(),
-      ip: ctx.state.logEntry.ip[0] ?? null,
-      geo: ctx.state.logEntry.geos[0] ?? null,
+      ip: geo?.ip?.[0] ?? null,
+      geo,
+      coords: {
+        type: 'Point',
+        // mongodb requires longitude, latitude order
+        coordinates: [geo?.coords[1] ?? 0, geo?.coords[0] ?? 0],
+      },
     }
     if (urlToInspect !== null) {
       try {
@@ -772,6 +779,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   }
   try {
     tool = new Exiftool()
+    tool.setMaxBufferMultiplier(15)
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     const raw = `/usr/local/bin/exiftool -config ${configPath} `
       + '-quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" '
