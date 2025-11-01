@@ -159,7 +159,6 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     let uploadedName
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
     const geo = ctx.state.logEntry?.geos?.[0]
-    delete geo?.coords
     const uploadDoc = {
       date: new Date(),
       ip: geo?.ip?.[0] ?? null,
@@ -167,8 +166,11 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
       coords: {
         type: 'Point',
         // mongodb requires longitude, latitude order
-        coordinates: [geo?.coords[1] ?? 0, geo?.coords[0] ?? 0],
+        coordinates: [(geo?.coords?.[1] ?? 0), (geo?.coords?.[0] ?? 0)],
       },
+    }
+    if (geo.coords) {
+      delete geo?.coords
     }
     if (urlToInspect !== null) {
       try {
