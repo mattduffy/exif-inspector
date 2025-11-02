@@ -105,7 +105,6 @@ app.dirs = {
   },
   private: {
     dir: `${appRoot}/private`,
-    // uploads: `${appRoot}/uploads`,
     uploads: `${appRoot}/images_uploaded`,
     accounts: `${appRoot}/private/a`,
   },
@@ -196,7 +195,21 @@ async function openGraph(ctx, next) {
   ogArray.push('<meta property="og:image:height" content="295">')
   ogArray.push('<meta property="og:image:alt" content="Image metadata inspector.">')
   ogArray.push('<meta property="og:description" content="Inspect and edit the metadata embedded in your images.">')
-  ctx.state.openGraph = ogArray.join('\n')
+  // ctx.state.openGraph = ogArray.join('\n')
+  const twitArray = []
+  twitArray.push('<meta name="twitter:card" content="summary_large_image">')
+  twitArray.push('<meta name="twitter:domain" content="exif-inspector.com">')
+  twitArray.push('<meta name="twitter:url" content="'
+    + `${ctx.request.href}${ctx.request.search}">`
+  )
+  twitArray.push('<meta name="twitter:image" contents="'
+    + `${ctx.state.origin}/i/ei-ogEmbed-450x295.png">`
+  )
+  twitArray.push('<meta name="twitter:title" contents="Exif Inspector">')
+  twitArray.push('<meta name="twitter:description" contents="'
+    + 'Inspect and edit the metadata embedded in your images.">'
+  )
+  ctx.state.openGraph = ogArray.concat(twitArray).join('\n')
   logg(ctx.state.openGraph)
   await next()
 }
