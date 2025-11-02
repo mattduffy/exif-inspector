@@ -8,7 +8,7 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { createSenetinel } from 'redis'
+import { createSentinel } from 'redis'
 import * as Dotenv from 'dotenv'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -63,7 +63,7 @@ try {
     .on('reconnecting', () => {
       console.log('Redis sentinel reconnecting')
     })
-    .on('error', (err) => { console.error('Redis Sentinel Error', err) })
+    .on('error', err => console.error('Redis Sentinel Error', err))
     .on('ready', () => { console.log('Redis Sentinel connection is ready') })
 
   await sentinel.connect()
