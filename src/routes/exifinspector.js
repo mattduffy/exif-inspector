@@ -781,7 +781,9 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   }
   try {
     tool = new Exiftool()
-    tool.setMaxBufferMultiplier(15)
+    log('current value for exiftool exec() maxBuffer:', tool.getOutputBufferSize())
+    // tool.setMaxBufferMultiplier(1000)
+    tool.setMaxBufferMultiplier(Infinity)
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     const raw = `/usr/local/bin/exiftool -config ${configPath} `
       + '-quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" '
