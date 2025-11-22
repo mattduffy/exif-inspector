@@ -237,7 +237,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     const exifShortcut = shortcuts[`${ctx.request.body?.tagSet?.[0]}`] ?? false
     log(`exifShortcut = ${exifShortcut}`)
     log(`image size: ${image?.size} bytes`)
-    if (image.size === 0) {
+    if (image?.size === 0) {
       try {
         log(image.filepath)
         const delete0ByteFile = await rm(image.filepath, { force: true })
@@ -271,6 +271,15 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
           uploadDoc.inspectedFile = imageSaved
           uploadDoc.size = image.size
           images.push(imageSaved)
+        } else {
+          // somehow image upload is null
+          ctx.type = 'application/json; charset=utf-8'
+          ctx.status = 200
+          ctx.body = {
+            error: 'Empty File',
+            written: false,
+            file: image,
+          }
         }
       } catch (e) {
         error(`Failed to move ${image.filepath} to the ${imageSaved}.`)
