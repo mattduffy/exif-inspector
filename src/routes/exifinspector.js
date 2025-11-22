@@ -169,8 +169,8 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         coordinates: [(geo?.coords?.[1] ?? 0), (geo?.coords?.[0] ?? 0)],
       },
     }
-    if (geo.coords) {
-      delete geo?.coords
+    if (geo?.coords) {
+      delete geo.coords
     }
     if (urlToInspect !== null) {
       try {
