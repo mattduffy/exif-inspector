@@ -161,7 +161,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     const geo = ctx.state.logEntry?.geos?.[0]
     const uploadDoc = {
       date: new Date(),
-      ip: geo?.ip?.[0] ?? null,
+      ip: geo?.ip ?? null,
       geo,
       coords: {
         type: 'Point',
