@@ -53,7 +53,7 @@ dotenv.config({
   processEnv: appEnv,
   debug: showDebug,
 })
-let aiEnv = {}
+const aiEnv = {}
 dotenv.config({
   path: path.resolve(appRoot, 'config/ai.env'),
   processEnv: aiEnv,
@@ -194,21 +194,22 @@ async function openGraph(ctx, next) {
   ogArray.push('<meta property="og:image:width" content="450">')
   ogArray.push('<meta property="og:image:height" content="295">')
   ogArray.push('<meta property="og:image:alt" content="Image metadata inspector.">')
-  ogArray.push('<meta property="og:description" content="Inspect and edit the metadata embedded in your images.">')
+  ogArray.push('<meta property="og:description" '
+    + 'content="Inspect and edit the metadata embedded in your images.">')
   // ctx.state.openGraph = ogArray.join('\n')
   const twitArray = []
   twitArray.push('<meta name="twitter:card" content="summary_large_image">')
   twitArray.push('<meta name="twitter:domain" content="exif-inspector.com">')
   twitArray.push('<meta name="twitter:url" content="'
-    + `${ctx.request.href}${ctx.request.search}">`
-  )
+    + `${ctx.request.href}${ctx.request.search}">`)
+
   twitArray.push('<meta name="twitter:image" contents="'
-    + `${ctx.state.origin}/i/ei-ogEmbed-450x295.png">`
-  )
+    + `${ctx.state.origin}/i/ei-ogEmbed-450x295.png">`)
+
   twitArray.push('<meta name="twitter:title" contents="Exif Inspector">')
   twitArray.push('<meta name="twitter:description" contents="'
-    + 'Inspect and edit the metadata embedded in your images.">'
-  )
+    + 'Inspect and edit the metadata embedded in your images.">')
+
   ctx.state.openGraph = ogArray.concat(twitArray).join('\n')
   logg(ctx.state.openGraph)
   await next()
@@ -246,12 +247,15 @@ async function csp(ctx, next) {
     + 'frame-ancestors \'none\'; '
     + 'object-src \'none\'; '
     + 'form-action \'self\'; '
-    + `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' `
+      + `${ctx.request.protocol}://${ctx.app.domain}; `
     + `style-src-attr 'self' 'unsafe-inline' ${ctx.request.protocol}://${ctx.app.domain}; `
     + `style-src-elem 'self' 'unsafe-inline' ${ctx.request.protocol}://${ctx.app.domain}; `
-    + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' ${ctx.request.protocol}://${ctx.app.domain}; `
+    + `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' `
+      + `${ctx.request.protocol}://${ctx.app.domain}; `
     + `script-src-attr 'self' 'nonce-${nonce}' ${ctx.request.protocol}://${ctx.app.domain}; `
-    + `script-src-elem 'self' 'nonce-${nonce}' ${ctx.request.protocol}://${ctx.app.domain} *.apple-mapkit.com; `
+    + `script-src-elem 'self' 'nonce-${nonce}' `
+      + `${ctx.request.protocol}://${ctx.app.domain} *.apple-mapkit.com; `
     + `img-src 'self' data: blob: ${ctx.request.protocol}://${ctx.app.domain} *; `
     + `font-src 'self' ${ctx.request.protocol}://${ctx.app.domain}; `
     + `media-src 'self' data: ${ctx.request.protocol}://${ctx.app.domain}; `
@@ -259,7 +263,8 @@ async function csp(ctx, next) {
     + `child-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain}; `
     + `worker-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain}; `
     + `manifest-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain}; `
-    + `connect-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain} *.ls.apple.com *.apple-mapkit.com *.geo.apple.com; `
+    + `connect-src 'self' blob: ${ctx.request.protocol}://${ctx.app.domain} `
+      + '*.ls.apple.com *.apple-mapkit.com *.geo.apple.com; '
   ctx.set('Content-Security-Policy', policy)
   logg(`Content-Security-Policy: ${policy}`)
   try {
@@ -294,7 +299,8 @@ async function cors(ctx, next) {
 
 async function acceptCH(ctx, next) {
   const err = error.extend('Accept-CH')
-  ctx.set('Accept-CH',
+  ctx.set(
+    'Accept-CH',
     'Sec-CH-UA,'
     + 'Sec-CH-UA-Mobile,'
     + 'Sec-CH-UA-Arch,'
@@ -305,7 +311,7 @@ async function acceptCH(ctx, next) {
     + 'Sec-CH-UA-Wow64,'
     + 'Device-Memory,'
     + 'Width,'
-    + 'Viewport-Width'
+    + 'Viewport-Width',
   )
   try {
     await next()
