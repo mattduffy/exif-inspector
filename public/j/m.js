@@ -148,17 +148,17 @@ function hasLocationTags(meta) {
     hasCoords = 'EXIF'
   } else if (meta['Composite:GPSPosition']) {
     hasCoords = 'Composite'
-  } else if (meta['XMP:LocationShownGPSLatitude'] &&
-    meta['XMP:LocationShownGPSLongitude']) {
+  } else if (meta['XMP:LocationShownGPSLatitude']
+    && meta['XMP:LocationShownGPSLongitude']) {
     hasCoords = 'XMP'
-  } else if (meta['XMP:LocationCreatedGPSLatitude'] &&
-    meta['XMP:LocationCreatedGPSLongitude']) {
+  } else if (meta['XMP:LocationCreatedGPSLatitude']
+    && meta['XMP:LocationCreatedGPSLongitude']) {
     hasCoords = 'XMP'
-  } else if (meta['XMP:LocationShown']?.[0]?.GPSLatitude &&
-    meta['XMP:LocationShown']?.[0]?.GPSLongitude) {
+  } else if (meta['XMP:LocationShown']?.[0]?.GPSLatitude
+    && meta['XMP:LocationShown']?.[0]?.GPSLongitude) {
     hasCoords = 'XMP-struct'
-  } else if (meta['XMP:LocationCreated']?.[0]?.GPSLatitude &&
-    meta['XMP:LocationCreated']?.[0]?.GPSLongitude) {
+  } else if (meta['XMP:LocationCreated']?.[0]?.GPSLatitude
+    && meta['XMP:LocationCreated']?.[0]?.GPSLongitude) {
     hasCoords = 'XMP-struct'
   } else {
     hasCoords = false
@@ -223,10 +223,10 @@ function normalizeCoordinateTags() {
   const xmpLocationShown = dl.querySelector(':scope input[name="XMP:LocationShown"]')
   const xmpLocationCreated = dl.querySelector(':scope input[name="XMP:LocationCreated"]')
   const xmpLocationShownLatLon = dl.querySelectorAll(
-    ':scope input[name^="XMP:LocationShown:LatLon"]'
+    ':scope input[name^="XMP:LocationShown:LatLon"]',
   )
   const xmpLocationCreatedLatLon = dl.querySelectorAll(
-    ':scope input[name^="XMP:LocationCreated:LatLon"]'
+    ':scope input[name^="XMP:LocationCreated:LatLon"]',
   )
   const xmpShownLat = dl.querySelector(':scope input[name^="XMP:LocationShown:GPSLat"]')
   const xmpShownLon = dl.querySelector(':scope input[name^="XMP:LocationShown:GPSLon"]')
@@ -1213,8 +1213,8 @@ async function send(data = null, review = null) {
             mapPoints.push({
               lat: convertFromPolarToScalar(Slat),
               lon: convertFromPolarToScalar(Slon),
-              tag: `${t.tag} #${m}` }
-            )
+              tag: `${t.tag} #${m}`,
+            })
           })
         } else {
           const label = document.createElement('label')
@@ -1349,15 +1349,15 @@ async function send(data = null, review = null) {
     })
     div.appendChild(dl)
     document.querySelector('div#xmpzone').classList.remove('hidden')
-    if (results.metadata[0]['XMP:Look'] !== undefined ||
-      results.metadata[0]['XMP:ToneCurvePV2012'] !== undefined) {
+    if (results.metadata[0]['XMP:Look'] !== undefined
+      || results.metadata[0]['XMP:ToneCurvePV2012'] !== undefined) {
       const a = document.createElement('a')
       a.setAttribute('download', 'presets.xmp')
       a.textContent = 'Download Adobe preset xmp file.'
       a.classList.add('presets')
       const u = new URL(
         `/getxmpdata/${(document.querySelector('input[id="inspectedFilename_Id"]')).value}`,
-        `${origin}`
+        `${origin}`,
       )
       a.href = u.href
       console.log('create link for downloading presets.xmp file.')
