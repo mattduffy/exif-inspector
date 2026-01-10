@@ -1,7 +1,8 @@
 /**
  * @module @mattduffy/koa-glp
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/utils/addHiddenField.js The script to perform a one-time refactoring of $.owners[*].members fields.
+ * @summary The script to perform a one-time refactoring of $.owners[*].members fields.
+ * @file src/utils/addHiddenField.js
  */
 import path from 'node:path'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
@@ -25,7 +26,11 @@ dotenv.config({ path: path.resolve(appRoot, 'config/redis.env'), processEnv: red
 
 const program = new Command()
 program.name('addHiddenField')
-  .requiredOption('--data-dir <dir>', 'Directory containing JSON data files to update with $.owners[*].members[*].hidden field.', 'test')
+  .requiredOption(
+    '--data-dir <dir>',
+    'Directory containing JSON data files to update with $.owners[*].members[*].hidden field.',
+    'test',
+  )
   .option('--dry-run', 'Run the script as a dry-run, so no changes are saved.')
 
 program.parse(process.argv)

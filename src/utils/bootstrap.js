@@ -1,7 +1,8 @@
 /**
  * @module @mattduffy/koa-glp
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/utils/bootstrap.js The script to bootstrap the app.
+ * @summary The script to bootstrap the app.
+ * @file src/utils/bootstrap.js
  */
 
 import path from 'node:path'
@@ -26,9 +27,18 @@ const appEnv = {}
 dotenv.config({ path: path.resolve(appRoot, 'config/app.env'), processEnv: appEnv, debug: true })
 // log(appEnv)
 const bootEnv = {}
-dotenv.config({ path: path.resolve(appRoot, 'config/bootstrap.env'), processEnv: bootEnv, debug: true })
+dotenv.config({
+  path: path.resolve(appRoot, 'config/bootstrap.env'),
+  processEnv: bootEnv,
+  debug: true,
+})
+
 const mongoEnv = {}
-dotenv.config({ path: path.resolve(appRoot, 'config/mongodb.env'), processEnv: mongoEnv, debug: true })
+dotenv.config({
+  path: path.resolve(appRoot, 'config/mongodb.env'),
+  processEnv: mongoEnv,
+  debug: true,
+})
 log(mongoEnv)
 
 // Bootstrap the app collection in the db.
