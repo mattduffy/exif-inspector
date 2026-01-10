@@ -1,6 +1,14 @@
 const restrictedGlobals = require('eslint-restricted-globals')
 
 module.exports = {
+  settings: {
+    'import/resolver': {
+      exports: {},
+      node: {
+        extensions: ['.js', '.mjs'],
+      },
+    },
+  },
   globals: {
     window: true,
     document: true,
