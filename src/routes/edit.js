@@ -2,7 +2,8 @@
  * @summary Koa router for editing the main top-level pages.
  * @module @mattduffy/koa-glp
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/edit-pier.js The router for editing the top level app URLs.
+ * @summary The router for editing the top level app URLs.
+ * @file src/routes/edit-pier.js
  */
 
 import path from 'node:path'
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
 import formidable from 'formidable'
-import { processFormData, doTokensMatch } from './middlewares.js'
+// import { processFormData, doTokensMatch } from './middlewares.js'
 import {
   _log,
   _info,
@@ -246,7 +247,9 @@ router.get('editPier-GET', '/edit/pier/:pier', hasFlash, async (ctx) => {
       // const args = [key, '[643', '+', 'bylex', 'limit', '1', '1']
       nextPier = await redis.zRange(
         key,
-        `[${pierNumber}`, '+', { BY: 'LEX', LIMIT: { offset: 1, count: 1 } },
+        `[${pierNumber}`,
+        '+',
+        { BY: 'LEX', LIMIT: { offset: 1, count: 1 } },
       )
       if (Number.isNaN(parseInt(nextPier, 10))) {
         nextPier = '001'
@@ -259,7 +262,9 @@ router.get('editPier-GET', '/edit/pier/:pier', hasFlash, async (ctx) => {
     try {
       previousPier = await redis.zRange(
         key,
-        `[${pierNumber}`, '-', { BY: 'LEX', REV: true, LIMIT: { offset: '1', count: '1' } },
+        `[${pierNumber}`,
+        '-',
+        { BY: 'LEX', REV: true, LIMIT: { offset: '1', count: '1' } },
       )
       if (Number.isNaN(parseInt(previousPier, 10))) {
         previousPier = await redis.zRange(
@@ -356,7 +361,11 @@ router.post('postEdit', '/edit/pier/:pier', hasFlash, async (ctx) => {
     if (csrfTokenSession === csrfTokenHidden) info('session === hidden')
     if (csrfTokenCookie === csrfTokenHidden) info('cookie === hidden')
     if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
-      error(`CSRF-Token mismatch: header:${csrfTokenCookie} hidden:${csrfTokenHidden} - session:${csrfTokenSession}`)
+      error(
+        `CSRF-Token mismatch: header:${csrfTokenCookie} `
+        + `hidden:${csrfTokenHidden} - `
+        + `session:${csrfTokenSession}`,
+      )
       error(`CSR-Token mismatch: header:${csrfTokenCookie} - session:${csrfTokenSession}`)
       ctx.type = 'application/json; charset=utf-8'
       ctx.status = 401
@@ -409,9 +418,15 @@ router.post('postEdit', '/edit/pier/:pier', hasFlash, async (ctx) => {
         try {
           const mkdirResult = await mkdir(savePath, { recursive: true })
           info(`mkdirResult: ${mkdirResult}`)
-          await rename(pierImage.filepath, `${savePath}/image_${pierUpdated.images.length}.${fileExt}`)
+          await rename(
+            pierImage.filepath,
+            `${savePath}/image_${pierUpdated.images.length}.${fileExt}`,
+          )
           fileUploadStatus = 'success'
-          info(`${fileUploadStatus} - saved new pier ${pierUpdated.pier} photo: ${savePath}/image_${pierUpdated.images.length}.${fileExt}`)
+          info(
+            `${fileUploadStatus} - saved new pier ${pierUpdated.pier} `
+            + `photo: ${savePath}/image_${pierUpdated.images.length}.${fileExt}`,
+          )
           pierUpdated.images.unshift(imgSrc)
           okPierImage = true
         } catch (e) {
@@ -502,7 +517,11 @@ router.post('geohash', '/edit/geohash', async (ctx) => {
     if (csrfTokenSession === csrfTokenHidden) info('session === hidden')
     if (csrfTokenCookie === csrfTokenHidden) info('cookie === hidden')
     if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
-      error(`CSRF-Token mismatch: header:${csrfTokenCookie} hidden:${csrfTokenHidden} - session:${csrfTokenSession}`)
+      error(
+        `CSRF-Token mismatch: header:${csrfTokenCookie} `
+        + `hidden:${csrfTokenHidden} - `
+        + `session:${csrfTokenSession}`,
+      )
       ctx.type = 'application/json; charset=utf-8'
       ctx.status = 401
       ctx.body = { error: 'csrf token mismatch' }

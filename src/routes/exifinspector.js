@@ -2,7 +2,8 @@
  * @summary Koa router for the main top-level pages.
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/exifinspector.js The router for the top level app URLs.
+ * @summary The router for the top level app URLs.
+ * @file src/routes/exifinspector.js
  */
 
 import {
@@ -14,7 +15,7 @@ import path from 'node:path'
 import Router from '@koa/router'
 import { ulid } from 'ulid'
 import { ObjectId } from 'mongodb'
-import { fileTypeFromFile } from 'file-type' 
+import { fileTypeFromFile } from 'file-type'
 import { Exiftool } from '@mattduffy/exiftool'
 import get from '@mattduffy/webfinger/get.js'
 import {
@@ -40,7 +41,9 @@ function sanitizeFilename(filename) {
   // Remove whitespace characters from filename.
   // Remove non-word characters from filename.
   const cleanName = filename.replaceAll(
-    /[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g,
+    /* /[(\s?)!@#\$%&*\(\)]|((?<=%)\d{2})(?!\.\D{2,5})/g, */
+    // eslint no-useless-escape
+    /[(\s?)!@#$%&*()]|((?<=%)\d{2})(?!\.\D{2,5})/g,
     '_',
   )
   console.log(`Sanitizing filename ${filename} to ${cleanName}`)
@@ -60,7 +63,7 @@ async function ensureFileExtension(file, og) {
   } else {
     ext = ''
   }
-  return ext 
+  return ext
 }
 
 function removeServerDetails(data) {
@@ -155,7 +158,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     }
     const images = []
     // check if the url field was submitted
-    let inspectedName
+    // let inspectedName
     let uploadedName
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
     const geo = ctx.state.logEntry?.geos?.[0]
@@ -207,7 +210,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         image.originalFilename = filename
         image.size = Number.parseInt(remoteResponse.headers['content-length'], 10)
         image.mimetype = remoteResponse.headers['content-type']
-        ///uploadedName = path.resolve(`${ctx.app.root}/uploads/${newFilename}`)
+        // uploadedName = path.resolve(`${ctx.app.root}/uploads/${newFilename}`)
         uploadedName = path.resolve(`${ctx.app.root}/${UPLOADS}/${newFilename}`)
         uploadDoc.uploadedFile = uploadedName
         image.filepath = uploadedName
@@ -449,115 +452,116 @@ router.post(
   addIpToSession,
   processFormData,
   async (ctx) => {
-  const log = exifLog.extend('POST-editLocation')
-  const error = exifError.extend('POST-editLocation')
-  const csrfTokenCookie = ctx.cookies.get('csrfToken')
-  const csrfTokenSession = ctx.session.csrfToken
-  const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
-  if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
-  if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
-  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
-  if (!doTokensMatch(ctx)) {
-    error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
-    error(`                     hidden:${csrfTokenHidden}`)
-    error(`                    session:${csrfTokenSession}`)
-    ctx.type = 'application/json; charset=utf-8'
-    ctx.status = 401
-    ctx.body = { error: 'csrf token mismatch' }
-  } else {
-    const [filename] = ctx.request.body.inspectedFilename ?? null
-    const imageFile = path.resolve(`${ctx.app.root}/${INSPECTED}/${filename}`)
-    const response = {}
-    const tags = ctx.request.body
-    let stats
-    let exiftool = new Exiftool()
-    let newLocation
-    let result
-    /* eslint-disable no-nested-ternary */
-    const coordinates = {
-      latitude: (tags?.['EXIF:GPSLatitude'])
-        ? tags['EXIF:GPSLatitude'][0]
-        : ((tags?.['XMP:GPSLatitude'])
-          ? tags['XMP:GPSLatitude'][0]
-          : null) ?? null,
-      longitude: (tags?.['EXIF:GPSLongitude'])
-        ? tags['EXIF:GPSLongitude'][0]
-        : ((tags?.['XMP:GPSLongitude'])
-          ? tags['XMP:GPSLongitude'][0]
-          : null) ?? null,
-      city: (tags?.['IPTC:City'])
-        ? tags['IPTC:City'][0]
-        : ((tags?.['XMP:City'])
-          ? tags['XMP:City'][0]
-          : ((tags?.['XMP:LocationShownCity'])
-            ? tags['XMP:LocationShownCity'][0]
-            : null)) ?? undefined,
-      state: (tags?.['IPTC:Province-State'])
-        ? tags['IPTC:Province-State'][0]
-        : ((tags?.['XMP:State'])
-          ? tags['XMP:State'][0]
-          : ((tags?.['XMP:LocationShownCity'])
-            ? tags['XMP:LocationShownCity'][0]
-            : null)) ?? undefined,
-      country: (tags?.['IPTC:Country-PrimaryLocationName'])
-        ? tags['IPTC:Country-PrimaryLocationName'][0]
-        : ((tags?.['XMP:Country'])
-          ? tags['XMP:Country'][0]
-          : ((tags?.['XMP:LocationShownCountryName'])
-            ? tags['XMP:LocationShownCountryName'][0]
-            : null)) ?? undefined,
-      countryCode: (tags?.['IPTC:Country-PrimaryLocationCode'])
-        ? tags['IPTC:Country-PrimaryLocationCode'][0]
-        : ((tags?.['XMP:CountryCode'])
-          ? tags['XMP:CountryCode'][0]
-          : ((tags?.['XMP:LocationShownCountryCode'])
-            ? tags['XMP:LocationShownCountryCode'][0]
-            : null)) ?? undefined,
-      location: (tags?.['IPTC:Sub-location'])
-        ? tags['IPTC:Sub-location'][0]
-        : ((tags?.['XMP:Location'])
-          ? (tags['XMP:Location'][0])
-          : null) ?? undefined,
-    }
-    /* eslint-enable no-nested-ternary */
-    try {
-      log('imageFile', imageFile)
-      stats = await stat(imageFile)
-      // log(stats)
-      if (stats.isFile()) {
-        log('init ', imageFile)
-        exiftool = await exiftool.init(imageFile)
-        const expandStructs = true
-        exiftool.enableXMPStructTagOutput(expandStructs)
-        exiftool.setGPSCoordinatesOutputFormat('+gps')
-        exiftool.enableBinaryTagOutput(true)
-        exiftool.setOverwriteOriginal(true)
-        log('setting new config path')
-        await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
-        log('stripping initial location data')
-        const stripLocationFirst = await exiftool.stripLocation()
-        log('stripLocationFirst', stripLocationFirst)
-        log('setting new location', newLocation)
-        log('new coordinates', coordinates)
-        newLocation = await exiftool.setLocation(coordinates)
-        log('newLocation', newLocation)
-        result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
-        log('result', result)
-        response.modifiedFile = result[0]['File:FileName']
-        response.metadata = result
+    const log = exifLog.extend('POST-editLocation')
+    const error = exifError.extend('POST-editLocation')
+    const csrfTokenCookie = ctx.cookies.get('csrfToken')
+    const csrfTokenSession = ctx.session.csrfToken
+    const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
+    if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
+    if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
+    if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
+    if (!doTokensMatch(ctx)) {
+      error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
+      error(`                     hidden:${csrfTokenHidden}`)
+      error(`                    session:${csrfTokenSession}`)
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 401
+      ctx.body = { error: 'csrf token mismatch' }
+    } else {
+      const [filename] = ctx.request.body.inspectedFilename ?? null
+      const imageFile = path.resolve(`${ctx.app.root}/${INSPECTED}/${filename}`)
+      const response = {}
+      const tags = ctx.request.body
+      let stats
+      let exiftool = new Exiftool()
+      let newLocation
+      let result
+      /* eslint-disable no-nested-ternary */
+      const coordinates = {
+        latitude: (tags?.['EXIF:GPSLatitude'])
+          ? tags['EXIF:GPSLatitude'][0]
+          : ((tags?.['XMP:GPSLatitude'])
+            ? tags['XMP:GPSLatitude'][0]
+            : null) ?? null,
+        longitude: (tags?.['EXIF:GPSLongitude'])
+          ? tags['EXIF:GPSLongitude'][0]
+          : ((tags?.['XMP:GPSLongitude'])
+            ? tags['XMP:GPSLongitude'][0]
+            : null) ?? null,
+        city: (tags?.['IPTC:City'])
+          ? tags['IPTC:City'][0]
+          : ((tags?.['XMP:City'])
+            ? tags['XMP:City'][0]
+            : ((tags?.['XMP:LocationShownCity'])
+              ? tags['XMP:LocationShownCity'][0]
+              : null)) ?? undefined,
+        state: (tags?.['IPTC:Province-State'])
+          ? tags['IPTC:Province-State'][0]
+          : ((tags?.['XMP:State'])
+            ? tags['XMP:State'][0]
+            : ((tags?.['XMP:LocationShownCity'])
+              ? tags['XMP:LocationShownCity'][0]
+              : null)) ?? undefined,
+        country: (tags?.['IPTC:Country-PrimaryLocationName'])
+          ? tags['IPTC:Country-PrimaryLocationName'][0]
+          : ((tags?.['XMP:Country'])
+            ? tags['XMP:Country'][0]
+            : ((tags?.['XMP:LocationShownCountryName'])
+              ? tags['XMP:LocationShownCountryName'][0]
+              : null)) ?? undefined,
+        countryCode: (tags?.['IPTC:Country-PrimaryLocationCode'])
+          ? tags['IPTC:Country-PrimaryLocationCode'][0]
+          : ((tags?.['XMP:CountryCode'])
+            ? tags['XMP:CountryCode'][0]
+            : ((tags?.['XMP:LocationShownCountryCode'])
+              ? tags['XMP:LocationShownCountryCode'][0]
+              : null)) ?? undefined,
+        location: (tags?.['IPTC:Sub-location'])
+          ? tags['IPTC:Sub-location'][0]
+          : ((tags?.['XMP:Location'])
+            ? (tags['XMP:Location'][0])
+            : null) ?? undefined,
       }
-    } catch (e) {
-      error(`Failed to update requested image file: ${imageFile}`)
-      error(e)
+      /* eslint-enable no-nested-ternary */
+      try {
+        log('imageFile', imageFile)
+        stats = await stat(imageFile)
+        // log(stats)
+        if (stats.isFile()) {
+          log('init ', imageFile)
+          exiftool = await exiftool.init(imageFile)
+          const expandStructs = true
+          exiftool.enableXMPStructTagOutput(expandStructs)
+          exiftool.setGPSCoordinatesOutputFormat('+gps')
+          exiftool.enableBinaryTagOutput(true)
+          exiftool.setOverwriteOriginal(true)
+          log('setting new config path')
+          await exiftool.setConfigPath(`${ctx.app.root}/config/exiftool.config`)
+          log('stripping initial location data')
+          const stripLocationFirst = await exiftool.stripLocation()
+          log('stripLocationFirst', stripLocationFirst)
+          log('setting new location', newLocation)
+          log('new coordinates', coordinates)
+          newLocation = await exiftool.setLocation(coordinates)
+          log('newLocation', newLocation)
+          result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
+          log('result', result)
+          response.modifiedFile = result[0]['File:FileName']
+          response.metadata = result
+        }
+      } catch (e) {
+        error(`Failed to update requested image file: ${imageFile}`)
+        error(e)
+      }
+      log('csrf token check passed')
+      // const res = { fields: ctx.request.body }
+      // ctx.response.body = res.fields ?? { huh: 'whut?' }
+      ctx.response.status = 200
+      ctx.response.type = 'application/json; charset=utf-8'
+      ctx.response.body = response ?? { huh: 'whut?' }
     }
-    log('csrf token check passed')
-    // const res = { fields: ctx.request.body }
-    // ctx.response.body = res.fields ?? { huh: 'whut?' }
-    ctx.response.status = 200
-    ctx.response.type = 'application/json; charset=utf-8'
-    ctx.response.body = response ?? { huh: 'whut?' }
-  }
-})
+  },
+)
 
 router.get('getReviewFile', '/review/:f', async (ctx) => {
   const log = exifLog.extend('GET-reviewFile')
@@ -682,7 +686,7 @@ router.get('getEditedFile', '/inspected/:f', async (ctx) => {
       edittedFile = await readFile(edittedFilePath)
       const { ext } = path.parse(edittedFilePath)
       const _original = file.match(
-        /(?<name>.*)\.{1}(?<type>jpeg|jpg|png|heic|webp|gif)_original$/i
+        /(?<name>.*)\.{1}(?<type>jpeg|jpg|png|heic|webp|gif)_original$/i,
       )
       let type
       if (_original?.groups?.type) {
@@ -842,55 +846,57 @@ router.delete(
   addIpToSession,
   processFormData,
   async (ctx) => {
-  const log = exifLog.extend('DELETE-deleteimage')
-  const error = exifError.extend('DELETE-deleteimage')
-  const csrfTokenCookie = ctx.cookies.get('csrfToken')
-  const csrfTokenSession = ctx.session.csrfToken
-  const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
-  if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
-  if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
-  if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
-  if (!doTokensMatch(ctx)) {
-    error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
-    error(`                     hidden:${csrfTokenHidden}`)
-    error(`                    session:${csrfTokenSession}`)
-    ctx.type = 'application/json; charset=utf-8'
-    ctx.status = 401
-    ctx.body = { error: 'csrf token mismatch' }
-  } else {
-    log('csrf token check passed')
-    const imageToDelete = path.resolve(`./${INSPECTED}`, ctx.params.file)
-    const moveToDeleted = path.resolve(`./${DELETED}`, ctx.params.file)
-    log(`imageToDelete: ${imageToDelete}`)
-    let isDeleted
-    try {
-      // isDeleted = await rm(imageToDelete, { force: true })
-      isDeleted = await rename(imageToDelete, moveToDeleted)
-      log(`marking image as deleted in db: ${imageToDelete}`)
-      const db = ctx.state.mongodb.client.db()
-      const collection = db.collection('images')
-      const filter = { inspectedFile: imageToDelete }
-      const update = { $set:
-        {
-          deleted: true,
-          deletedFile: moveToDeleted,
-        },
+    const log = exifLog.extend('DELETE-deleteimage')
+    const error = exifError.extend('DELETE-deleteimage')
+    const csrfTokenCookie = ctx.cookies.get('csrfToken')
+    const csrfTokenSession = ctx.session.csrfToken
+    const csrfTokenHidden = ctx.request.body.csrfTokenHidden[0]
+    if (csrfTokenCookie === csrfTokenSession) log('cookie === session')
+    if (csrfTokenCookie === csrfTokenHidden) log('hidden === cookie')
+    if (csrfTokenSession === csrfTokenHidden) log('session === hidden')
+    if (!doTokensMatch(ctx)) {
+      error(`CSRF-Token mismatch: header:${csrfTokenCookie}`)
+      error(`                     hidden:${csrfTokenHidden}`)
+      error(`                    session:${csrfTokenSession}`)
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 401
+      ctx.body = { error: 'csrf token mismatch' }
+    } else {
+      log('csrf token check passed')
+      const imageToDelete = path.resolve(`./${INSPECTED}`, ctx.params.file)
+      const moveToDeleted = path.resolve(`./${DELETED}`, ctx.params.file)
+      log(`imageToDelete: ${imageToDelete}`)
+      let isDeleted
+      try {
+        // isDeleted = await rm(imageToDelete, { force: true })
+        isDeleted = await rename(imageToDelete, moveToDeleted)
+        log(`marking image as deleted in db: ${imageToDelete}`)
+        const db = ctx.state.mongodb.client.db()
+        const collection = db.collection('images')
+        const filter = { inspectedFile: imageToDelete }
+        const update = {
+          $set:
+          {
+            deleted: true,
+            deletedFile: moveToDeleted,
+          },
+        }
+        log(filter, update)
+        const _deleted = await collection.updateOne(filter, update)
+        log('db delete result: ', _deleted)
+        ctx.status = 200
+        ctx.type = 'application/json; charset=utf-8'
+        ctx.body = { status: 'ok', isDeleted }
+      } catch (e) {
+        error(`Failed to delete image: ${imageToDelete}`)
+        error(e)
+        ctx.status = 418
+        ctx.type = 'application/json; charset=utf-8'
+        ctx.body = { error: e.message }
       }
-      log(filter, update)
-      const _deleted = await collection.updateOne(filter, update)
-      log('db delete result: ', _deleted)
-      ctx.status = 200
-      ctx.type = 'application/json; charset=utf-8'
-      ctx.body = { status: 'ok', isDeleted }
-    } catch (e) {
-      error(`Failed to delete image: ${imageToDelete}`)
-      error(e)
-      ctx.status = 418
-      ctx.type = 'application/json; charset=utf-8'
-      ctx.body = { error: e.message }
     }
-  }
-})
+  },
+)
 
 router.get('about', '/about', hasFlash, async (ctx) => {
   const log = exifLog.extend('about')

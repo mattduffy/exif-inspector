@@ -77,15 +77,18 @@ class CryptoKeys {
     this.#keys = config.keys ?? { signing: null, encrypting: null }
     // RSA Signing key options
     this.#rsaSig = config?.RSA_SIG_KEY_NAME ?? process.env.RSA_SIG_KEY_NAME ?? 'RSASSA-PKCS1-v1_5'
-    this.#sigBits = parseInt(config?.RSA_SIG_KEY_MOD, 10) ?? parseInt(process.env.RSA_SIG_KEY_MOD, 10) ?? 2048
+    this.#sigBits = parseInt(config?.RSA_SIG_KEY_MOD, 10)
+      ?? parseInt(process.env.RSA_SIG_KEY_MOD, 10) ?? 2048
     // this.#sigHash = config?.RSA_ENC_KEY_TYPE ?? process.env.RSA_ENC_KEY_TYPE ?? 'SHA-256'
     this.#sigHash = config?.RSA_SIG_KEY_HASH ?? process.env.RSA_SIG_KEY_HASH ?? 'SHA-256'
     // RSA Encrypting key options
     this.#rsaEnc = config?.RSA_ENC_KEY_NAME ?? process.env.RSA_ENC_KEY_NAME ?? 'RSA-OAEP'
-    this.#encBits = parseInt(config?.RSA_ENC_KEY_MOD, 10) ?? parseInt(process.env.RSA_ENC_KEY_MOD, 10) ?? 2048
+    this.#encBits = parseInt(config?.RSA_ENC_KEY_MOD, 10)
+      ?? parseInt(process.env.RSA_ENC_KEY_MOD, 10) ?? 2048
     this.#encHash = config?.RSA_ENC_KEY_TYPE ?? process.env.RSA_ENC_KEY_TYPE ?? 'SHA-256'
     // ECDSA Signing key options
-    this.#namedCurve = config?.ECDSA_SIG_KEY_NAMEDCURVE ?? process.env.ECDSA_SIG_KEY_NAMEDCURVE ?? 'P-521'
+    this.#namedCurve = config?.ECDSA_SIG_KEY_NAMEDCURVE
+      ?? process.env.ECDSA_SIG_KEY_NAMEDCURVE ?? 'P-521'
   }
 
   async generateKey(o) {
@@ -171,14 +174,18 @@ class CryptoKeys {
       throw new Error(e)
     }
     try {
-      this.#exportedSigning.public = this.#pubToPem(await subtle.exportKey('spki', this.#signing.publicKey))
+      this.#exportedSigning.public = this.#pubToPem(
+        await subtle.exportKey('spki', this.#signing.publicKey),
+      )
     } catch (e) {
       error('Failed to export signing public key.')
       error(e)
       throw new Error(e)
     }
     try {
-      this.#exportedSigning.private = this.#priToPem(await subtle.exportKey('pkcs8', this.#signing.privateKey))
+      this.#exportedSigning.private = this.#priToPem(
+        await subtle.exportKey('pkcs8', this.#signing.privateKey),
+      )
     } catch (e) {
       error('Failed to export signing private key.')
       error(e)
@@ -202,14 +209,18 @@ class CryptoKeys {
       throw new Error(e)
     }
     try {
-      this.#exportedEncrypting.public = this.#pubToPem(await subtle.exportKey('spki', this.#encrypting.publicKey))
+      this.#exportedEncrypting.public = this.#pubToPem(
+        await subtle.exportKey('spki', this.#encrypting.publicKey),
+      )
     } catch (e) {
       error('Failed to export encrypting public key.')
       error(e)
       throw new Error(e)
     }
     try {
-      this.#exportedEncrypting.private = this.#priToPem(await subtle.exportKey('pkcs8', this.#encrypting.privateKey))
+      this.#exportedEncrypting.private = this.#priToPem(
+        await subtle.exportKey('pkcs8', this.#encrypting.privateKey),
+      )
     } catch (e) {
       error('Failed to export encrypting private key.')
       error(e)
@@ -219,7 +230,10 @@ class CryptoKeys {
 
   #pubToPem(pub) {
     this.log('pubToPem private method')
-    let pubToPem = Buffer.from(String.fromCharCode(...new Uint8Array(pub)), 'binary').toString('base64')
+    let pubToPem = Buffer.from(
+      String.fromCharCode(...new Uint8Array(pub)),
+      'binary',
+    ).toString('base64')
     pubToPem = pubToPem.match(/.{1,64}/g).join('\n')
     pubToPem = '-----BEGIN PUBLIC KEY-----\n'
       + `${pubToPem}\n`
@@ -229,7 +243,10 @@ class CryptoKeys {
 
   #priToPem(pri) {
     this.log('priToPem private method')
-    let priToPem = Buffer.from(String.fromCharCode(...new Uint8Array(pri)), 'binary').toString('base64')
+    let priToPem = Buffer.from(
+      String.fromCharCode(...new Uint8Array(pri)),
+      'binary',
+    ).toString('base64')
     priToPem = priToPem.match(/.{1,64}/g).join('\n')
     priToPem = '-----BEGIN PRIVATE KEY-----\n'
       + `${priToPem}\n`

@@ -49,7 +49,13 @@ class App {
     // this.#cryptoKeys = new CryptoKeys({ dirs: { public: this._keyDir, private: this._keyDir } })
     this.RSA_SIG_KEY_FILENAME = config.appEnv.RSA_SIG_KEY_FILENAME
     this.RSA_ENC_KEY_FILENAME = config.appEnv.RSA_ENC_KEY_FILENAME
-    this.#cryptoKeys = new CryptoKeys({ dirs: { public: this._keyDir, private: this._keyDir }, ...config.appEnv })
+    this.#cryptoKeys = new CryptoKeys({
+      dirs: {
+        public: this._keyDir,
+        private: this._keyDir,
+      },
+      ...config.appEnv,
+    })
   }
 
   async init() {
@@ -98,7 +104,10 @@ class App {
   async keys() {
     const log = appLog.extend('keys')
     const error = appError.extend('keys')
-    this._keys = (await this._db.findOne({ name: this._siteName }, { projection: { keys: 1 } }))?.keys
+    this._keys = (await this._db.findOne(
+      { name: this._siteName },
+      { projection: { keys: 1 } },
+    ))?.keys
     let needToUpdate = false
     const numSigKeys = this._keys.signing?.length ?? 0
     const numEncKeys = this._keys.encrypting?.length ?? 0
@@ -252,7 +261,7 @@ class App {
     if (open) {
       jwk = (await this.#openKey(j)).toString()
     }
-    // const matches = jwk.match(/(?<key_ops>"key_ops":\[.*\]),(?<ext>"ext":(?:true|false)),(?<kty>"kty":"(?:RSA|AES|ECDSA|HMAC)"),(?<n>"n":"(?<n_val>.*)"),(?<e>"e":".*"),(?<alg>"alg":".*"),(?<kid>"kid":".*"),?(?<use>"use":".*")?/).groups
+    /* eslint-disable-next-line */
     const matches = jwk.match(/"key_ops":(?<key_ops>\[.*\]),"ext":(?<ext>(true|false)),"kty":(?<kty>".*"),"n":(?<n>".*"),"e":(?<e>".*"),"alg":(?<alg>".*"),"kid":(?<kid>".*"(?=,)),?(?:"use":(?<use>".*"))?/)
     const groups = matches?.groups
     const indent = '  '

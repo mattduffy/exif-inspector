@@ -2,7 +2,8 @@
  * @summary Koa router for the account api endpoints.
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/account.js The router for the account api endpoints.
+ * @summary The router for the account api endpoints.
+ * @file src/routes/account.js
  */
 
 import path from 'node:path'
@@ -15,7 +16,7 @@ import { _log, _error } from '../utils/logging.js'
 /* eslint-disable-next-line no-unused-vars */
 import { Users, AdminUser } from '../models/users.js'
 import {
-  doTokensMatch,
+  // doTokensMatch,
   processFormData,
   hasFlash,
 } from './middlewares.js'
@@ -96,57 +97,61 @@ router.post(
   hasFlash,
   processFormData,
   async (ctx) => {
-  const log = accountLog.extend('POST-account-change-password')
-  const error = accountError.extend('POST-account-change-password')
-  if (!ctx.state?.isAuthenticated) {
-    error('User is not authenticated.  Redirect to /')
-    ctx.status = 401
-    ctx.redirect('/')
-  } else {
-    log(`View ${ctx.state.sessionUser.username}'s account password.`)
-    // const sessionId = ctx.cookies.get('session')
-    const csrfTokenCookie = ctx.cookies.get('csrfToken')
-    const csrfTokenSession = ctx.session.csrfToken
-    const csrfTokenHidden = ctx.request.body['csrf-token']
-    const { currentPassword } = ctx.request.body || ''
-    const { newPassword1 } = ctx.request.body || ''
-    const { newPassword2 } = ctx.request.body || ''
-    if (csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden) {
-      if (currentPassword === '') {
-        error('currentPassword is missing.')
-        ctx.flash = { edit: { error: 'Missing current password.' } }
-        ctx.redirect('/account/change/password')
-      } else if (newPassword1 === '' || newPassword2 === '' || newPassword1 !== newPassword2) {
-        error('newPasswords are missing or don\'t match.')
-        ctx.flash = { edit: { error: 'New passwords must match.' } }
-        ctx.redirect('/account/change/password')
-      } else {
-        try {
-          log('Have currentPassword and matching newPasswordn')
-          const result = await ctx.state.sessionUser.updatePassword(currentPassword, newPassword1)
-          if (result.success) {
-            ctx.state.sessionUser = await ctx.state.sessionUser.update()
-            ctx.flash = { edit: { message: result.message } }
-            ctx.redirect('/account/change/password')
-          } else {
-            ctx.flash = { edit: { error: 'Couldn\'t update password.' } }
+    const log = accountLog.extend('POST-account-change-password')
+    const error = accountError.extend('POST-account-change-password')
+    if (!ctx.state?.isAuthenticated) {
+      error('User is not authenticated.  Redirect to /')
+      ctx.status = 401
+      ctx.redirect('/')
+    } else {
+      log(`View ${ctx.state.sessionUser.username}'s account password.`)
+      // const sessionId = ctx.cookies.get('session')
+      const csrfTokenCookie = ctx.cookies.get('csrfToken')
+      const csrfTokenSession = ctx.session.csrfToken
+      const csrfTokenHidden = ctx.request.body['csrf-token']
+      const { currentPassword } = ctx.request.body || ''
+      const { newPassword1 } = ctx.request.body || ''
+      const { newPassword2 } = ctx.request.body || ''
+      if (csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden) {
+        if (currentPassword === '') {
+          error('currentPassword is missing.')
+          ctx.flash = { edit: { error: 'Missing current password.' } }
+          ctx.redirect('/account/change/password')
+        } else if (newPassword1 === '' || newPassword2 === '' || newPassword1 !== newPassword2) {
+          error('newPasswords are missing or don\'t match.')
+          ctx.flash = { edit: { error: 'New passwords must match.' } }
+          ctx.redirect('/account/change/password')
+        } else {
+          try {
+            log('Have currentPassword and matching newPasswordn')
+            const result = await ctx.state.sessionUser.updatePassword(
+              currentPassword,
+              newPassword1,
+            )
+            if (result.success) {
+              ctx.state.sessionUser = await ctx.state.sessionUser.update()
+              ctx.flash = { edit: { message: result.message } }
+              ctx.redirect('/account/change/password')
+            } else {
+              ctx.flash = { edit: { error: 'Couldn\'t update password.' } }
+              ctx.redirect('/account/change/password')
+            }
+          } catch (e) {
+            ctx.flash = { edit: { error: e.message } }
             ctx.redirect('/account/change/password')
           }
-        } catch (e) {
-          ctx.flash = { edit: { error: e.message } }
-          ctx.redirect('/account/change/password')
         }
+      } else {
+        error('csrf token mismatch')
+        delete ctx.session.csrfToken
+        ctx.cookies.set('csrfToken')
+        ctx.status = 403
+        ctx.type = 'application/json'
+        ctx.body = { status: 'Error, csrf tokens do not match' }
       }
-    } else {
-      error('csrf token mismatch')
-      delete ctx.session.csrfToken
-      ctx.cookies.set('csrfToken')
-      ctx.status = 403
-      ctx.type = 'application/json'
-      ctx.body = { status: 'Error, csrf tokens do not match' }
     }
-  }
-})
+  },
+)
 
 router.get('accountTokens', '/account/tokens', hasFlash, async (ctx) => {
   const log = accountLog.extend('GET-account-tokens')
@@ -190,7 +195,8 @@ router.get('accountCreateKeys', '/account/:username/createKeys/:type?', hasFlash
   } else if (ctx.request.header.csrftoken !== ctx.session.csrfToken) {
     error(
       `CSR-Token mismatch: header:${ctx.request.header.csrftoken} - `
-      + `session:${ctx.session.csrfToken}`)
+      + `session:${ctx.session.csrfToken}`,
+    )
     status = 401
     ctx.body = { error: 'csrf token mismatch' }
   } else {
@@ -450,7 +456,7 @@ router.post('accountEditPost', '/account/edit', hasFlash, processFormData, async
         //  )
         const avatarSaved = path.resolve(
           `${ctx.app.dirs.public.dir}/${ctx.state.sessionUser.publicDir}`
-          + `avatar-${avatarOriginalFilenameCleaned}`
+          + `avatar-${avatarOriginalFilenameCleaned}`,
         )
         await rename(avatar.filepath, avatarSaved)
         // ctx.state.sessionUser.avatar = `${ctx.state.sessionUser.publicDir}`
@@ -468,7 +474,7 @@ router.post('accountEditPost', '/account/edit', hasFlash, processFormData, async
         // )
         const headerSaved = path.resolve(
           `${ctx.app.dirs.public.dir}/${ctx.state.sessionUser.publicDir}header-`
-          + `${headerOriginalFilenameCleaned}`
+          + `${headerOriginalFilenameCleaned}`,
         )
         await rename(header.filepath, headerSaved)
         // ctx.state.sessionUser.header = `${ctx.state.sessionUser.publicDir}header-`
@@ -548,7 +554,7 @@ router.get('adminListUsers', '/admin/account/listusers', hasFlash, async (ctx) =
       // ctx.throw('Error trying to retrieve list of all user accounts.')
       const err = new Error(
         'Error trying to retrieve list of all user accounts.',
-        { cause: e }
+        { cause: e },
       )
       ctx.throw(500, err)
     }
@@ -653,7 +659,7 @@ router.get('adminEditUserGet', '/admin/account/edit/:username', hasFlash, async 
       // ctx.throw(500, `Error trying to retrieve ${ctx.params.username}'s account.`)
       const err = new Error(
         `Error trying to retrieve ${ctx.params.username}'s account.`,
-        { cause: e }
+        { cause: e },
       )
       ctx.throw(500, err)
     }
@@ -667,156 +673,157 @@ router.post(
   hasFlash,
   processFormData,
   async (ctx) => {
-  const log = accountLog.extend('POST-admin-editusers')
-  const error = accountError.extend('POST-admin-editusers')
-  if (!ctx.state?.isAuthenticated) {
-    ctx.flash = {
-      index: {
-        info: null,
-        message: null,
-        error: 'You need to be logged in to do that.',
-      },
-    }
-    error('Tried to edit an account without being authenticated.')
-    ctx.status = 401
-    ctx.redirect('/')
-  } else {
-    try {
-      // const sessionId = ctx.cookies.get('session')
-      const csrfTokenCookie = ctx.cookies.get('csrfToken')
-      const csrfTokenSession = ctx.session.csrfToken
-      const csrfTokenHidden = ctx.request.body['csrf-token']
-      // const db = ctx.state.mongodb.client.db()
-      // const collection = db.collection(USERS)
-      // const users = new Users(collection, ctx)
-      const users = new Users(ctx.state.mongodb, ctx)
-      if (csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden) {
-        const { username } = ctx.request.body
-        let displayUser = await users.getByUsername(username)
-        if (username !== '') {
-          if (username !== displayUser.username) {
-            if (displayUser.isUsernameAvailable(username)) {
-              displayUser.username = username
-            } else {
-              ctx.flash = {
-                edit: {
-                  info: null,
-                  message: null,
-                  error: `${username} is not available.`,
-                },
+    const log = accountLog.extend('POST-admin-editusers')
+    const error = accountError.extend('POST-admin-editusers')
+    if (!ctx.state?.isAuthenticated) {
+      ctx.flash = {
+        index: {
+          info: null,
+          message: null,
+          error: 'You need to be logged in to do that.',
+        },
+      }
+      error('Tried to edit an account without being authenticated.')
+      ctx.status = 401
+      ctx.redirect('/')
+    } else {
+      try {
+        // const sessionId = ctx.cookies.get('session')
+        const csrfTokenCookie = ctx.cookies.get('csrfToken')
+        const csrfTokenSession = ctx.session.csrfToken
+        const csrfTokenHidden = ctx.request.body['csrf-token']
+        // const db = ctx.state.mongodb.client.db()
+        // const collection = db.collection(USERS)
+        // const users = new Users(collection, ctx)
+        const users = new Users(ctx.state.mongodb, ctx)
+        if (csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden) {
+          const { username } = ctx.request.body
+          let displayUser = await users.getByUsername(username)
+          if (username !== '') {
+            if (username !== displayUser.username) {
+              if (displayUser.isUsernameAvailable(username)) {
+                displayUser.username = username
+              } else {
+                ctx.flash = {
+                  edit: {
+                    info: null,
+                    message: null,
+                    error: `${username} is not available.`,
+                  },
+                }
+                ctx.redirect(`/admin/account/edit/@${displayUser.username}`)
               }
-              ctx.redirect(`/admin/account/edit/@${displayUser.username}`)
             }
           }
-        }
-        const { firstname } = ctx.request.body
-        if (firstname !== '') displayUser.firstName = firstname
-        const { lastname } = ctx.request.body
-        if (lastname !== '') displayUser.lastName = lastname
-        const { displayname } = ctx.request.body
-        if (displayname !== '') displayUser.displayName = displayname
-        const { primaryEmail } = ctx.request.body
-        if (primaryEmail !== '') displayUser.primarEmail = primaryEmail
-        const { secondaryEmail } = ctx.request.body
-        if (secondaryEmail !== '') displayUser.secondaryEmail = secondaryEmail
-        const { description } = ctx.request.body
-        if (description !== '') displayUser.description = description
-        const { isLocked } = ctx.request.body
-        if (isLocked === 'on') {
-          displayUser.locked = true
-        } else {
-          displayUser.locked = false
-        }
-        const { isBot } = ctx.request.body
-        if (isBot === 'on') {
-          displayUser.bot = true
-        } else {
-          displayUser.bot = false
-        }
-        const { isGroup } = ctx.request.body
-        if (isGroup === 'on') {
-          displayUser.group = true
-        } else {
-          displayUser.group = false
-        }
-        log('avatar file: %O', ctx.request.files.avatar.size)
-        log('avatar file: %O', ctx.request.files.avatar.filepath)
-        if (displayUser.publicDir === '') {
-          // log('users ctx: %O', displayUser._ctx)
-          log(`${displayUser.username} - no upload directory set yet, setting it now.`)
-          displayUser.publicDir = 'a'
-        }
-        const { avatar } = ctx.request.files
-        if (avatar.size > 0) {
-          const avatarOriginalFilenameCleaned = sanitizeFilename(avatar.originalFilename)
-          // const avatarSaved = path.resolve(
-          //  `${ctx.app.dirs.public.dir}/${displayUser.publicDir}avatar-`
-          //   + `${avatar.originalFilename}`
-          //  )
-          const avatarSaved = path.resolve(
-            `${ctx.app.dirs.public.dir}/${displayUser.publicDir}avatar-`
-            + `${avatarOriginalFilenameCleaned}`
-          )
-          await rename(avatar.filepath, avatarSaved)
-          // displayUser.avatar = `${displayUser.publicDir}avatar-${avatar.originalFilename}`
-          displayUser.avatar = `${displayUser.publicDir}avatar-${avatarOriginalFilenameCleaned}`
-        }
-        // log('header file: %O', ctx.request.files.header)
-        const { header } = ctx.request.files
-        if (header.size > 0) {
-          const headerOriginalFilenameCleaned = sanitizeFilename(header.originalFilename)
-          // const headerSaved = path.resolve(
-          //   `${ctx.app.dirs.public.dir}/${displayUser.publicDir}header-`
-          //   + `${header.originalFilename}`
-          // )
-          const headerSaved = path.resolve(
-            `${ctx.app.dirs.public.dir}/${displayUser.publicDir}header-`
-            + `${headerOriginalFilenameCleaned}`
-          )
-          await rename(header.filepath, headerSaved)
-          // displayUser.header = `${displayUser.publicDir}header-${header.originalFilename}`
-          displayUser.header = `${displayUser.publicDir}header-${headerOriginalFilenameCleaned}`
-        }
-        const { url } = ctx.request.body
-        if (url !== '') displayUser.url = url
-        try {
-          displayUser = await displayUser.update()
-          ctx.flash = {
-            view: {
-              info: null,
-              message: `${username}'s account has been updated.`,
-              error: null,
-            },
+          const { firstname } = ctx.request.body
+          if (firstname !== '') displayUser.firstName = firstname
+          const { lastname } = ctx.request.body
+          if (lastname !== '') displayUser.lastName = lastname
+          const { displayname } = ctx.request.body
+          if (displayname !== '') displayUser.displayName = displayname
+          const { primaryEmail } = ctx.request.body
+          if (primaryEmail !== '') displayUser.primarEmail = primaryEmail
+          const { secondaryEmail } = ctx.request.body
+          if (secondaryEmail !== '') displayUser.secondaryEmail = secondaryEmail
+          const { description } = ctx.request.body
+          if (description !== '') displayUser.description = description
+          const { isLocked } = ctx.request.body
+          if (isLocked === 'on') {
+            displayUser.locked = true
+          } else {
+            displayUser.locked = false
           }
-        } catch (e) {
-          error(e)
-          // ctx.throw(400, 'Failed to update user account.', e)
-          ctx.flash = {
-            view: {
-              info: null,
-              error: e,
-              message: null,
-            },
+          const { isBot } = ctx.request.body
+          if (isBot === 'on') {
+            displayUser.bot = true
+          } else {
+            displayUser.bot = false
           }
+          const { isGroup } = ctx.request.body
+          if (isGroup === 'on') {
+            displayUser.group = true
+          } else {
+            displayUser.group = false
+          }
+          log('avatar file: %O', ctx.request.files.avatar.size)
+          log('avatar file: %O', ctx.request.files.avatar.filepath)
+          if (displayUser.publicDir === '') {
+            // log('users ctx: %O', displayUser._ctx)
+            log(`${displayUser.username} - no upload directory set yet, setting it now.`)
+            displayUser.publicDir = 'a'
+          }
+          const { avatar } = ctx.request.files
+          if (avatar.size > 0) {
+            const avatarOriginalFilenameCleaned = sanitizeFilename(avatar.originalFilename)
+            // const avatarSaved = path.resolve(
+            //  `${ctx.app.dirs.public.dir}/${displayUser.publicDir}avatar-`
+            //   + `${avatar.originalFilename}`
+            //  )
+            const avatarSaved = path.resolve(
+              `${ctx.app.dirs.public.dir}/${displayUser.publicDir}avatar-`
+              + `${avatarOriginalFilenameCleaned}`,
+            )
+            await rename(avatar.filepath, avatarSaved)
+            // displayUser.avatar = `${displayUser.publicDir}avatar-${avatar.originalFilename}`
+            displayUser.avatar = `${displayUser.publicDir}avatar-${avatarOriginalFilenameCleaned}`
+          }
+          // log('header file: %O', ctx.request.files.header)
+          const { header } = ctx.request.files
+          if (header.size > 0) {
+            const headerOriginalFilenameCleaned = sanitizeFilename(header.originalFilename)
+            // const headerSaved = path.resolve(
+            //   `${ctx.app.dirs.public.dir}/${displayUser.publicDir}header-`
+            //   + `${header.originalFilename}`
+            // )
+            const headerSaved = path.resolve(
+              `${ctx.app.dirs.public.dir}/${displayUser.publicDir}header-`
+              + `${headerOriginalFilenameCleaned}`,
+            )
+            await rename(header.filepath, headerSaved)
+            // displayUser.header = `${displayUser.publicDir}header-${header.originalFilename}`
+            displayUser.header = `${displayUser.publicDir}header-${headerOriginalFilenameCleaned}`
+          }
+          const { url } = ctx.request.body
+          if (url !== '') displayUser.url = url
+          try {
+            displayUser = await displayUser.update()
+            ctx.flash = {
+              view: {
+                info: null,
+                message: `${username}'s account has been updated.`,
+                error: null,
+              },
+            }
+          } catch (e) {
+            error(e)
+            // ctx.throw(400, 'Failed to update user account.', e)
+            ctx.flash = {
+              view: {
+                info: null,
+                error: e,
+                message: null,
+              },
+            }
+          }
+          delete ctx.session.csrfToken
+          ctx.cookies.set('csrfToken')
+          ctx.cookies.set('csrfToken.sig')
+          ctx.redirect(`/admin/account/view/@${displayUser.username}`)
+        } else {
+          error('csrf token mismatch')
+          ctx.status = 403
+          ctx.type = 'application/json'
+          ctx.body = { status: 'Error, csrf tokens do not match' }
         }
-        delete ctx.session.csrfToken
-        ctx.cookies.set('csrfToken')
-        ctx.cookies.set('csrfToken.sig')
-        ctx.redirect(`/admin/account/view/@${displayUser.username}`)
-      } else {
-        error('csrf token mismatch')
-        ctx.status = 403
-        ctx.type = 'application/json'
-        ctx.body = { status: 'Error, csrf tokens do not match' }
+      } catch (e) {
+        error(e)
+        // ctx.throw(500, 'Failed up update user\'s account.', e)
+        const err = new Error('Failed up update user\'s account.', { cause: e })
+        ctx.throw(500, err)
       }
-    } catch (e) {
-      error(e)
-      // ctx.throw(500, 'Failed up update user\'s account.', e)
-      const err = new Error('Failed up update user\'s account.', { cause: e })
-      ctx.throw(500, err)
     }
-  }
-})
+  },
+)
 
 router.delete(
   'deleteUserAccount',
@@ -824,68 +831,69 @@ router.delete(
   hasFlash,
   processFormData,
   async (ctx) => {
-  const log = accountLog.extend('POST-account-delete')
-  const error = accountError.extend('POST-account-delete')
-  if (!ctx.state?.isAuthenticated) {
-    error('User is not authenticated.  Redirect to /')
-    ctx.status = 401
-    ctx.redirect('/')
-  } else {
-    //
-    // Check that route param :id and form field id values match
-    //
-    const csrfTokenCookie = ctx.cookies.get('csrfToken')
-    const csrfTokenSession = ctx.session.csrfToken
-    const { id, csrfTokenForm } = ctx.request.body
-    const db = ctx.state.mongodb.client.db()
-    const collection = db.collection(USERS)
-    const users = new Users(collection, ctx)
-    if (csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenForm) {
-      try {
-        // let displayUser = await users.getById(id)
-        const displayUser = await users.archiveUser(ctx, id)
-        if (!displayUser) {
-          ctx.flash.delete = {
-            // some flash message
-          }
-          ctx.status = 404
-          ctx.type = 'application/json'
-          ctx.body = {
-            status: 404,
-            error: `User id: ${id} not found.`,
-            message: null,
-          }
-        } else {
-          ctx.flash.delete = {
-            // some flash message
-          }
-          ctx.status = 200
-          ctx.type = 'application/json'
-          ctx.body = {
-            status: 200,
-            error: null,
-            message: `User account: @${displayUser?.username} has been deleted.`,
-            user: displayUser.username,
-            id,
-          }
-        }
-      } catch (e) {
-        error(`Error from users.getById(${id})`)
-      }
+    const log = accountLog.extend('POST-account-delete')
+    const error = accountError.extend('POST-account-delete')
+    if (!ctx.state?.isAuthenticated) {
+      error('User is not authenticated.  Redirect to /')
+      ctx.status = 401
+      ctx.redirect('/')
     } else {
-      log('CSRF Token mismatch.  No delete made.')
-      log(`session token: ${csrfTokenSession}`)
-      log(` cookie token: ${csrfTokenCookie}`)
-      log(`   form token: ${csrfTokenForm}`)
-      ctx.status = 403
-      ctx.type = 'application/json'
-      ctx.body = {
-        status: 403,
-        error: 'Error, csrf tokens do not match',
-        message: null,
+      //
+      // Check that route param :id and form field id values match
+      //
+      const csrfTokenCookie = ctx.cookies.get('csrfToken')
+      const csrfTokenSession = ctx.session.csrfToken
+      const { id, csrfTokenForm } = ctx.request.body
+      const db = ctx.state.mongodb.client.db()
+      const collection = db.collection(USERS)
+      const users = new Users(collection, ctx)
+      if (csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenForm) {
+        try {
+          // let displayUser = await users.getById(id)
+          const displayUser = await users.archiveUser(ctx, id)
+          if (!displayUser) {
+            ctx.flash.delete = {
+              // some flash message
+            }
+            ctx.status = 404
+            ctx.type = 'application/json'
+            ctx.body = {
+              status: 404,
+              error: `User id: ${id} not found.`,
+              message: null,
+            }
+          } else {
+            ctx.flash.delete = {
+              // some flash message
+            }
+            ctx.status = 200
+            ctx.type = 'application/json'
+            ctx.body = {
+              status: 200,
+              error: null,
+              message: `User account: @${displayUser?.username} has been deleted.`,
+              user: displayUser.username,
+              id,
+            }
+          }
+        } catch (e) {
+          error(`Error from users.getById(${id})`)
+        }
+      } else {
+        log('CSRF Token mismatch.  No delete made.')
+        log(`session token: ${csrfTokenSession}`)
+        log(` cookie token: ${csrfTokenCookie}`)
+        log(`   form token: ${csrfTokenForm}`)
+        ctx.status = 403
+        ctx.type = 'application/json'
+        ctx.body = {
+          status: 403,
+          error: 'Error, csrf tokens do not match',
+          message: null,
+        }
       }
     }
-  }
-})
+  },
+)
 
 export { router as account }

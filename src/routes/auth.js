@@ -2,17 +2,18 @@
  * @summary Koa router for the main top-level pages.
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/auth.js The router for authentication related actions.
+ * @summary The router for authentication related actions.
+ * @file src/routes/auth.js
  */
 
 import Router from '@koa/router'
 import { ulid } from 'ulid'
-import { ObjectId } from 'mongodb'
+// import { ObjectId } from 'mongodb'
 import {
   addIpToSession,
   doTokensMatch,
   processFormData,
-  hasFlash,
+  // hasFlash,
 } from './middlewares.js'
 import { _log, _error } from '../utils/logging.js'
 import { Users } from '../models/users.js'
@@ -62,7 +63,7 @@ router.post('postLogin', '/login', addIpToSession, processFormData, async (ctx) 
   const sessionId = ctx.cookies.get('session')
   const [username] = ctx.request.body.username
   const [password] = ctx.request.body.password
-  const [csrfTokenHidden] = ctx.request.body['csrf-token']
+  // const [csrfTokenHidden] = ctx.request.body['csrf-token']
   // if (!(csrfTokenCookie === csrfTokenSession && csrfTokenSession === csrfTokenHidden)) {
   if (!doTokensMatch(ctx)) {
     error(`CSR-Token mismatch: header:${csrfTokenCookie} - session:${csrfTokenSession}`)

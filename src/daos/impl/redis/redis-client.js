@@ -41,7 +41,7 @@ const redisConnOpts = {
       ca: await fs.readFile(redisEnv.REDIS_CACERT),
     },
   },
-  nodeClientOptions: {       
+  nodeClientOptions: {
     username: redisEnv.REDIS_USER,
     password: redisEnv.REDIS_PASSWORD,
     socket: {
@@ -57,19 +57,20 @@ const redisConnOpts = {
   keyPrefix: `${redisEnv.REDIS_KEY_PREFIX}:` ?? 'koa:',
 }
 console.log(redisConnOpts)
-let sentinel
+let _sentinel
 try {
-  sentinel = await createSentinel(redisConnOpts)
+  _sentinel = await createSentinel(redisConnOpts)
     .on('reconnecting', () => {
       console.log('Redis sentinel reconnecting')
     })
-    .on('error', err => console.error('Redis Sentinel Error', err))
+    .on('error', (err) => console.error('Redis Sentinel Error', err))
     .on('ready', () => { console.log('Redis Sentinel connection is ready') })
 
-  await sentinel.connect()
+  await _sentinel.connect()
 } catch (e) {
   console.log(e)
 }
+const sentinel = _sentinel
 export {
   sentinel as redis,
 }

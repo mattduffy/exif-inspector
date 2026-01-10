@@ -2,7 +2,7 @@
  * @summary Schema migrations for the User object model.
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/utils/migrations/user-schema.js A schema migration .
+ * @file src/utils/migrations/user-schema.js
  */
 
 import { client } from '../../daos/impl/mongodb/mongo-client.js'
@@ -13,6 +13,7 @@ const migrationCollection = 'migrations'
 
 await client.connect()
 const userSchema = client.db(database).collection(userCollection)
+console.log(userSchema)
 const migration = client.db(database).collection(migrationCollection)
 const userMigration = await migration.find({ schema: 'user' }).sort({ migrationDate: -1 })
 if (await userMigration.hasNext()) {

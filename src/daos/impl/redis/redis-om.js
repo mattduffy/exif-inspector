@@ -1,7 +1,8 @@
 /**
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/daos/imple/redis/redis-om.js The low-level connection object of redis-om.
+ * @summary The low-level connection object of redis-om.
+ * @file src/daos/imple/redis/redis-om.js
  */
 
 import path from 'node:path'
@@ -23,7 +24,11 @@ console.log('redis-client.js >>root = ', root)
 const showDebug = process.env.NODE_ENV !== 'production'
 // Dotenv.config({ path: path.resolve(root, 'config/redis.env'), debug: showDebug })
 const redisEnv = {}
-Dotenv.config({ path: path.resolve(root, 'config/redis.env'), processEnv: redisEnv, debug: showDebug })
+Dotenv.config({
+  path: path.resolve(root, 'config/redis.env'),
+  processEnv: redisEnv,
+  debug: showDebug,
+})
 
 const config = {
   url: `rediss://${redisEnv.REDIS_HOST}:${redisEnv.REDIS_HOST_PORT}/${redisEnv.REDIS_DB}`,
@@ -41,11 +46,6 @@ const redis = createClient(config)
 await redis.connect()
 const clientOm = await new Client().use(redis)
 // console.log(config)
-// const prefix = redisEnv.REDIS_KEY_PREFIX
-// const testJson = { pier: 'test pier', location: { longitude: -88.442671, latitude: 42.590727 }, geohash: 'dp9473qhbq0' }
-// const testJsonInsert = await redis.json.set(`${prefix}:test:001`, '$', testJson)
-// console.log(testJsonInsert)
-
 export {
   redis,
   clientOm,

@@ -2,13 +2,14 @@
  * @summary Koa router for the public .well-known resources.
  * @module @mattduffy/koa-stub
  * @author Matthew Duffy <mattduffy@gmail.com>
- * @file src/routes/wellKnown.js The router for public well-known URI actions.
+ * @summary The router for public well-known URI actions.
+ * @file src/routes/wellKnown.js
  */
 
 import Router from '@koa/router'
-import NodeInfo from '@mattduffy/webfinger/nodeinfo.js' // eslint-disable-line import/no-unresolved
-import Hostmeta from '@mattduffy/webfinger/host-meta.js' // eslint-disable-line import/no-unresolved
-import Webfinger from '@mattduffy/webfinger/webfinger.js' // eslint-disable-line import/no-unresolved
+import NodeInfo from '@mattduffy/webfinger/nodeinfo.js'
+import Hostmeta from '@mattduffy/webfinger/host-meta.js'
+import Webfinger from '@mattduffy/webfinger/webfinger.js'
 import { App } from '../models/app.js'
 import { _log, _info, _error } from '../utils/logging.js'
 
@@ -80,7 +81,7 @@ router.get('nodeinfo', '/.well-known/nodeinfo', async (ctx) => {
   }
   let info
   try {
-    const host = ctx.request.host
+    const { host } = ctx.request
     const o = { db: ctx.state.mongodb.client, host, path: ctx.request.path }
     const node = new NodeInfo(o)
     info = await node.info()
@@ -145,7 +146,7 @@ router.get('host-meta', '/.well-known/host-meta', async (ctx, next) => {
   try {
     // const host = `${ctx.request.protocol}://${ctx.request.host}`
     // const host = ctx.request.origin
-    const host = ctx.state.host
+    const { host } = ctx.state
     const o = { path: ctx.request.path, host }
     const meta = new Hostmeta(o)
     info = meta.info()
