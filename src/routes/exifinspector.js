@@ -804,7 +804,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
       + `-f ${fileString}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
-    log('images: ', images)
+    // log('images: ', images)
     // if (images.length > 0) {
     //   images.sort((a, b) => {
     //    return new Date(b['File:FileModifyDate']) - new Date(a['File:FileModifyDate'])
