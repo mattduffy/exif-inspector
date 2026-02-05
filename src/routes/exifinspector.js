@@ -787,8 +787,8 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
   ctx.redirect('/')
 })
 
-router.get('redirectToPaginatedList', '/x', async (ctx) => {
-  ctx.redirect('/x/1')
+router.get('redirectToPaginatedListDeleted', '/d', async (ctx) => {
+  ctx.redirect('/d/1')
 })
 
 router.get('listDeletedImages', '/d/:page', async (ctx) => {
@@ -817,11 +817,17 @@ router.get('listDeletedImages', '/d/:page', async (ctx) => {
     log(c)
     const out = await cmd(c)
     dirContents = out.stdout.split('\n')
+    if (dirContents.slice(-1)[0] === '') {
+      dirContents = dirContents.slice(0, -1)
+    }
     pageOffset = (page === 1) ? 0 : (page - 1) * pageLimit
     limit = pageOffset + pageLimit
     log(`pageLimit (${pageLimit}), pageOffset (${pageOffset}), limit (${limit})`)
+    // log('dir contents', dirContents)
     dirSlice = dirContents.slice(pageOffset, limit)
+    // log(dirSlice)
     fileString = dirSlice.map((f) => `"${dir}/${f}"`).join(' ')
+    // log(fileString.replaceAll(' ', '\n'))
   } catch (e) {
     error(`failed to list files in ${dir}`)
     error(e)
@@ -839,6 +845,7 @@ router.get('listDeletedImages', '/d/:page', async (ctx) => {
       + `-f ${fileString}`
     log(`raw exiftool cmd: ${raw}`)
     images = await tool.raw(raw)
+    // log(images.slice(-1))
   } catch (e) {
     error('Failed to exiftool inspected images.')
     error(e)
@@ -867,6 +874,10 @@ router.get('listDeletedImages', '/d/:page', async (ctx) => {
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
   await ctx.render('listDeletedImages', locals)
+})
+
+router.get('redirectToPaginatedList', '/x', async (ctx) => {
+  ctx.redirect('/x/1')
 })
 
 router.get('listUploadedImages', '/x/:page', async (ctx) => {
