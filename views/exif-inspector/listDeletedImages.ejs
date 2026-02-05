@@ -1,0 +1,232 @@
+    <section id="headerSection">
+        <h1><a href="<%= domain %>"><%= siteName %></a></h1>
+        <h2><span></span> Total Deleted Images.</h2>
+        <h4><a href="<%= domain %>/x/1">View uploaded images.</a></h4>
+        <% if (flash?.info) { %>
+        <div id="info" class="info">
+            <span><%= flash.info %></span>
+        </div>
+        <% } %>
+        <% if (flash?.message) { %>
+        <div id="messages" class="messages">
+            <span><%= flash.message %></span>
+        </div>
+        <% } %>
+        <% if (flash?.error) { %>
+        <div id="errors" class="errors">
+            <span><%= flash.error %></span>
+        </div>
+        <% } %>
+        <% if (isAuthenticated) { %>
+
+        <% } %>
+        <nav class="pages">
+            <span>page: <%= pageInfo.page %></span><br>
+            <span>pageOffset: <%= pageInfo.pageOffset %></span><br>
+            <span>limit: <%= pageInfo.limit %></span><br>
+            <ul id="top-nav">
+                <%
+                let n = fileCount / perPage
+                let pages = (n > Math.trunc(n)) ? n += 1 : n
+                for (let i = 1; i <= pages; i++) { %>
+                <% if (pageInfo.page === i) { %>
+                <li style="background-color: lightgoldenrodyellow;"><b><a href="<%= domain %>/d/<%= i %>">page <%= i %></a></b></li>
+                    <% } else { %>
+                <li><a href="<%= domain%>/d/<%= i %>">page <%= i %></a></li>
+                    <% } %>
+                <% } %>
+            </ul>
+        </nav>
+        <ol id="links" start=<%= pageInfo.pageOffset + 1 %> style="margin-bottom: 1.5em; border: 3px aliceblue solid; border-radius: 10px;">
+        </ol>
+        <p id="noImages" class="hidden">All images have been deleted.</p>
+        <script nonce="<%= nonce %>" type="module">
+            const topUlNav = document.querySelector('ul#top-nav')
+            const bottomUlNav = topUlNav.cloneNode(true)
+            const bottomNav = document.createElement('nav')
+            bottomNav.id = 'bottom-nav'
+            bottomNav.classList.add('pages')
+            bottomNav.appendChild(bottomUlNav)
+            topUlNav.parentElement.parentElement.insertBefore(bottomNav, document.querySelector('p#noImages'))
+            let origin = '<%= domain %>'
+            let access = '<%= accessToken %>'
+            let images = <%- JSON.stringify(images) %>
+            let fileCount = <%= fileCount %>
+            let perPage = <%= perPage %>
+            const ul = document.querySelector('ol#links')
+            let count = 0
+            function reviewHandler(e) {
+                e.preventDefault()
+                e.stopPropagation()
+                const dataset = e.target.dataset
+                console.log(dataset)
+                const link = new URL(`/review/${dataset.file}`, origin)
+                console.log(link)
+                location.assign(link)
+            }
+            function updateFileCount(x) {
+                const span = document.querySelector('section#headerSection > h2 > span')
+                // const text = span.textContent.slice(span.textContent.lastIndexOf(' Uploaded Images.'))
+                // h2.textContent = `${x} ${text}`
+                span.textContent = `${x}`
+            }
+            async function deleteHandler(e) {
+                e.preventDefault()
+                e.stopPropagation()
+                const li = e.target.parentElement.parentElement
+                const image = e.target.dataset.file
+                console.log(li)
+                console.log(image)
+                const formData = new FormData()
+                formData.append('file', image)
+                formData.append('csrfTokenHidden', '<%= csrfToken %>')
+                formData.append('_method', 'delete')
+                for (const x of formData.entries()) {
+                    console.log(x)
+                }
+                const opts = {
+                  method: 'POST',
+                  headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${window.access}`,
+                    'X-Http-Method-Override': 'delete',
+                  },
+                  body: formData,
+                }
+                console.log(opts)
+                const url = new window.URL(`${origin}/delete/image/${image}`)
+                console.log(url.toString())
+                const request = new Request(url, opts)
+                let response
+                let json
+                try {
+                    response = await fetch(request, { credentials: 'same-origin' }) 
+                    if (!response.ok) {
+                        throw new Error('bad response', { cause: e })
+                    }
+                } catch (e) {
+                    console.info(e)
+                    li.style.backgroundColor = 'orange'
+                    return
+                }
+                try {
+                    json = await response.json()
+                    console.log(json)
+                    li.style.backgroundColor = 'green'
+                    setTimeout((image) => {
+                        li.parentElement.removeChild(li)
+                        updateFileCount(Number.parseInt(document.querySelector('section#headerSection > h2 > span').textContent, 10) -1)
+                    }, 750)
+                } catch (e) {
+                    console.info(e)
+                    li.style.backgroundColor = 'yellow'
+                    return
+                }
+            }
+            // console.log(images)
+            if (images.constructor.name !== 'Array' && images?.stdout) {
+                console.info(`images is not an array: ${images.constructor.name}`)
+                console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
+                console.info(`stderr: ${(images?.stderr) ? images.stderr : 'no stderr provided'}`)
+                console.info(`stdout: ${(images?.stdout) ? images.stdout : 'no stdout provided'}`)
+            }
+            if (images.stdout) {
+                console.info('images array may be corrupt or incomplete.')
+                console.info(`code: ${(images?.code) ? images.code : 'no error code provided'}`)
+                try {
+                    const temp = JSON.parse(images.stdout)
+                    console.info(temp)
+                    if (Array.isArray(temp)) {
+                        images = temp
+                    } else {
+                        images = []
+                    }
+                } catch (e) {
+                    console.info('failed to revive images json')
+                    console.info(e)
+                    images = []
+                }
+            }
+            if (images.length === 0) {
+                document.querySelector('p#noImages').classList.remove('hidden')
+            } else {
+                images.forEach((i, e) => {
+                    if (i['File:FileName'] && !/IPTC-Photometa/i.test(i['File:FileName'])) {
+                        count += 1
+                        const li = document.createElement('li')
+                        li.classList.add('linklist')
+                        const d = document.createElement('span')
+                        d.style.marginRight = '.5em'
+                        d.style.whiteSpace = 'nowrap'
+                        d.innerText = new Date(i['File:FileModifyDate']).toDateString()
+                        li.appendChild(d)
+                        const s = document.createElement('span')
+                        s.style.marginRight = '.5em'
+                        s.style.whiteSpace = 'nowrap'
+                        s.textContent = i['File:FileSize']
+                        li.appendChild(s)
+                        const _s = document.createElement('span')
+                        _s.style.marginRight = '.5em'
+                        _s.style.whiteSpace = 'normal'
+                        _s.textContent = '' 
+                        li.appendChild(_s)
+                        const a = document.createElement('a')
+                        a.href = `${origin}/unspected/${i['File:FileName']}`
+                        a.setAttribute('target', '_blank')
+                        a.textContent = i['File:FileName']
+                        if (i['EXIF:ThumbnailImage']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['EXIF:ThumbnailImage'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        if (i['Photoshop:PhotoshopThumbnail']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['Photoshop:PhotoshopThumbnail'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        if (i['JFIF:ThumbnailTIFF']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['JFIF:ThumbnailTIFF'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        if (i['JUMBF:C2PAThumbnailClaimJpegData']) {
+                            const preview = document.createElement('img')
+                            preview.classList.add('smallImgPreview')
+                            preview.src = `data:${i['File:MIMEType']};base64,${i['JUMBF:C2PAThumbnailClaimJpegData'].slice(7)}`
+                            li.appendChild(preview)
+                        }
+                        li.appendChild(a)
+                        const span1 = document.createElement('span')
+                        span1.classList.add('magnifyingGlass')
+                        span1.setAttribute('title', 'Review this image.')
+                        const magnifyingGlass = document.createElement('img')
+                        magnifyingGlass.dataset.file = i['File:FileName']
+                        magnifyingGlass.id = `review_${count}`
+                        magnifyingGlass.classList.add('magnifyingGlass')
+                        magnifyingGlass.src = `${origin}/i/magnifying-glass.svg`
+                        magnifyingGlass.addEventListener('click', reviewHandler)
+                        span1.appendChild(magnifyingGlass)
+                        li.appendChild(span1)
+                        const span = document.createElement('span')
+                        span.classList.add('trashcan')
+                        span.setAttribute('title', 'Delete this image.')
+                        const trashcan = document.createElement('img')
+                        trashcan.dataset.file = i['File:FileName']
+                        trashcan.id = `delete_${count}`
+                        trashcan.src = `${origin}/i/delete.svg`
+                        trashcan.classList.add('trashcan')
+                        trashcan.addEventListener('click', deleteHandler)
+                        span.appendChild(trashcan)
+                        li.appendChild(span)
+                        ul.appendChild(li)
+                    }
+                })
+            }
+            const span = document.querySelector('section#headerSection > h2 > span')
+            span.textContent = `${count}`
+            span.textContent = fileCount 
+        </script> 
+    </section>
