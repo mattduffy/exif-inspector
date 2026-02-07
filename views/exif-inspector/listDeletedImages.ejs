@@ -1,7 +1,8 @@
     <section id="headerSection">
         <h1><a href="<%= domain %>"><%= siteName %></a></h1>
         <h2><span></span> Total Deleted Images.</h2>
-        <h4><a href="<%= domain %>/x/1">View uploaded images.</a></h4>
+        <h4><a href="<%= domain %>/x/1">View inspected images.</a></h4>
+        <h4><a href="<%= domain %>/u/1">View stuck uploaded images.</a></h4>
         <% if (flash?.info) { %>
         <div id="info" class="info">
             <span><%= flash.info %></span>
