@@ -671,6 +671,41 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   return ctx.render('index', locals)
 })
 
+router.get('getStuckFile', '/stuck/:f', async (ctx) => {
+  const log = exifLog.extend('GET-stuckFile')
+  const error = exifError.extend('GET-stuckFile')
+  const file = sanitize(ctx.params.f)
+  if (!file || file === '') {
+    error('Missing required file name url parameter.')
+    ctx.response.status = 401
+  } else {
+    let edittedFile
+    const edittedFilePath = path.resolve(`${ctx.app.root}/${UPLOADS}/${file}`)
+    try {
+      log('get inspected file', edittedFilePath)
+      edittedFile = await readFile(edittedFilePath)
+      const { ext } = path.parse(edittedFilePath)
+      const _original = file.match(
+        /(?<name>.*)\.{1}(?<type>jpeg|jpg|png|heic|webp|gif)_original$/i,
+      )
+      let type
+      if (_original?.groups?.type) {
+        type = _original.groups.type
+      } else {
+        type = `image/${ext.slice(1)}`
+      }
+      ctx.response.status = 200
+      ctx.response.type = type
+      log(ctx.response.status, type, edittedFile)
+      ctx.response.body = edittedFile
+    } catch (e) {
+      error(`Failed to open ${edittedFilePath} `)
+      error(e)
+      ctx.response.status = 404
+    }
+  }
+})
+
 router.get('getDeletedFile', '/unspected/:f', async (ctx) => {
   const log = exifLog.extend('GET-deletedFile')
   const error = exifError.extend('GET-deletedFile')
@@ -787,6 +822,95 @@ router.get('getXMPData', '/getxmpdata/:f', async (ctx) => {
   ctx.redirect('/')
 })
 
+router.get('redirectToPaginatedListUploaded', '/u', async (ctx) => {
+  ctx.redirect('/u/1')
+})
+
+router.get('listStuckUploadedImages', '/u/:page', async (ctx) => {
+  const log = exifLog.extend('liststuckuploadedimages')
+  const error = exifError.extend('liststuckuploadedimages')
+  ctx.state.sessionUser = ctx.state.sessionUser ?? {}
+  if (!ctx.state.isAuthenticated) {
+    ctx.redirect('/login')
+  }
+  log('Displaying list of images uploaded but somehow failed on the server.')
+  log('URL parameters: ', ctx.params)
+  const page = Number.parseInt((ctx.params?.page) ? ctx.params.page : 1, 10)
+  let images
+  let tool
+  const dir = path.resolve(`${ctx.app.root}/${UPLOADS}`)
+  let dirContents
+  let dirSlice
+  const pageLimit = 20
+  let pageOffset
+  let limit
+  let fileString
+  let cmd
+  try {
+    cmd = promisify(exec)
+    const c = `ls -1t --ignore "Readme.md" ${dir}`
+    log(c)
+    const out = await cmd(c)
+    dirContents = out.stdout.split('\n')
+    if (dirContents.slice(-1)[0] === '') {
+      dirContents = dirContents.slice(0, -1)
+    }
+    pageOffset = (page === 1) ? 0 : (page - 1) * pageLimit
+    limit = pageOffset + pageLimit
+    log(`pageLimit (${pageLimit}), pageOffset (${pageOffset}), limit (${limit})`)
+    log('dir contents', dirContents)
+    dirSlice = dirContents.slice(pageOffset, limit)
+    log(dirSlice)
+    fileString = dirSlice.map((f) => `"${dir}/${f}"`).join(' ')
+    // log(fileString.replaceAll(' ', '\n'))
+  } catch (e) {
+    error(`failed to list files in ${dir}`)
+    error(e)
+    fileString = dir
+  }
+  try {
+    tool = new Exiftool()
+    log('current value for exiftool exec() maxBuffer:', tool.getOutputBufferSize())
+    // tool.setMaxBufferMultiplier(1000)
+    // tool.setMaxBufferMultiplier(Infinity)
+    const configPath = `${ctx.app.dirs.config}/exiftool.config`
+    const raw = `/usr/local/bin/exiftool -config ${configPath} `
+      + '-quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" '
+      + '-File:Filename -File:MIMEType -File:FileSize -File:FileModifyDate -AllThumbs '
+      + `-f ${fileString}`
+    log(`raw exiftool cmd: ${raw}`)
+    images = await tool.raw(raw)
+    // log(images.slice(-1))
+  } catch (e) {
+    error('Failed to exiftool inspected images.')
+    error(e)
+  }
+
+  const csrfToken = ulid()
+  ctx.session.csrfToken = csrfToken
+  ctx.cookies.set('csrfToken', csrfToken, { httpOnly: true, sameSite: 'strict' })
+  const locals = {}
+  locals.images = images || []
+  locals.pageInfo = {
+    page,
+    pageOffset,
+    limit,
+    pageLimit,
+  }
+  locals.fileCount = dirContents.length || 0
+  locals.perPage = pageLimit
+  locals.structuredData = JSON.stringify(ctx.state.structuredData, null, '\t')
+  locals.csrfToken = csrfToken
+  locals.domain = ctx.state.origin
+  // locals.origin = ctx.request.href
+  locals.flash = ctx.flash?.index ?? {}
+  locals.title = `${ctx.app.site}: List Uploaded Images`
+  locals.sessionUser = ctx.state.sessionUser
+  locals.accessToken = ctx.state.searchJwtAccess
+  locals.isAuthenticated = ctx.state.isAuthenticated
+  await ctx.render('listStuckUploadedImages', locals)
+})
+
 router.get('redirectToPaginatedListDeleted', '/d', async (ctx) => {
   ctx.redirect('/d/1')
 })
@@ -837,7 +961,7 @@ router.get('listDeletedImages', '/d/:page', async (ctx) => {
     tool = new Exiftool()
     log('current value for exiftool exec() maxBuffer:', tool.getOutputBufferSize())
     // tool.setMaxBufferMultiplier(1000)
-    tool.setMaxBufferMultiplier(Infinity)
+    // tool.setMaxBufferMultiplier(Infinity)
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     const raw = `/usr/local/bin/exiftool -config ${configPath} `
       + '-quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" '
@@ -920,7 +1044,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
     tool = new Exiftool()
     log('current value for exiftool exec() maxBuffer:', tool.getOutputBufferSize())
     // tool.setMaxBufferMultiplier(1000)
-    tool.setMaxBufferMultiplier(Infinity)
+    // tool.setMaxBufferMultiplier(Infinity)
     const configPath = `${ctx.app.dirs.config}/exiftool.config`
     const raw = `/usr/local/bin/exiftool -config ${configPath} `
       + '-quiet -json --ext md -groupNames -b -dateFormat "%Y/%m/%d %H:%M:%S" '
