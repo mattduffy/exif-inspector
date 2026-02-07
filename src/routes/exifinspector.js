@@ -1004,9 +1004,9 @@ router.get('redirectToPaginatedList', '/x', async (ctx) => {
   ctx.redirect('/x/1')
 })
 
-router.get('listUploadedImages', '/x/:page', async (ctx) => {
-  const log = exifLog.extend('listuploadedimages')
-  const error = exifLog.extend('listuploadedimages')
+router.get('listInspectedImages', '/x/:page', async (ctx) => {
+  const log = exifLog.extend('listinspectedimages')
+  const error = exifLog.extend('listinspectedimages')
   ctx.state.sessionUser = ctx.state.sessionUser ?? {}
   if (!ctx.state.isAuthenticated) {
     ctx.redirect('/login')
@@ -1085,7 +1085,7 @@ router.get('listUploadedImages', '/x/:page', async (ctx) => {
   locals.sessionUser = ctx.state.sessionUser
   locals.accessToken = ctx.state.searchJwtAccess
   locals.isAuthenticated = ctx.state.isAuthenticated
-  await ctx.render('listUploadedImages', locals)
+  await ctx.render('listInspectedImages', locals)
 })
 
 router.delete(
