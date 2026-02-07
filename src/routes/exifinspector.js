@@ -159,10 +159,12 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
     const images = []
     // check if the url field was submitted
     // let inspectedName
+    const objectId = new ObjectId()
     let uploadedName
     let urlToInspect = ctx.request.body?.url?.[0] ?? null
     const geo = ctx.state.logEntry?.geos?.[0]
     const uploadDoc = {
+      _id: objectId,
       date: new Date(),
       ip: geo?.ip ?? null,
       geo,
@@ -205,7 +207,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         const filepath = path.parse(urlToInspect.pathname)
         const filename = `${filepath.base}`
         // const newFilename = `${ulid()}${filepath.ext}`
-        const newFilename = `${new ObjectId().toString()}${filepath.ext}`
+        const newFilename = `${objectId.toString()}${filepath.ext}`
         image.newFilename = newFilename
         image.originalFilename = filename
         image.size = Number.parseInt(remoteResponse.headers['content-length'], 10)
@@ -260,14 +262,16 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         if (image !== null) {
           imageOriginalFilenameCleaned = `${sanitizeFilename(image.originalFilename)}`
             + `${await ensureFileExtension(image.filepath, image.originalFilename)}`
-          const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
+          // const prefix = image.newFilename.slice(0, image.newFilename.lastIndexOf('.'))
           imageSaved = path.resolve(
-            `${ctx.app.root}/${INSPECTED}/${prefix}_${imageOriginalFilenameCleaned}`,
+            // `${ctx.app.root}/${INSPECTED}/${prefix}_${imageOriginalFilenameCleaned}`,
+            `${ctx.app.root}/${INSPECTED}/${objectId}_${imageOriginalFilenameCleaned}`,
           )
           log('image file path:', path.parse(imageSaved))
           const isMoved = await rename(image.filepath, imageSaved)
           log(`${imageSaved} moved successfully? ${(isMoved === undefined)}`)
-          response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
+          // response.inspectedFile = `${prefix}_${imageOriginalFilenameCleaned}`
+          response.inspectedFile = `${objectId}_${imageOriginalFilenameCleaned}`
           uploadDoc.imageTempName = image.newFilename
           uploadDoc.uploadedFile = image.originalFilename
           uploadDoc.sanitizedFile = imageOriginalFilenameCleaned
