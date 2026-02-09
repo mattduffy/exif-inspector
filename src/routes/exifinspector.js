@@ -675,6 +675,18 @@ router.get('getReviewFile', '/review/:f', async (ctx) => {
   return ctx.render('index', locals)
 })
 
+router.get('getUnStickFile', '/unstick/:f', async (ctx) => {
+  const log = exifLog.extend('GET-unstick')
+  const error = exifError.extend('GET-unstick')
+  const file = sanitize(ctx.params.f)
+  if (!file || file === '') {
+    error('Missing required file name url parameter.')
+    ctx.response.status = 401
+  } else {
+
+  }
+})
+
 router.get('getStuckFile', '/stuck/:f', async (ctx) => {
   const log = exifLog.extend('GET-stuckFile')
   const error = exifError.extend('GET-stuckFile')
