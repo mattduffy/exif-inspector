@@ -1,6 +1,12 @@
     <section id="headerSection">
         <h1><a href="<%= origin %>"><%= siteName %></a></h1>
+        <%  if (isAuthenticated) { %>
+            <h5><a href="<%= domain %>/x/1">View inspected images.</a></h5>
+            <h5><a href="<%= domain %>/u/1">View stuck uploded images.</a></h5>
+            <h5><a href="<%= domain %>/d/1">View deleted images.</a></h5>
+        <% } %>
         <h2>View and edit your image metadata.</h2>
+        
         <p>
             Built using the excellent <a href="https://exiftool.org" target="_blank">Exiftool</a> 
             by Phil Harvey, this app lets you inspect the metadata tags embedded in your image 
