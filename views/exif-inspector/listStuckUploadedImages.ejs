@@ -61,7 +61,7 @@
                 e.stopPropagation()
                 const dataset = e.target.dataset
                 console.log(dataset)
-                const link = new URL(`/review/${dataset.file}`, origin)
+                const link = new URL(`/unstick/${dataset.file}`, origin)
                 console.log(link)
                 location.assign(link)
             }

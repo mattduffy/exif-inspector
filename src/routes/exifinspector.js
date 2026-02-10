@@ -679,11 +679,70 @@ router.get('getUnStickFile', '/unstick/:f', async (ctx) => {
   const log = exifLog.extend('GET-unstick')
   const error = exifError.extend('GET-unstick')
   const file = sanitize(ctx.params.f)
+  const objectId = new ObjectId()
+  let newFilePath
+  const date = new Date()
+  const geo = ctx.state.logEntry?.geos?.[0]
+  const uploadDoc = {
+    _id: objectId,
+    date,
+    ip: geo?.ip ?? null,
+    geo,
+    coords: {
+      type: 'Point',
+      // mongodb requires longitude, latitude order
+      coordinates: [(geo?.coords?.[1] ?? 0), (geo?.coords?.[0] ?? 0)],
+    },
+    imageTempName: file,
+    sanitizedFile: file,
+    uploadedFile: 'Image file stuck in uploads dir',
+    size: 'wait for it',
+    inspectedFile: '',
+  }
   if (!file || file === '') {
     error('Missing required file name url parameter.')
     ctx.response.status = 401
   } else {
-
+    const newFilename = `${objectId}_`
+      + `${date.toISOString().split('T')[0]}.`
+      + `${file.slice(file.lastIndexOf('.') + 1)}`
+    const stuckFilePath = `${ctx.app.root}/${UPLOADS}/${file}`
+    log('new name for unsticking file:', newFilename)
+    try {
+      newFilePath = path.resolve(`${ctx.app.root}/${INSPECTED}/${newFilename}`)
+      const isMoved = await rename(stuckFilePath, newFilePath)
+      log(`${newFilePath} moved successfully?`, isMoved)
+      uploadDoc.inspectedFile = newFilePath
+    } catch (e) {
+      error('Unsticking action failed')
+      error(e)
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 200
+      ctx.body = {
+        error: 'Unsticking action failed.',
+        written: false,
+        file,
+      }
+    }
+    try {
+      log('saving unstuck file details to db.')
+      log(uploadDoc)
+      const db = ctx.state.mongodb.client.db()
+      const collection = db.collection('images')
+      const dbSaved = await collection.insertOne(uploadDoc)
+      log(dbSaved)
+    } catch (e) {
+      error('failed to save unstuck file details to db.')
+      error(e)
+      ctx.type = 'application/json; charset=utf-8'
+      ctx.status = 200
+      ctx.body = {
+        error: 'Saving unsticking action to db failed.',
+        written: true,
+        file: newFilename,
+      }
+    }
+    ctx.redirect(`${ctx.state.origin}/review/${newFilename}`)
   }
 })
 
@@ -874,7 +933,7 @@ router.get('listStuckUploadedImages', '/u/:page', async (ctx) => {
     pageOffset = (page === 1) ? 0 : (page - 1) * pageLimit
     limit = pageOffset + pageLimit
     log(`pageLimit (${pageLimit}), pageOffset (${pageOffset}), limit (${limit})`)
-    log('dir contents', dirContents)
+    // log('dir contents', dirContents)
     dirSlice = dirContents.slice(pageOffset, limit)
     log(dirSlice)
     fileString = dirSlice.map((f) => `"${dir}/${f}"`).join(' ')
