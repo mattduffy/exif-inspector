@@ -324,13 +324,16 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
         let stripResult
         if (exifShortcut === 'StripAllTags') {
           stripResult = await exiftool.stripMetadata()
-          log(stripResult)
+          log('strip all metadata', stripResult)
           result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
           if (stripResult?.original) {
             const original = path.parse(stripResult.original)
             response.originalFile = original.base
           }
           response.modifiedFile = (await exiftool.getPath()).file
+          log((await exiftool.getPath()).file)
+          log('response.modifiedFile', response.modifiedFile)
+          response.modifiedFile = response.modifiedFile.replace(/"$/, '')
         } else if (exifShortcut === 'StripGPS') {
           await exiftool.stripLocation()
           result = await exiftool.getMetadata('', null, '--ICC_Profile:all')
@@ -340,7 +343,7 @@ router.post('fileUpload', '/upload', addIpToSession, processFormData, async (ctx
           }
           // response.modifiedFile = result[0]['File:FileorName']
           response.modifiedFile = (await exiftool.getPath()).file
-          log(result)
+          log('strip location metadata', result)
         } else {
           result = await exiftool.getMetadata(
             '',
