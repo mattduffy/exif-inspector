@@ -1108,11 +1108,15 @@ router.get('listInspectedImages', '/x/:page', async (ctx) => {
     log(c)
     const out = await cmd(c)
     dirContents = out.stdout.split('\n')
+    // Throw away the last item in dirContents because it is a reference to the directory itself.
+    dirContents.pop()
     pageOffset = (page === 1) ? 0 : (page - 1) * pageLimit
     limit = pageOffset + pageLimit
     log(`pageLimit (${pageLimit}), pageOffset (${pageOffset}), limit (${limit})`)
     dirSlice = dirContents.slice(pageOffset, limit)
+    log('sliced dir contents', dirSlice.length, dirSlice)
     fileString = dirSlice.map((f) => `"${dir}/${f}"`).join(' ')
+    log('fileString', fileString)
   } catch (e) {
     error(`failed to list files in ${dir}`)
     error(e)
