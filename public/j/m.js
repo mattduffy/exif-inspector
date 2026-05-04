@@ -1007,6 +1007,7 @@ async function send(data = null, review = null) {
       const locationListDiv = tagListDiv('locationzone')
       const dl = locationListDiv.querySelector(':scope > dl')
       dl.appendChild(dt)
+      console.log('help', dt)
       // add results of geocoder reverse lookup
       const geoLookup = await myGeocoder(new window.mapkit.Coordinate(lat, lon))
       if (geoLookup?.results && geoLookup.results.length > 0) {
@@ -1020,8 +1021,9 @@ async function send(data = null, review = null) {
         /* eslint-enable no-nested-ternary */
         const address = document.createElement('dd')
         address.innerHTML = `${l.fullThoroughfare}<br>`
-          + `${l.subLocality}, ${l.locality}<br>`
-          + `${l.postCode}, ${l.administrativeArea}<br>`
+          + `${l.subLocality ? `${l.subLocality}, ` : ''}${l.locality ? l.locality : ''}<br>`
+          + `${l.postCode}, ${l.administrativeArea ? `${l.administrativeArea}` : ''}<br>`
+          + `${l.country}<br>`
           + `TZ: ${l.timezone}`
         dl.appendChild(locality)
         dl.appendChild(address)
