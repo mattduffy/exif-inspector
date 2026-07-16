@@ -389,6 +389,7 @@ async function logRequest(ctx, next) {
         try {
           if (Array.isArray(ctx.request.ips) && ctx.request.ips.length > 0) {
             ctx.request.ips.forEach((ip, i) => {
+              // Find IPv6 addresses with ::ffff prefix that is just masking an IPv4 address.
               const _ip = /^::ffff:(?<ip4>.*)$/.exec(ip)?.groups.ip4 ?? ip
               const city = geoIPCity.city(_ip)
               const geo = {}
