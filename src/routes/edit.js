@@ -22,7 +22,7 @@ import {
   // getSetName,
   getTownDirName,
 } from '../utils/logging.js'
-import { redis } from '../daos/impl/redis/redis-om.js'
+import { redis } from '../daos/impl/redis/redis-client.js'
 
 const editLog = _log.extend('edit')
 const editInfo = _info.extend('edit')
