@@ -27,12 +27,16 @@ import {
   _log,
   _error,
 } from '../utils/logging.js'
+import { redis } from '../daos/impl/redis/redis-client.js'
 
 const exifLog = _log.extend('main')
 const exifError = _error.extend('main')
 const UPLOADS = 'images_uploaded'
 const INSPECTED = 'images_inspected'
 const DELETED = 'images_deleted'
+
+exifLog(await redis.ping())
+
 function sanitize(param) {
   // fill in with some effective input scrubbing logic
   return param
